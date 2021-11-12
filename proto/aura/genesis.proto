@@ -1,0 +1,11 @@
+syntax = "proto3";
+package auranw.aura.aura;
+
+// this line is used by starport scaffolding # genesis/proto/import
+
+option go_package = "github.com/aura-nw/aura/x/aura/types";
+
+// GenesisState defines the aura module's genesis state.
+message GenesisState {
+    // this line is used by starport scaffolding # genesis/proto/state
+}

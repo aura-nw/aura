@@ -11,7 +11,7 @@ Using Makefile
 ```
     make
 ```
-The **aurad** bin file is located on **$source_directory/bin/** 
+The **aurad** bin file is located on **${source_directory}/cmd/** and **GO_PATH** (default ~/go/bin/) 
 
 ## Setup a LocalNet
 

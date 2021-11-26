@@ -37,3 +37,9 @@ The docs about genesis customization: https://hub.cosmos.network/main/resources/
 aurad start 
 ```
 ## Setup testnet using testnetCmd
+
+## Contribution
+The Aurad is still in development by the Aura Network team. For more information on how to contribute to this project, please contact us at support@aura.network
+
+## License
+Aurad project source code files are made available under Apache-2.0 License, located in the LICENSE file. Basically, you can do whatever you want as long as you include the original copyright and license notice in any copy of the software/source.

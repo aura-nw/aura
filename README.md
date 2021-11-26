@@ -1,5 +1,8 @@
 # Aura
-Aura network
+
+This repository contains source code for Aurad (Aura Daemon). Aurad binary is the official client for Aura Network. Aurad is built using Cosmos SDK
+
+Aura Network is a NFT-centric blockchain platform that provides infrastructure assisting to bring user assets to the crypto market.
 
 ## Prerequisite
 - Go 1.17+

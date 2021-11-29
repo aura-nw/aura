@@ -12,9 +12,9 @@ require (
 	github.com/spf13/cast v1.3.1
 	github.com/spf13/cobra v1.1.3
 	github.com/stretchr/testify v1.7.0
-	github.com/tendermint/spm v0.1.5
-	github.com/tendermint/tendermint v0.34.13
-	github.com/tendermint/tm-db v0.6.4
+	github.com/tendermint/spm v0.1.8
+	github.com/tendermint/tendermint v0.35.0
+	github.com/tendermint/tm-db v0.6.6
 	google.golang.org/genproto v0.0.0-20210903162649-d08c68adba83
 	google.golang.org/grpc v1.40.0
 )

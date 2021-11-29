@@ -7,7 +7,7 @@ Aura Network is a NFT-centric blockchain platform that provides infrastructure a
 ## Prerequisite
 - Go 1.17+
 - Starport 0.18.3
-- Cosmos SDK 0.44.0
+- Cosmos SDK 0.44.4
 
 ## Install Aura daemon
 Using Makefile

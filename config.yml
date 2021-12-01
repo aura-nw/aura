@@ -14,3 +14,8 @@ client:
 faucet:
   name: bob
   coins: ["5token", "100000stake"]
+genesis:
+  app_state:
+    aura:
+      params:
+        max_supply: "300000100"

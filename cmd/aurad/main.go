@@ -26,6 +26,11 @@ func main() {
 		testnetCmd(app.ModuleBasics, banktypes.GenesisBalancesIterator{}),
 	)
 
+	// generate genesis vesting accounts cmd
+	rootCmd.AddCommand(
+		AddGenesisVestingAccountCmd(app.DefaultNodeHome),
+	)
+
 	if err := svrcmd.Execute(rootCmd, app.DefaultNodeHome); err != nil {
 		os.Exit(1)
 	}

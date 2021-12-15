@@ -152,7 +152,7 @@ func InitTestnet(
 	)
 
 	inBuf := bufio.NewReader(cmd.InOrStdin())
-	
+
 	// generate private keys, node IDs, and initial transactions
 	for i := 0; i < numValidators; i++ {
 		nodeDirName := nodeNames[i]

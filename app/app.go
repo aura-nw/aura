@@ -91,6 +91,9 @@ import (
 	auramodule "github.com/aura-nw/aura/x/aura"
 	auramodulekeeper "github.com/aura-nw/aura/x/aura/keeper"
 	auramoduletypes "github.com/aura-nw/aura/x/aura/types"
+	wasmmodule "github.com/aura-nw/aura/x/wasm"
+	wasmmodulekeeper "github.com/aura-nw/aura/x/wasm/keeper"
+	wasmmoduletypes "github.com/aura-nw/aura/x/wasm/types"
 	// this line is used by starport scaffolding # stargate/app/moduleImport
 	custommint "github.com/aura-nw/aura/custom/mint"
 )
@@ -143,6 +146,7 @@ var (
 		transfer.AppModuleBasic{},
 		vesting.AppModuleBasic{},
 		auramodule.AppModuleBasic{},
+		wasmmodule.AppModuleBasic{},
 		// this line is used by starport scaffolding # stargate/app/moduleBasic
 	)
 
@@ -212,6 +216,8 @@ type App struct {
 	ScopedTransferKeeper capabilitykeeper.ScopedKeeper
 
 	AuraKeeper auramodulekeeper.Keeper
+
+	WasmKeeper wasmmodulekeeper.Keeper
 	// this line is used by starport scaffolding # stargate/app/keeperDeclaration
 
 	// the module manager
@@ -246,6 +252,7 @@ func New(
 		govtypes.StoreKey, paramstypes.StoreKey, ibchost.StoreKey, upgradetypes.StoreKey, feegrant.StoreKey,
 		evidencetypes.StoreKey, ibctransfertypes.StoreKey, capabilitytypes.StoreKey,
 		auramoduletypes.StoreKey,
+		wasmmoduletypes.StoreKey,
 		// this line is used by starport scaffolding # stargate/app/storeKey
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
@@ -352,6 +359,13 @@ func New(
 
 	auraModule := auramodule.NewAppModule(appCodec, app.AuraKeeper)
 
+	app.WasmKeeper = *wasmmodulekeeper.NewKeeper(
+		appCodec,
+		keys[wasmmoduletypes.StoreKey],
+		keys[wasmmoduletypes.MemStoreKey],
+	)
+	wasmModule := wasmmodule.NewAppModule(appCodec, app.WasmKeeper)
+
 	// this line is used by starport scaffolding # stargate/app/keeperDefinition
 
 	// Create static IBC router, add transfer route, then set and seal it
@@ -391,6 +405,7 @@ func New(
 		params.NewAppModule(app.ParamsKeeper),
 		transferModule,
 		auraModule,
+		wasmModule,
 		// this line is used by starport scaffolding # stargate/app/appModule
 	)
 
@@ -426,6 +441,7 @@ func New(
 		evidencetypes.ModuleName,
 		ibctransfertypes.ModuleName,
 		auramoduletypes.ModuleName,
+		wasmmoduletypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/initGenesis
 	)
 
@@ -614,6 +630,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
 	paramsKeeper.Subspace(ibchost.ModuleName)
 	paramsKeeper.Subspace(auramoduletypes.ModuleName)
+	paramsKeeper.Subspace(wasmmoduletypes.ModuleName)
 	// this line is used by starport scaffolding # stargate/app/paramSubspace
 
 	return paramsKeeper

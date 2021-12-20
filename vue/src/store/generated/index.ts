@@ -1,8 +1,10 @@
 // THIS FILE IS GENERATED AUTOMATICALLY. DO NOT MODIFY.
 
+import AuraNwAuraAuranwAuraWasm from './aura-nw/aura/auranw.aura.wasm'
 
 
 export default { 
+  AuraNwAuraAuranwAuraWasm: load(AuraNwAuraAuranwAuraWasm, 'auranw.aura.wasm'),
   
 }
 

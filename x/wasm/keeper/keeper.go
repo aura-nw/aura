@@ -414,3 +414,74 @@ func assertNil(err error) {
 		panic(fmt.Errorf("logic error - this should never happen. %w", err))
 	}
 }
+
+func (k Keeper) GetContractHistory(ctx sdk.Context, contractAddr sdk.AccAddress) []types.ContractCodeHistoryEntry {
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.GetContractCodeHistoryElementPrefix(contractAddr))
+	r := make([]types.ContractCodeHistoryEntry, 0)
+	iter := prefixStore.Iterator(nil, nil)
+	for ; iter.Valid(); iter.Next() {
+		var e types.ContractCodeHistoryEntry
+		k.cdc.MustUnmarshal(iter.Value(), &e)
+		r = append(r, e)
+	}
+	return r
+}
+
+func (k Keeper) HasContractInfo(ctx sdk.Context, contractAddress sdk.AccAddress) bool {
+	store := ctx.KVStore(k.storeKey)
+	return store.Has(types.GetContractAddressKey(contractAddress))
+}
+
+func (k Keeper) IterateContractInfo(ctx sdk.Context, cb func(sdk.AccAddress, types.ContractInfo) bool) {
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.ContractKeyPrefix)
+	iter := prefixStore.Iterator(nil, nil)
+	for ; iter.Valid(); iter.Next() {
+		var contract types.ContractInfo
+		k.cdc.MustUnmarshal(iter.Value(), &contract)
+		// cb returns true to stop early
+		if cb(iter.Key(), contract) {
+			break
+		}
+	}
+}
+
+// IterateContractsByCode iterates over all contracts with given codeID ASC on code update time.
+func (k Keeper) IterateContractsByCode(ctx sdk.Context, codeID uint64, cb func(address sdk.AccAddress) bool) {
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.GetContractByCodeIDSecondaryIndexPrefix(codeID))
+	for iter := prefixStore.Iterator(nil, nil); iter.Valid(); iter.Next() {
+		key := iter.Key()
+		if cb(key[types.AbsoluteTxPositionLen:]) {
+			return
+		}
+	}
+}
+
+func (k Keeper) GetContractState(ctx sdk.Context, contractAddress sdk.AccAddress) sdk.Iterator {
+	prefixStoreKey := types.GetContractStorePrefix(contractAddress)
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), prefixStoreKey)
+	return prefixStore.Iterator(nil, nil)
+}
+
+func (k Keeper) IterateCodeInfos(ctx sdk.Context, cb func(uint64, types.CodeInfo) bool) {
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.CodeKeyPrefix)
+	iter := prefixStore.Iterator(nil, nil)
+	for ; iter.Valid(); iter.Next() {
+		var c types.CodeInfo
+		k.cdc.MustUnmarshal(iter.Value(), &c)
+		// cb returns true to stop early
+		if cb(binary.BigEndian.Uint64(iter.Key()), c) {
+			return
+		}
+	}
+}
+
+func (k Keeper) GetByteCode(ctx sdk.Context, codeID uint64) ([]byte, error) {
+	store := ctx.KVStore(k.storeKey)
+	var codeInfo types.CodeInfo
+	codeInfoBz := store.Get(types.GetCodeKey(codeID))
+	if codeInfoBz == nil {
+		return nil, nil
+	}
+	k.cdc.MustUnmarshal(codeInfoBz, &codeInfo)
+	return k.wasmVM.GetCode(codeInfo.CodeHash)
+}

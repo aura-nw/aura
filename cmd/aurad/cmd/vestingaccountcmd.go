@@ -1,4 +1,4 @@
-package main
+package cmd
 
 import (
 	"bufio"
@@ -112,52 +112,18 @@ contain valid denominations. Accounts may optionally be supplied with vesting pa
 					return errors.New("vesting amount cannot be greater than total amount")
 				}
 
-				switch {
-				case vestingStart != 0 && periodLength != 0:
-					//periods define
+				if vestingStart != 0 && periodLength != 0 {
 					var numPeriod int64 = vestingTime / periodLength
-					var totalAmount sdk.Int = vestingAmt[0].Amount
+					var totalAmount sdk.Int = vestingAmt[0].Amount //Currently, only allow to vest 1 type of coin per account
 					var periodicAmount sdk.Int = totalAmount.QuoRaw(numPeriod)
 
-					if vestingTime%periodLength != 0 {
-						periods := make([]authvesting.Period, numPeriod+1)
-						for i := 0; i < int(numPeriod+1); i++ {
-							periods[i].Length = periodLength
-							periods[i].Amount, _ = sdk.ParseCoinsNormalized(vestingAmtStr)
-							periods[i].Amount[0].Amount = periodicAmount
-							if !totalAmount.ModRaw(numPeriod).IsZero() && int64(i) == numPeriod {
-								periods[i].Length = vestingTime % periodLength
-								periods[i].Amount[0].Amount = totalAmount.ModRaw(numPeriod).Add(periodicAmount)
-							}
-							fmt.Print("period ", periods[i], "\n")
-						}
-						for i := 0; i < int(numPeriod+1); i++ {
-							fmt.Print("period2 ", periods[i], "\n")
-						}
-						genAccount = authvesting.NewPeriodicVestingAccountRaw(baseVestingAccount, vestingStart, periods)
-					} else {
-						periods := make([]authvesting.Period, numPeriod)
-						for i := 0; i < int(numPeriod); i++ {
-							periods[i].Length = periodLength
-							periods[i].Amount, _ = sdk.ParseCoinsNormalized(vestingAmtStr)
-							periods[i].Amount[0].Amount = periodicAmount
-							if !totalAmount.ModRaw(numPeriod).IsZero() && int64(i) == (numPeriod-1) {
-								periods[i].Amount[0].Amount = totalAmount.ModRaw(numPeriod).Add(periodicAmount)
-							}
-							fmt.Print("period ", periods[i], "\n")
-						}
-						for i := 0; i < int(numPeriod); i++ {
-							fmt.Print("period2 ", periods[i], "\n")
-						}
-						genAccount = authvesting.NewPeriodicVestingAccountRaw(baseVestingAccount, vestingStart, periods)
-					}
-					//genAccount = authvesting.NewPeriodicVestingAccountRaw(baseVestingAccount, vestingStart, periods)
-
-				default:
+					periods := caculateVestingPeriods(vestingTime, periodLength, vestingAmtStr, numPeriod, totalAmount, periodicAmount)
+					genAccount = authvesting.NewPeriodicVestingAccountRaw(baseVestingAccount, vestingStart, periods)
+				} else {
 					return errors.New("invalid vesting parameters; must supply start and end time or end time")
 				}
 			} else {
-				genAccount = baseAccount
+				return errors.New("command is only allowed to create periodic vesting account")
 			}
 
 			if err := genAccount.Validate(); err != nil {
@@ -229,4 +195,33 @@ contain valid denominations. Accounts may optionally be supplied with vesting pa
 	flags.AddQueryFlagsToCmd(cmd)
 
 	return cmd
+}
+
+func caculateVestingPeriods(vestingTime int64, periodLength int64, vestingAmtStr string, numPeriod int64, totalAmount sdk.Int, periodicAmount sdk.Int) authvesting.Periods {
+	if vestingTime%periodLength != 0 {
+		//divisible vesting time
+		periods := make([]authvesting.Period, numPeriod+1)
+		for i := 0; i < int(numPeriod+1); i++ {
+			periods[i].Length = periodLength
+			periods[i].Amount, _ = sdk.ParseCoinsNormalized(vestingAmtStr)
+			periods[i].Amount[0].Amount = periodicAmount
+			if !totalAmount.ModRaw(numPeriod).IsZero() && int64(i) == numPeriod {
+				periods[i].Length = vestingTime % periodLength
+				periods[i].Amount[0].Amount = totalAmount.ModRaw(numPeriod).Add(periodicAmount)
+			}
+		}
+		return periods
+	} else {
+		//indivisible vesting time
+		periods := make([]authvesting.Period, numPeriod)
+		for i := 0; i < int(numPeriod); i++ {
+			periods[i].Length = periodLength
+			periods[i].Amount, _ = sdk.ParseCoinsNormalized(vestingAmtStr)
+			periods[i].Amount[0].Amount = periodicAmount
+			if !totalAmount.ModRaw(numPeriod).IsZero() && int64(i) == (numPeriod-1) {
+				periods[i].Amount[0].Amount = totalAmount.ModRaw(numPeriod).Add(periodicAmount)
+			}
+		}
+		return periods
+	}
 }

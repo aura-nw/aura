@@ -547,9 +547,7 @@ paths:
                       PageRequest.count_total
 
                       was set, its value is undefined otherwise
-            title: |-
-              QueryContractsByCodeResponse is the response type for the
-              Query/ContractsByCode RPC method
+            title: "QueryContractsByCodeResponse is the response type for the\r\nQuery/ContractsByCode RPC method"
         default:
           description: An unexpected error response.
           schema:
@@ -832,9 +830,7 @@ paths:
                       PageRequest.count_total
 
                       was set, its value is undefined otherwise
-            title: |-
-              QueryPinnedCodesResponse is the response type for the
-              Query/PinnedCodes RPC method
+            title: "QueryPinnedCodesResponse is the response type for the\r\nQuery/PinnedCodes RPC method"
         default:
           description: An unexpected error response.
           schema:
@@ -1111,13 +1107,7 @@ paths:
                       Label is optional metadata to be stored with a contract
                       instance.
                   created:
-                    title: >-
-                      Created Tx position when the contract was instantiated.
-
-                      This data should kept internal and not be exposed via
-                      query results. Just
-
-                      use for sorting
+                    title: "Created Tx position when the contract was instantiated.\r\nThis data should kept internal and not be exposed via query results. Just\r\nuse for sorting"
                     type: object
                     properties:
                       blockHeight:
@@ -1127,16 +1117,8 @@ paths:
                       txIndex:
                         type: string
                         format: uint64
-                        title: >-
-                          TxIndex is a monotonic counter within the block
-                          (actual transaction index,
-
-                          or gas consumed)
-                    description: >-
-                      AbsoluteTxPosition is a unique transaction position that
-                      allows for global
-
-                      ordering of transactions.
+                        title: "TxIndex is a monotonic counter within the block (actual transaction index,\r\nor gas consumed)"
+                    description: "AbsoluteTxPosition is a unique transaction position that allows for global\r\nordering of transactions."
                   ibcPortId:
                     type: string
                   extension:
@@ -1313,11 +1295,7 @@ paths:
                             "value": "1.212s"
                           }
                 title: ContractInfo stores a WASM contract instance
-            title: >-
-              QueryContractInfoResponse is the response type for the
-              Query/ContractInfo RPC
-
-              method
+            title: "QueryContractInfoResponse is the response type for the Query/ContractInfo RPC\r\nmethod"
         default:
           description: An unexpected error response.
           schema:
@@ -1559,11 +1537,7 @@ paths:
                         txIndex:
                           type: string
                           format: uint64
-                          title: >-
-                            TxIndex is a monotonic counter within the block
-                            (actual transaction index,
-
-                            or gas consumed)
+                          title: "TxIndex is a monotonic counter within the block (actual transaction index,\r\nor gas consumed)"
                     msg:
                       type: string
                       format: byte
@@ -1586,9 +1560,7 @@ paths:
                       PageRequest.count_total
 
                       was set, its value is undefined otherwise
-            title: |-
-              QueryContractHistoryResponse is the response type for the
-              Query/ContractHistory RPC method
+            title: "QueryContractHistoryResponse is the response type for the\r\nQuery/ContractHistory RPC method"
         default:
           description: An unexpected error response.
           schema:
@@ -1880,9 +1852,7 @@ paths:
                       PageRequest.count_total
 
                       was set, its value is undefined otherwise
-            title: |-
-              QueryAllContractStateResponse is the response type for the
-              Query/AllContractState RPC method
+            title: "QueryAllContractStateResponse is the response type for the\r\nQuery/AllContractState RPC method"
         default:
           description: An unexpected error response.
           schema:
@@ -2146,9 +2116,7 @@ paths:
                 type: string
                 format: byte
                 title: Data contains the raw store data
-            title: |-
-              QueryRawContractStateResponse is the response type for the
-              Query/RawContractState RPC method
+            title: "QueryRawContractStateResponse is the response type for the\r\nQuery/RawContractState RPC method"
         default:
           description: An unexpected error response.
           schema:
@@ -2361,9 +2329,7 @@ paths:
                 type: string
                 format: byte
                 title: Data contains the json data returned from the smart contract
-            title: |-
-              QuerySmartContractStateResponse is the response type for the
-              Query/SmartContractState RPC method
+            title: "QuerySmartContractStateResponse is the response type for the\r\nQuery/SmartContractState RPC method"
         default:
           description: An unexpected error response.
           schema:
@@ -15144,14 +15110,8 @@ definitions:
       txIndex:
         type: string
         format: uint64
-        title: >-
-          TxIndex is a monotonic counter within the block (actual transaction
-          index,
-
-          or gas consumed)
-    description: |-
-      AbsoluteTxPosition is a unique transaction position that allows for global
-      ordering of transactions.
+        title: "TxIndex is a monotonic counter within the block (actual transaction index,\r\nor gas consumed)"
+    description: "AbsoluteTxPosition is a unique transaction position that allows for global\r\nordering of transactions."
   auranw.aura.wasm.AccessConfig:
     type: object
     properties:
@@ -15234,11 +15194,7 @@ definitions:
           txIndex:
             type: string
             format: uint64
-            title: >-
-              TxIndex is a monotonic counter within the block (actual
-              transaction index,
-
-              or gas consumed)
+            title: "TxIndex is a monotonic counter within the block (actual transaction index,\r\nor gas consumed)"
       msg:
         type: string
         format: byte
@@ -15275,13 +15231,7 @@ definitions:
         type: string
         description: Label is optional metadata to be stored with a contract instance.
       created:
-        title: >-
-          Created Tx position when the contract was instantiated.
-
-          This data should kept internal and not be exposed via query results.
-          Just
-
-          use for sorting
+        title: "Created Tx position when the contract was instantiated.\r\nThis data should kept internal and not be exposed via query results. Just\r\nuse for sorting"
         type: object
         properties:
           blockHeight:
@@ -15291,16 +15241,8 @@ definitions:
           txIndex:
             type: string
             format: uint64
-            title: >-
-              TxIndex is a monotonic counter within the block (actual
-              transaction index,
-
-              or gas consumed)
-        description: >-
-          AbsoluteTxPosition is a unique transaction position that allows for
-          global
-
-          ordering of transactions.
+            title: "TxIndex is a monotonic counter within the block (actual transaction index,\r\nor gas consumed)"
+        description: "AbsoluteTxPosition is a unique transaction position that allows for global\r\nordering of transactions."
       ibcPortId:
         type: string
       extension:
@@ -15501,9 +15443,7 @@ definitions:
       data:
         type: string
         format: byte
-        title: |-
-          Data contains same raw bytes returned as data from the wasm contract.
-          (May be empty)
+        title: "Data contains same raw bytes returned as data from the wasm contract.\r\n(May be empty)"
     description: MsgMigrateContractResponse returns contract migration result data.
   auranw.aura.wasm.MsgStoreCodeResponse:
     type: object
@@ -15551,9 +15491,7 @@ definitions:
               PageRequest.count_total
 
               was set, its value is undefined otherwise
-    title: |-
-      QueryAllContractStateResponse is the response type for the
-      Query/AllContractState RPC method
+    title: "QueryAllContractStateResponse is the response type for the\r\nQuery/AllContractState RPC method"
   auranw.aura.wasm.QueryCodeResponse:
     type: object
     properties:
@@ -15650,11 +15588,7 @@ definitions:
                 txIndex:
                   type: string
                   format: uint64
-                  title: >-
-                    TxIndex is a monotonic counter within the block (actual
-                    transaction index,
-
-                    or gas consumed)
+                  title: "TxIndex is a monotonic counter within the block (actual transaction index,\r\nor gas consumed)"
             msg:
               type: string
               format: byte
@@ -15677,9 +15611,7 @@ definitions:
               PageRequest.count_total
 
               was set, its value is undefined otherwise
-    title: |-
-      QueryContractHistoryResponse is the response type for the
-      Query/ContractHistory RPC method
+    title: "QueryContractHistoryResponse is the response type for the\r\nQuery/ContractHistory RPC method"
   auranw.aura.wasm.QueryContractInfoResponse:
     type: object
     properties:
@@ -15703,13 +15635,7 @@ definitions:
             type: string
             description: Label is optional metadata to be stored with a contract instance.
           created:
-            title: >-
-              Created Tx position when the contract was instantiated.
-
-              This data should kept internal and not be exposed via query
-              results. Just
-
-              use for sorting
+            title: "Created Tx position when the contract was instantiated.\r\nThis data should kept internal and not be exposed via query results. Just\r\nuse for sorting"
             type: object
             properties:
               blockHeight:
@@ -15719,16 +15645,8 @@ definitions:
               txIndex:
                 type: string
                 format: uint64
-                title: >-
-                  TxIndex is a monotonic counter within the block (actual
-                  transaction index,
-
-                  or gas consumed)
-            description: >-
-              AbsoluteTxPosition is a unique transaction position that allows
-              for global
-
-              ordering of transactions.
+                title: "TxIndex is a monotonic counter within the block (actual transaction index,\r\nor gas consumed)"
+            description: "AbsoluteTxPosition is a unique transaction position that allows for global\r\nordering of transactions."
           ibcPortId:
             type: string
           extension:
@@ -15895,11 +15813,7 @@ definitions:
                     "value": "1.212s"
                   }
         title: ContractInfo stores a WASM contract instance
-    title: >-
-      QueryContractInfoResponse is the response type for the Query/ContractInfo
-      RPC
-
-      method
+    title: "QueryContractInfoResponse is the response type for the Query/ContractInfo RPC\r\nmethod"
   auranw.aura.wasm.QueryContractsByCodeResponse:
     type: object
     properties:
@@ -15926,9 +15840,7 @@ definitions:
               PageRequest.count_total
 
               was set, its value is undefined otherwise
-    title: |-
-      QueryContractsByCodeResponse is the response type for the
-      Query/ContractsByCode RPC method
+    title: "QueryContractsByCodeResponse is the response type for the\r\nQuery/ContractsByCode RPC method"
   auranw.aura.wasm.QueryPinnedCodesResponse:
     type: object
     properties:
@@ -15955,9 +15867,7 @@ definitions:
               PageRequest.count_total
 
               was set, its value is undefined otherwise
-    title: |-
-      QueryPinnedCodesResponse is the response type for the
-      Query/PinnedCodes RPC method
+    title: "QueryPinnedCodesResponse is the response type for the\r\nQuery/PinnedCodes RPC method"
   auranw.aura.wasm.QueryRawContractStateResponse:
     type: object
     properties:
@@ -15965,9 +15875,7 @@ definitions:
         type: string
         format: byte
         title: Data contains the raw store data
-    title: |-
-      QueryRawContractStateResponse is the response type for the
-      Query/RawContractState RPC method
+    title: "QueryRawContractStateResponse is the response type for the\r\nQuery/RawContractState RPC method"
   auranw.aura.wasm.QuerySmartContractStateResponse:
     type: object
     properties:
@@ -15975,9 +15883,7 @@ definitions:
         type: string
         format: byte
         title: Data contains the json data returned from the smart contract
-    title: |-
-      QuerySmartContractStateResponse is the response type for the
-      Query/SmartContractState RPC method
+    title: "QuerySmartContractStateResponse is the response type for the\r\nQuery/SmartContractState RPC method"
   cosmos.base.query.v1beta1.PageRequest:
     type: object
     properties:

@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
@@ -55,7 +56,7 @@ type WasmVMResponseHandler interface {
 
 type (
 	Keeper struct {
-		cdc                   codec.BinaryCodec
+		cdc                   codec.Codec
 		storeKey              sdk.StoreKey
 		accountKeeper         types.AccountKeeper
 		bank                  CoinTransferrer
@@ -71,6 +72,57 @@ type (
 		gasRegister   GasRegister
 	}
 )
+
+func NewKeeper(
+	cdc codec.Codec,
+	storeKey sdk.StoreKey,
+	paramSpace paramtypes.Subspace,
+	accountKeeper types.AccountKeeper,
+	bankKeeper types.BankKeeper,
+	stakingKeeper types.StakingKeeper,
+	distKeeper types.DistributionKeeper,
+	channelKeeper types.ChannelKeeper,
+	portKeeper types.PortKeeper,
+	capabilityKeeper types.CapabilityKeeper,
+	portSource types.ICS20TransferPortSource,
+	serviceRouter types.MsgServiceRouter,
+	queryRouter GRPCQueryRouter,
+	homeDir string,
+	wasmConfig types.WasmConfig,
+	supportedFeatures string,
+	opts ...Option,
+
+) Keeper {
+	wasmer, err := wasmvm.NewVM(filepath.Join(homeDir, "wasm"), supportedFeatures, contractMemoryLimit, wasmConfig.ContractDebugMode, wasmConfig.MemoryCacheSize)
+	if err != nil {
+		panic(err)
+	}
+	// set KeyTable if it has not already been set
+	if !paramSpace.HasKeyTable() {
+		paramSpace = paramSpace.WithKeyTable(types.ParamKeyTable())
+	}
+
+	keeper := Keeper{
+		storeKey:         storeKey,
+		cdc:              cdc,
+		wasmVM:           wasmer,
+		accountKeeper:    accountKeeper,
+		bank:             NewBankCoinTransferrer(bankKeeper),
+		portKeeper:       portKeeper,
+		capabilityKeeper: capabilityKeeper,
+		messenger:        NewDefaultMessageHandler(serviceRouter, channelKeeper, capabilityKeeper, bankKeeper, cdc, portSource),
+		queryGasLimit:    wasmConfig.SmartQueryGasLimit,
+		paramSpace:       paramSpace,
+		gasRegister:      NewDefaultWasmGasRegister(),
+	}
+	keeper.wasmVMQueryHandler = DefaultQueryPlugins(bankKeeper, stakingKeeper, distKeeper, channelKeeper, queryRouter, keeper)
+	for _, o := range opts {
+		o.apply(&keeper)
+	}
+	// not updateable, yet
+	keeper.wasmVMResponseHandler = NewDefaultWasmVMContractResponseHandler(NewMessageDispatcher(keeper.messenger, keeper))
+	return keeper
+}
 
 // reply is only called from keeper internal functions (dispatchSubmessages) after processing the submessage
 func (k Keeper) reply(ctx sdk.Context, contractAddress sdk.AccAddress, reply wasmvmtypes.Reply) ([]byte, error) {
@@ -155,57 +207,6 @@ func (k Keeper) IsPinnedCode(ctx sdk.Context, codeID uint64) bool {
 	return store.Has(types.GetPinnedCodeIndexPrefix(codeID))
 }
 
-func NewKeeper(
-	cdc codec.BinaryCodec,
-	storeKey sdk.StoreKey,
-	paramSpace paramtypes.Subspace,
-	accountKeeper types.AccountKeeper,
-	bankKeeper types.BankKeeper,
-	stakingKeeper types.StakingKeeper,
-	distKeeper types.DistributionKeeper,
-	channelKeeper types.ChannelKeeper,
-	portKeeper types.PortKeeper,
-	capabilityKeeper types.CapabilityKeeper,
-	portSource types.ICS20TransferPortSource,
-	serviceRouter types.MsgServiceRouter,
-	queryRouter GRPCQueryRouter,
-	homeDir string,
-	wasmConfig types.WasmConfig,
-	supportedFeatures string,
-	opts ...Option,
-
-) Keeper {
-	wasmer, err := wasmvm.NewVM(filepath.Join(homeDir, "wasm"), supportedFeatures, contractMemoryLimit, wasmConfig.ContractDebugMode, wasmConfig.MemoryCacheSize)
-	if err != nil {
-		panic(err)
-	}
-	// set KeyTable if it has not already been set
-	if !paramSpace.HasKeyTable() {
-		paramSpace = paramSpace.WithKeyTable(types.ParamKeyTable())
-	}
-
-	keeper := Keeper{
-		storeKey:         storeKey,
-		cdc:              cdc,
-		wasmVM:           wasmer,
-		accountKeeper:    accountKeeper,
-		bank:             NewBankCoinTransferrer(bankKeeper),
-		portKeeper:       portKeeper,
-		capabilityKeeper: capabilityKeeper,
-		messenger:        NewDefaultMessageHandler(serviceRouter, channelKeeper, capabilityKeeper, bankKeeper, cdc, portSource),
-		queryGasLimit:    wasmConfig.SmartQueryGasLimit,
-		paramSpace:       paramSpace,
-		gasRegister:      NewDefaultWasmGasRegister(),
-	}
-	keeper.wasmVMQueryHandler = DefaultQueryPlugins(bankKeeper, stakingKeeper, distKeeper, channelKeeper, queryRouter, keeper)
-	for _, o := range opts {
-		o.apply(&keeper)
-	}
-	// not updateable, yet
-	keeper.wasmVMResponseHandler = NewDefaultWasmVMContractResponseHandler(NewMessageDispatcher(keeper.messenger, keeper))
-	return keeper
-}
-
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return moduleLogger(ctx)
 }
@@ -231,7 +232,7 @@ func NewBankCoinTransferrer(keeper types.BankKeeper) BankCoinTransferrer {
 func (c BankCoinTransferrer) TransferCoins(parentCtx sdk.Context, fromAddr sdk.AccAddress, toAddr sdk.AccAddress, amt sdk.Coins) error {
 	em := sdk.NewEventManager()
 	ctx := parentCtx.WithEventManager(em)
-	if err := c.keeper.SendEnabledCoins(ctx, amt...); err != nil {
+	if err := c.keeper.IsSendEnabledCoins(ctx, amt...); err != nil {
 		return err
 	}
 	if c.keeper.BlockedAddr(fromAddr) {
@@ -484,4 +485,99 @@ func (k Keeper) GetByteCode(ctx sdk.Context, codeID uint64) ([]byte, error) {
 	}
 	k.cdc.MustUnmarshal(codeInfoBz, &codeInfo)
 	return k.wasmVM.GetCode(codeInfo.CodeHash)
+}
+
+// GetParams returns the total set of wasm parameters.
+func (k Keeper) GetParams(ctx sdk.Context) types.Params {
+	var params types.Params
+	k.paramSpace.GetParamSet(ctx, &params)
+	return params
+}
+
+func (k Keeper) setParams(ctx sdk.Context, ps types.Params) {
+	k.paramSpace.SetParamSet(ctx, &ps)
+}
+
+func (k Keeper) importCode(ctx sdk.Context, codeID uint64, codeInfo types.CodeInfo, wasmCode []byte) error {
+	wasmCode, err := uncompress(wasmCode, k.GetMaxWasmCodeSize(ctx))
+	if err != nil {
+		return sdkerrors.Wrap(types.ErrCreateFailed, err.Error())
+	}
+	newCodeHash, err := k.wasmVM.Create(wasmCode)
+	if err != nil {
+		return sdkerrors.Wrap(types.ErrCreateFailed, err.Error())
+	}
+	if !bytes.Equal(codeInfo.CodeHash, newCodeHash) {
+		return sdkerrors.Wrap(types.ErrInvalid, "code hashes not same")
+	}
+
+	store := ctx.KVStore(k.storeKey)
+	key := types.GetCodeKey(codeID)
+	if store.Has(key) {
+		return sdkerrors.Wrapf(types.ErrDuplicate, "duplicate code: %d", codeID)
+	}
+	// 0x01 | codeID (uint64) -> ContractInfo
+	store.Set(key, k.cdc.MustMarshal(&codeInfo))
+	return nil
+}
+
+func (k Keeper) importContract(ctx sdk.Context, contractAddr sdk.AccAddress, c *types.ContractInfo, state []types.Model) error {
+	if !k.containsCodeInfo(ctx, c.CodeID) {
+		return sdkerrors.Wrapf(types.ErrNotFound, "code id: %d", c.CodeID)
+	}
+	if k.HasContractInfo(ctx, contractAddr) {
+		return sdkerrors.Wrapf(types.ErrDuplicate, "contract: %s", contractAddr)
+	}
+
+	historyEntry := c.ResetFromGenesis(ctx)
+	k.appendToContractHistory(ctx, contractAddr, historyEntry)
+	k.storeContractInfo(ctx, contractAddr, c)
+	k.addToContractCodeSecondaryIndex(ctx, contractAddr, historyEntry)
+	return k.importContractState(ctx, contractAddr, state)
+}
+
+func (k Keeper) importContractState(ctx sdk.Context, contractAddress sdk.AccAddress, models []types.Model) error {
+	prefixStoreKey := types.GetContractStorePrefix(contractAddress)
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), prefixStoreKey)
+	for _, model := range models {
+		if model.Value == nil {
+			model.Value = []byte{}
+		}
+		if prefixStore.Has(model.Key) {
+			return sdkerrors.Wrapf(types.ErrDuplicate, "duplicate key: %x", model.Key)
+		}
+		prefixStore.Set(model.Key, model.Value)
+	}
+	return nil
+}
+
+func (k Keeper) containsCodeInfo(ctx sdk.Context, codeID uint64) bool {
+	store := ctx.KVStore(k.storeKey)
+	return store.Has(types.GetCodeKey(codeID))
+}
+
+func (k Keeper) importAutoIncrementID(ctx sdk.Context, lastIDKey []byte, val uint64) error {
+	store := ctx.KVStore(k.storeKey)
+	if store.Has(lastIDKey) {
+		return sdkerrors.Wrapf(types.ErrDuplicate, "autoincrement id: %s", string(lastIDKey))
+	}
+	bz := sdk.Uint64ToBigEndian(val)
+	store.Set(lastIDKey, bz)
+	return nil
+}
+
+// PeekAutoIncrementID reads the current value without incrementing it.
+func (k Keeper) PeekAutoIncrementID(ctx sdk.Context, lastIDKey []byte) uint64 {
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(lastIDKey)
+	id := uint64(1)
+	if bz != nil {
+		id = binary.BigEndian.Uint64(bz)
+	}
+	return id
+}
+
+// Querier creates a new grpc querier instance
+func Querier(k *Keeper) *grpcQuerier {
+	return NewGrpcQuerier(k.cdc, k.storeKey, k, k.queryGasLimit)
 }

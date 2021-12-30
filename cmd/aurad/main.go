@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/aura-nw/aura/app"
+	"github.com/aura-nw/aura/cmd/aurad/cmd"
 	svrcmd "github.com/cosmos/cosmos-sdk/server/cmd"
 	"github.com/tendermint/spm/cosmoscmd"
 
@@ -23,7 +24,12 @@ func main() {
 
 	//testnet cmd
 	rootCmd.AddCommand(
-		testnetCmd(app.ModuleBasics, banktypes.GenesisBalancesIterator{}),
+		cmd.TestnetCmd(app.ModuleBasics, banktypes.GenesisBalancesIterator{}),
+	)
+
+	// generate genesis vesting accounts cmd
+	rootCmd.AddCommand(
+		cmd.AddGenesisVestingAccountCmd(app.DefaultNodeHome),
 	)
 
 	if err := svrcmd.Execute(rootCmd, app.DefaultNodeHome); err != nil {

@@ -1,4 +1,4 @@
-package main
+package cmd
 
 // DONTCOVER
 
@@ -45,7 +45,7 @@ var (
 )
 
 // get cmd to initialize all files for tendermint testnet and application
-func testnetCmd(mbm module.BasicManager, genBalIterator banktypes.GenesisBalancesIterator) *cobra.Command {
+func TestnetCmd(mbm module.BasicManager, genBalIterator banktypes.GenesisBalancesIterator) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "testnet",
 		Short: "Initialize files for a simapp testnet",
@@ -152,7 +152,7 @@ func InitTestnet(
 	)
 
 	inBuf := bufio.NewReader(cmd.InOrStdin())
-	
+
 	// generate private keys, node IDs, and initial transactions
 	for i := 0; i < numValidators; i++ {
 		nodeDirName := nodeNames[i]

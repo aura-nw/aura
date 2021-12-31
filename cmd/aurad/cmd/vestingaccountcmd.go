@@ -199,7 +199,7 @@ contain valid denominations. Accounts may optionally be supplied with vesting pa
 
 func caculateVestingPeriods(vestingTime int64, periodLength int64, vestingAmtStr string, numPeriod int64, totalAmount sdk.Int, periodicAmount sdk.Int) authvesting.Periods {
 	if vestingTime%periodLength != 0 {
-		//divisible vesting time
+		//indivisible vesting time
 		periods := make([]authvesting.Period, numPeriod+1)
 		for i := 0; i < int(numPeriod+1); i++ {
 			periods[i].Length = periodLength
@@ -212,7 +212,7 @@ func caculateVestingPeriods(vestingTime int64, periodLength int64, vestingAmtStr
 		}
 		return periods
 	} else {
-		//indivisible vesting time
+		//divisible vesting time
 		periods := make([]authvesting.Period, numPeriod)
 		for i := 0; i < int(numPeriod); i++ {
 			periods[i].Length = periodLength

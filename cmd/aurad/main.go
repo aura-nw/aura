@@ -13,7 +13,7 @@ import (
 )
 
 func main() {
-	cmdOptions := GetWasmCmdOptions()
+	cmdOptions := cmd.GetWasmCmdOptions()
 	cmdOptions = append(cmdOptions, cosmoscmd.AddSubCmd(tmcmds.RollbackStateCmd))
 	rootCmd, _ := cosmoscmd.NewRootCmd(
 		app.Name,

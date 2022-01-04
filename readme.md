@@ -1,56 +1,45 @@
-# aura
-**aura** is a blockchain built using Cosmos SDK and Tendermint and created with [Starport](https://github.com/tendermint/starport).
+# Aura
 
-## Get started
+This repository contains source code for Aurad (Aura Daemon). Aurad binary is the official client for Aura Network. Aurad is built using Cosmos SDK
 
+Aura Network is a NFT-centric blockchain platform that provides infrastructure assisting to bring user assets to the crypto market.
+
+## Prerequisite
+- Go 1.17+
+- Starport 0.18.3
+- Cosmos SDK 0.44.4
+
+## Install Aura daemon
+Using Makefile
 ```
-starport chain serve
+    make
 ```
+The **aurad** bin file is located on **${source_directory}/cmd/** and **GO_PATH** (default ~/go/bin/) 
 
-`serve` command installs dependencies, builds, initializes, and starts your blockchain in development.
+## Setup a LocalNet
 
-### Configure
-
-Your blockchain in development can be configured with `config.yml`. To learn more, see the [Starport docs](https://docs.starport.network).
-
-### Launch
-
-To launch your blockchain live on multiple nodes, use `starport network` commands. Learn more about [Starport Network](https://github.com/tendermint/spn).
-
-### Web Frontend
-
-Starport has scaffolded a Vue.js-based web app in the `vue` directory. Run the following commands to install dependencies and start the app:
-
+### Initialize the Chain
 ```
-cd vue
-npm install
-npm run serve
+# <moniker> is the custom username of the node
+# <chain-id> is the identity of the chain
+aurad init <moniker> --chain-id <chain-id>
 ```
+This command will initialize the home folder containing necessary components for your chain  
+(default: ~/.aura)
 
-The frontend app is built using the `@starport/vue` and `@starport/vuex` packages. For details, see the [monorepo for Starport front-end development](https://github.com/tendermint/vue).
+### Customize the genesis file
+A genesis file is a JSON file which defines the initial state of your blockchain. It can be seen as height 0 of your blockchain. The first block, at height 1, will reference the genesis file as its parent.
 
-## Release
-To release a new version of your blockchain, create and push a new tag with `v` prefix. A new draft release with the configured targets will be created.
+The docs about genesis customization: https://hub.cosmos.network/main/resources/genesis.html
 
+### Run a node
 ```
-git tag v0.1
-git push origin v0.1
+aurad start 
 ```
+## Setup testnet using testnetCmd
 
-After a draft release is created, make your final changes from the release page and publish it.
+## Contribution
+The Aurad is still in development by the Aura Network team. For more information on how to contribute to this project, please contact us at support@aura.network
 
-### Install
-To install the latest version of your blockchain node's binary, execute the following command on your machine:
-
-```
-curl https://get.starport.network/aura-nw/aura@latest! | sudo bash
-```
-`aura-nw/aura` should match the `username` and `repo_name` of the Github repository to which the source code was pushed. Learn more about [the install process](https://github.com/allinbits/starport-installer).
-
-## Learn more
-
-- [Starport](https://github.com/tendermint/starport)
-- [Starport Docs](https://docs.starport.network)
-- [Cosmos SDK documentation](https://docs.cosmos.network)
-- [Cosmos SDK Tutorials](https://tutorials.cosmos.network)
-- [Discord](https://discord.gg/cosmosnetwork)
+## License
+Aurad project source code files are made available under Apache-2.0 License, located in the LICENSE file. Basically, you can do whatever you want as long as you include the original copyright and license notice in any copy of the software/source.

@@ -9,9 +9,12 @@ import (
 	"github.com/tendermint/spm/cosmoscmd"
 
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	tmcmds "github.com/tendermint/tendermint/cmd/tendermint/commands"
 )
 
 func main() {
+	cmdOptions := GetWasmCmdOptions()
+	cmdOptions = append(cmdOptions, cosmoscmd.AddSubCmd(tmcmds.RollbackStateCmd))
 	rootCmd, _ := cosmoscmd.NewRootCmd(
 		app.Name,
 		app.AccountAddressPrefix,
@@ -20,6 +23,7 @@ func main() {
 		app.ModuleBasics,
 		app.New,
 		// this line is used by starport scaffolding # root/arguments
+		cmdOptions...,
 	)
 
 	//testnet cmd

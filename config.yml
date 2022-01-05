@@ -1,19 +1,49 @@
 accounts:
-  - name: alice
-    coins: ["20000token", "200000000stake"]
-  - name: bob
-    coins: ["10000token", "100000000stake"]
+  - name: Hanoi
+    coins: ["5000000000000uaura"]
+  - name: Saigon
+    coins: ["5000000000000uaura"]
+  - name: Danang
+    coins: ["5000000000000uaura"]
 validator:
-  name: alice
-  staked: "100000000stake"
+  name: Hanoi
+  staked: "100000000uaura"
+  name: Saigon
+  staked: "100000000uaura"
+  name: Danang
+  staked: "100000000uaura"
 client:
   openapi:
     path: "docs/static/openapi.yml"
 faucet:
-  name: bob
-  coins: ["5token", "100000stake"]
+  name: Danang
+  coins: ["50000000uaura"]
+init:
+  app:
+    minimum-gas-prices: "0.0001uaura"
 genesis:
+  chain_id: "aura-testnet"
   app_state:
     aura:
       params:
-        max_supply: "300000100"
+        max_supply: "100000000000000000000000000000"
+    crisis:
+      constant_fee:
+        denom: uaura
+    gov:
+      deposit_params:
+        min_deposit: [
+         {
+           "denom": "uaura",
+           "amount": "10000000"
+         }
+        ]
+        max_deposit_period: "600s"
+      voting_params:
+        voting_period: "600s"
+    mint:
+      params:
+        mint_denom: "uaura"
+    staking:
+      params:
+        bond_denom: "uaura"

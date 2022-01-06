@@ -27,10 +27,6 @@ jobs:
         id: vars
         uses: tendermint/starport/actions/release/vars@develop
       
-      - name: GCC multilib
-        run: |
-          sudo apt-get install build-essential gcc-multilib g++-multilib
-
       - name: Issue Release Assets 
         uses: tendermint/starport/actions/cli@develop
         if: ${{ steps.vars.outputs.should_release == 'true' }}

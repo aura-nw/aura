@@ -38,6 +38,8 @@ jobs:
           args: chain build --release --release.prefix ${{ steps.vars.outputs.tarball_prefix }} -t linux:amd64 -t darwin:amd64
         env:
           CGO_ENABLED: 1
+          GOOS: linux
+          GOARCH: amd64
 
       - name: Delete the "latest" Release
         uses: dev-drprasad/delete-tag-and-release@v0.2.0

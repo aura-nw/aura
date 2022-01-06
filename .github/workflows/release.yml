@@ -35,12 +35,7 @@ jobs:
         uses: tendermint/starport/actions/cli@develop
         if: ${{ steps.vars.outputs.should_release == 'true' }}
         with:
-          args: chain build --release --release.prefix ${{ steps.vars.outputs.tarball_prefix }} -t linux:amd64 -t darwin:amd64
-        env:
-          CGO_ENABLED: 1
-          GOOS: darwin
-          GOARCH: amd64
-          CC: x86_64-apple-darwin15-clang
+          args: chain build --release --release.prefix ${{ steps.vars.outputs.tarball_prefix }} -t linux:amd64
 
       - name: Delete the "latest" Release
         uses: dev-drprasad/delete-tag-and-release@v0.2.0

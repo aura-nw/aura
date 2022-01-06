@@ -29,7 +29,7 @@ jobs:
       
       - name: GCC multilib
         run: |
-          sudo apt-get install gcc-multilib g++-multilib
+          sudo apt-get install build-essential gcc-multilib g++-multilib
 
       - name: Issue Release Assets 
         uses: tendermint/starport/actions/cli@develop

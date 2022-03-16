@@ -3,7 +3,7 @@ module github.com/aura-nw/aura
 go 1.16
 
 require (
-	github.com/cosmos/cosmos-sdk v0.44.4
+	github.com/cosmos/cosmos-sdk v0.45.1
 	github.com/cosmos/ibc-go v1.2.2
 	github.com/gogo/protobuf v1.3.3
 	github.com/google/go-cmp v0.5.7 // indirect

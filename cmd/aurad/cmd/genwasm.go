@@ -4,7 +4,7 @@ import (
 	// "github.com/aura-nw/aura/app"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/spf13/cobra"
-	"github.com/tendermint/spm/cosmoscmd"
+	"github.com/tendermint/starport/starport/pkg/cosmoscmd"
 	// "github.com/aura-nw/aura/x/wasm"
 	// wasmcli "github.com/aura-nw/aura/x/wasm/client/cli"
 )

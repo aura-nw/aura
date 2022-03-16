@@ -72,7 +72,7 @@ import (
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
 	// old ibc
-	"github.com/cosmos/ibc-go/modules/apps/transfer"
+	// "github.com/cosmos/ibc-go/modules/apps/transfer"
 	// ibctransferkeeper "github.com/cosmos/ibc-go/modules/apps/transfer/keeper"
 	// ibctransfertypes "github.com/cosmos/ibc-go/modules/apps/transfer/types"
 	// ibc "github.com/cosmos/ibc-go/modules/core"
@@ -81,6 +81,7 @@ import (
 	// ibchost "github.com/cosmos/ibc-go/modules/core/24-host"
 	// ibckeeper "github.com/cosmos/ibc-go/modules/core/keeper"
 	//new ibc
+	"github.com/cosmos/ibc-go/v2/modules/apps/transfer"
 	ibctransferkeeper "github.com/cosmos/ibc-go/v2/modules/apps/transfer/keeper"
 	ibctransfertypes "github.com/cosmos/ibc-go/v2/modules/apps/transfer/types"
 	ibc "github.com/cosmos/ibc-go/v2/modules/core"
@@ -96,8 +97,11 @@ import (
 	tmos "github.com/tendermint/tendermint/libs/os"
 	dbm "github.com/tendermint/tm-db"
 
-	"github.com/tendermint/spm/cosmoscmd"
-	"github.com/tendermint/spm/openapiconsole"
+	// "github.com/tendermint/spm/cosmoscmd"
+	// "github.com/tendermint/spm/openapiconsole"
+
+	"github.com/tendermint/starport/starport/pkg/cosmoscmd"
+	"github.com/tendermint/starport/starport/pkg/openapiconsole"
 
 	"github.com/aura-nw/aura/docs"
 

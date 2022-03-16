@@ -4,7 +4,6 @@ go 1.16
 
 require (
 	github.com/cosmos/cosmos-sdk v0.45.1
-	github.com/cosmos/ibc-go v1.2.2
 	github.com/cosmos/ibc-go/v2 v2.2.0
 	github.com/gogo/protobuf v1.3.3
 	github.com/google/go-cmp v0.5.7 // indirect
@@ -13,7 +12,8 @@ require (
 	github.com/spf13/cast v1.4.1
 	github.com/spf13/cobra v1.2.1
 	github.com/stretchr/testify v1.7.0
-	github.com/tendermint/spm v0.1.8
+	// github.com/tendermint/spm v0.1.8
+	github.com/tendermint/starport v0.19.2
 	github.com/tendermint/tendermint v0.34.14
 	github.com/tendermint/tm-db v0.6.6
 	golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd // indirect

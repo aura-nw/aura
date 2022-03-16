@@ -6,7 +6,7 @@ import (
 	"github.com/aura-nw/aura/app"
 	"github.com/aura-nw/aura/cmd/aurad/cmd"
 	svrcmd "github.com/cosmos/cosmos-sdk/server/cmd"
-	"github.com/tendermint/spm/cosmoscmd"
+	"github.com/tendermint/starport/starport/pkg/cosmoscmd"
 
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	tmcmds "github.com/tendermint/tendermint/cmd/tendermint/commands"

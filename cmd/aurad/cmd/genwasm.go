@@ -1,13 +1,12 @@
 package cmd
 
 import (
-	"github.com/aura-nw/aura/app"
+	// "github.com/aura-nw/aura/app"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/spf13/cobra"
 	"github.com/tendermint/spm/cosmoscmd"
-
-	"github.com/aura-nw/aura/x/wasm"
-	wasmcli "github.com/aura-nw/aura/x/wasm/client/cli"
+	// "github.com/aura-nw/aura/x/wasm"
+	// wasmcli "github.com/aura-nw/aura/x/wasm/client/cli"
 )
 
 func AddGenesisWasmMsgCmd(defaultNodeHome string) *cobra.Command {
@@ -18,14 +17,14 @@ func AddGenesisWasmMsgCmd(defaultNodeHome string) *cobra.Command {
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
 	}
-	genesisIO := wasmcli.NewDefaultGenesisIO()
-	txCmd.AddCommand(
-		wasmcli.GenesisStoreCodeCmd(defaultNodeHome, genesisIO),
-		wasmcli.GenesisInstantiateContractCmd(defaultNodeHome, genesisIO),
-		wasmcli.GenesisExecuteContractCmd(defaultNodeHome, genesisIO),
-		wasmcli.GenesisListContractsCmd(defaultNodeHome, genesisIO),
-		wasmcli.GenesisListCodesCmd(defaultNodeHome, genesisIO),
-	)
+	// genesisIO := wasmcli.NewDefaultGenesisIO()
+	// txCmd.AddCommand(
+	// 	wasmcli.GenesisStoreCodeCmd(defaultNodeHome, genesisIO),
+	// 	wasmcli.GenesisInstantiateContractCmd(defaultNodeHome, genesisIO),
+	// 	wasmcli.GenesisExecuteContractCmd(defaultNodeHome, genesisIO),
+	// 	wasmcli.GenesisListContractsCmd(defaultNodeHome, genesisIO),
+	// 	wasmcli.GenesisListCodesCmd(defaultNodeHome, genesisIO),
+	// )
 
 	return txCmd
 }
@@ -33,12 +32,12 @@ func AddGenesisWasmMsgCmd(defaultNodeHome string) *cobra.Command {
 func GetWasmCmdOptions() []cosmoscmd.Option {
 	var options []cosmoscmd.Option
 
-	options = append(options,
-		cosmoscmd.CustomizeStartCmd(func(startCmd *cobra.Command) {
-			wasm.AddModuleInitFlags(startCmd)
-		}),
-		cosmoscmd.AddSubCmd(AddGenesisWasmMsgCmd(app.DefaultNodeHome)),
-	)
+	// options = append(options,
+	// 	cosmoscmd.CustomizeStartCmd(func(startCmd *cobra.Command) {
+	// 		wasm.AddModuleInitFlags(startCmd)
+	// 	}),
+	// 	cosmoscmd.AddSubCmd(AddGenesisWasmMsgCmd(app.DefaultNodeHome)),
+	// )
 
 	return options
 }

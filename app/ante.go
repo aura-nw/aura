@@ -7,10 +7,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 	channelkeeper "github.com/cosmos/ibc-go/modules/core/04-channel/keeper"
 	ibcante "github.com/cosmos/ibc-go/modules/core/ante"
-
-	wasmTypes "github.com/aura-nw/aura/x/wasm/types"
-
-	wasmkeeper "github.com/aura-nw/aura/x/wasm/keeper"
+	// wasmkeeper "github.com/aura-nw/aura/x/wasm/keeper"
 )
 
 // NewAnteHandler returns an AnteHandler that checks and increments sequence
@@ -24,13 +21,13 @@ func NewAnteHandler(
 	txCounterStoreKey sdk.StoreKey,
 	channelKeeper channelkeeper.Keeper,
 	fk ante.FeegrantKeeper,
-	wasmConfig wasmTypes.WasmConfig,
+	// wasmConfig wasmTypes.WasmConfig,
 ) sdk.AnteHandler {
 	// copied sdk https://github.com/cosmos/cosmos-sdk/blob/v0.42.9/x/auth/ante/ante.go
 	return sdk.ChainAnteDecorators(
-		ante.NewSetUpContextDecorator(),                                          // outermost AnteDecorator. SetUpContext must be called first
-		wasmkeeper.NewLimitSimulationGasDecorator(wasmConfig.SimulationGasLimit), // after setup context to enforce limits early
-		wasmkeeper.NewCountTXDecorator(txCounterStoreKey),
+		ante.NewSetUpContextDecorator(), // outermost AnteDecorator. SetUpContext must be called first
+		// wasmkeeper.NewLimitSimulationGasDecorator(wasmConfig.SimulationGasLimit), // after setup context to enforce limits early
+		// wasmkeeper.NewCountTXDecorator(txCounterStoreKey),
 		ante.NewRejectExtensionOptionsDecorator(),
 		ante.NewMempoolFeeDecorator(),
 		ante.NewValidateBasicDecorator(),

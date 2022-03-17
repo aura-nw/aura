@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 
 	// "github.com/CosmWasm/wasmd/x/wasm"
 	// "github.com/CosmWasm/wasmd/x/wasm"
@@ -100,7 +101,8 @@ import (
 	// "github.com/tendermint/spm/cosmoscmd"
 	// "github.com/tendermint/spm/openapiconsole"
 
-	"github.com/tendermint/starport/starport/pkg/cosmoscmd"
+	// "github.com/tendermint/starport/starport/pkg/cosmoscmd"
+	"github.com/tendermint/spm/cosmoscmd"
 	"github.com/tendermint/starport/starport/pkg/openapiconsole"
 
 	"github.com/aura-nw/aura/docs"
@@ -112,6 +114,9 @@ import (
 	// wasmmodule "github.com/aura-nw/aura/x/wasm"
 	// wasmkeeper "github.com/aura-nw/aura/x/wasm/keeper"
 	// wasmtypes "github.com/aura-nw/aura/x/wasm/types"
+
+	"github.com/CosmWasm/wasmd/x/wasm"
+	wasmclient "github.com/CosmWasm/wasmd/x/wasm/client"
 
 	// this line is used by starport scaffolding # stargate/app/moduleImport
 	custommint "github.com/aura-nw/aura/custom/mint"
@@ -126,8 +131,38 @@ const (
 
 // this line is used by starport scaffolding # stargate/wasm/app/enabledProposals
 
+var (
+	// If EnabledSpecificProposals is "", and this is "true", then enable all x/wasm proposals.
+	// If EnabledSpecificProposals is "", and this is not "true", then disable all x/wasm proposals.
+	ProposalsEnabled = "true"
+	// If set to non-empty string it must be comma-separated list of values that are all a subset
+	// of "EnableAllProposals" (takes precedence over ProposalsEnabled)
+	// https://github.com/CosmWasm/wasmd/blob/02a54d33ff2c064f3539ae12d75d027d9c665f05/x/wasm/internal/types/proposal.go#L28-L34
+	EnableSpecificProposals = ""
+
+	EmptyWasmOpts []wasm.Option
+)
+
+// GetEnabledProposals parses the ProposalsEnabled / EnableSpecificProposals values to
+// produce a list of enabled proposals to pass into wasmd app.
+func GetEnabledProposals() []wasm.ProposalType {
+	if EnableSpecificProposals == "" {
+		if ProposalsEnabled == "true" {
+			return wasm.EnableAllProposals
+		}
+		return wasm.DisableAllProposals
+	}
+	chunks := strings.Split(EnableSpecificProposals, ",")
+	proposals, err := wasm.ConvertToProposals(chunks)
+	if err != nil {
+		panic(err)
+	}
+	return proposals
+}
+
 func getGovProposalHandlers() []govclient.ProposalHandler {
-	var govProposalHandlers []govclient.ProposalHandler
+	// var govProposalHandlers []govclient.ProposalHandler
+	govProposalHandlers := append(make([]govclient.ProposalHandler, 0), wasmclient.ProposalHandlers...)
 	// this line is used by starport scaffolding # stargate/app/govProposalHandlers
 
 	govProposalHandlers = append(govProposalHandlers,
@@ -168,6 +203,7 @@ var (
 		transfer.AppModuleBasic{},
 		vesting.AppModuleBasic{},
 		auramodule.AppModuleBasic{},
+		wasm.AppModuleBasic{},
 		// wasmmodule.AppModuleBasic{},
 		// this line is used by starport scaffolding # stargate/app/moduleBasic
 	)
@@ -181,6 +217,7 @@ var (
 		stakingtypes.NotBondedPoolName: {authtypes.Burner, authtypes.Staking},
 		govtypes.ModuleName:            {authtypes.Burner},
 		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
+		wasm.ModuleName:                {authtypes.Burner},
 		// this line is used by starport scaffolding # stargate/app/maccPerms
 		// wasm.ModuleName: {authtypes.Burner},
 	}
@@ -233,6 +270,7 @@ type App struct {
 	EvidenceKeeper   evidencekeeper.Keeper
 	TransferKeeper   ibctransferkeeper.Keeper
 	FeeGrantKeeper   feegrantkeeper.Keeper
+	WasmKeeper       wasm.Keeper
 
 	// make scoped keepers public for test purposes
 	ScopedIBCKeeper      capabilitykeeper.ScopedKeeper
@@ -259,6 +297,7 @@ func New(
 	invCheckPeriod uint,
 	encodingConfig cosmoscmd.EncodingConfig,
 	appOpts servertypes.AppOptions,
+	// wasmOpts []wasm.Option,
 	baseAppOptions ...func(*baseapp.BaseApp),
 ) cosmoscmd.App {
 	appCodec := encodingConfig.Marshaler
@@ -389,6 +428,11 @@ func New(
 	// if err != nil {
 	// 	panic(fmt.Sprintf("error while reading wasm config: %s", err))
 	// }
+
+	// custom messages
+	// registry := sgwasm.NewEncoderRegistry()
+	// registry.RegisterEncoder(sgwasm.DistributionRoute, sgwasm.CustomDistributionEncoder)
+	// registry.RegisterEncoder(claimmoduletypes.ModuleName, claimwasm.Encoder)
 
 	// The last arguments can contain custom message handlers, and custom query handlers,
 	// if we want to allow any custom callbacks

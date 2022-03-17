@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -23,6 +24,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/cosmos/cosmos-sdk/x/auth"
+	"github.com/cosmos/cosmos-sdk/x/auth/ante"
 	authrest "github.com/cosmos/cosmos-sdk/x/auth/client/rest"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
@@ -87,9 +89,12 @@ import (
 	ibctransfertypes "github.com/cosmos/ibc-go/v2/modules/apps/transfer/types"
 	ibc "github.com/cosmos/ibc-go/v2/modules/core"
 	ibcclient "github.com/cosmos/ibc-go/v2/modules/core/02-client"
+	ibcclientclient "github.com/cosmos/ibc-go/v2/modules/core/02-client/client"
 	ibcporttypes "github.com/cosmos/ibc-go/v2/modules/core/05-port/types"
 	ibchost "github.com/cosmos/ibc-go/v2/modules/core/24-host"
 	ibckeeper "github.com/cosmos/ibc-go/v2/modules/core/keeper"
+
+	// ibcclienttypes "github.com/cosmos/ibc-go/v2/modules/core/02-client/types"
 
 	"github.com/spf13/cast"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -117,6 +122,8 @@ import (
 
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmclient "github.com/CosmWasm/wasmd/x/wasm/client"
+
+	// "github.com/cosmos/cosmos-sdk/x/auth/ante"
 
 	// this line is used by starport scaffolding # stargate/app/moduleImport
 	custommint "github.com/aura-nw/aura/custom/mint"
@@ -170,6 +177,8 @@ func getGovProposalHandlers() []govclient.ProposalHandler {
 		distrclient.ProposalHandler,
 		upgradeclient.ProposalHandler,
 		upgradeclient.CancelProposalHandler,
+		ibcclientclient.UpdateClientProposalHandler,
+		ibcclientclient.UpgradeProposalHandler,
 		// this line is used by starport scaffolding # stargate/app/govProposalHandler
 	)
 
@@ -298,6 +307,7 @@ func New(
 	encodingConfig cosmoscmd.EncodingConfig,
 	appOpts servertypes.AppOptions,
 	// wasmOpts []wasm.Option,
+	// enabledProposals []wasm.ProposalType,
 	baseAppOptions ...func(*baseapp.BaseApp),
 ) cosmoscmd.App {
 	appCodec := encodingConfig.Marshaler
@@ -315,7 +325,7 @@ func New(
 		govtypes.StoreKey, paramstypes.StoreKey, ibchost.StoreKey, upgradetypes.StoreKey, feegrant.StoreKey,
 		evidencetypes.StoreKey, ibctransfertypes.StoreKey, capabilitytypes.StoreKey,
 		auramoduletypes.StoreKey,
-		// wasmtypes.StoreKey,
+		wasm.StoreKey,
 		// this line is used by starport scaffolding # stargate/app/storeKey
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
@@ -344,7 +354,8 @@ func New(
 	scopedIBCKeeper := app.CapabilityKeeper.ScopeToModule(ibchost.ModuleName)
 	scopedTransferKeeper := app.CapabilityKeeper.ScopeToModule(ibctransfertypes.ModuleName)
 	// this line is used by starport scaffolding # stargate/app/scopedKeeper
-	// scopedWasmKeeper := app.CapabilityKeeper.ScopeToModule(wasm.ModuleName)
+	scopedWasmKeeper := app.CapabilityKeeper.ScopeToModule(wasm.ModuleName)
+	app.CapabilityKeeper.Seal()
 
 	// add keepers
 	app.AccountKeeper = authkeeper.NewAccountKeeper(
@@ -422,12 +433,17 @@ func New(
 	)
 
 	auraModule := auramodule.NewAppModule(appCodec, app.AuraKeeper)
+	// this line is used by starport scaffolding # stargate/app/keeperDefinition
 
-	// wasmDir := filepath.Join(homePath, "wasm")
-	// wasmConfig, err := wasm.ReadWasmConfig(appOpts)
-	// if err != nil {
-	// 	panic(fmt.Sprintf("error while reading wasm config: %s", err))
-	// }
+	// Create static IBC router, add transfer route, then set and seal it
+	ibcRouter := ibcporttypes.NewRouter()
+	ibcRouter.AddRoute(ibctransfertypes.ModuleName, transferModule)
+
+	wasmDir := filepath.Join(homePath, "wasm")
+	wasmConfig, err := wasm.ReadWasmConfig(appOpts)
+	if err != nil {
+		panic(fmt.Sprintf("error while reading wasm config: %s", err))
+	}
 
 	// custom messages
 	// registry := sgwasm.NewEncoderRegistry()
@@ -436,35 +452,38 @@ func New(
 
 	// The last arguments can contain custom message handlers, and custom query handlers,
 	// if we want to allow any custom callbacks
-	// supportedFeatures := "iterator,staking,stargate"
+	supportedFeatures := "iterator,staking,stargate"
 	// wasmOpts := GetWasmOpts(appOpts)
-	// app.WasmKeeper = wasmkeeper.NewKeeper(
-	// 	appCodec,
-	// 	keys[wasm.StoreKey],
-	// 	app.GetSubspace(wasm.ModuleName),
-	// 	app.AccountKeeper,
-	// 	app.BankKeeper,
-	// 	app.StakingKeeper,
-	// 	app.DistrKeeper,
-	// 	app.IBCKeeper.ChannelKeeper,
-	// 	&app.IBCKeeper.PortKeeper,
-	// 	scopedWasmKeeper,
-	// 	app.TransferKeeper,
-	// 	app.MsgServiceRouter(),
-	// 	app.GRPCQueryRouter(),
-	// 	wasmDir,
-	// 	wasmConfig,
-	// 	supportedFeatures,
-	// 	wasmOpts...,
-	// )
+	// if cast.ToBool(appOpts.Get("telemetry.enabled")) {
+	// 	wasmOpts = append(wasmOpts, wasmkeeper.WithVMCacheMetrics(prometheus.DefaultRegisterer))
+	// }
+	app.WasmKeeper = wasm.NewKeeper(
+		appCodec,
+		keys[wasm.StoreKey],
+		app.GetSubspace(wasm.ModuleName),
+		app.AccountKeeper,
+		app.BankKeeper,
+		app.StakingKeeper,
+		app.DistrKeeper,
+		app.IBCKeeper.ChannelKeeper,
+		&app.IBCKeeper.PortKeeper,
+		scopedWasmKeeper,
+		app.TransferKeeper,
+		app.MsgServiceRouter(),
+		app.GRPCQueryRouter(),
+		wasmDir,
+		wasmConfig,
+		supportedFeatures,
+		// wasmOpts...,
+	)
+	// The gov proposal types can be individually enabled
+	// if len(enabledProposals) != 0 {
+	// 	govRouter.AddRoute(wasm.RouterKey, wasm.NewWasmProposalHandler(app.WasmKeeper, enabledProposals))
+	// }
+
 	// wasmModule := wasmmodule.NewAppModule(appCodec, app.WasmKeeper, app.StakingKeeper)
 
-	// this line is used by starport scaffolding # stargate/app/keeperDefinition
-
-	// Create static IBC router, add transfer route, then set and seal it
-	ibcRouter := ibcporttypes.NewRouter()
-	ibcRouter.AddRoute(ibctransfertypes.ModuleName, transferModule)
-	// this line is used by starport scaffolding # ibc/app/router
+	ibcRouter.AddRoute(wasm.ModuleName, wasm.NewIBCHandler(app.WasmKeeper, app.IBCKeeper.ChannelKeeper))
 	app.IBCKeeper.SetRouter(ibcRouter)
 
 	/****  Module Options ****/
@@ -498,7 +517,7 @@ func New(
 		params.NewAppModule(app.ParamsKeeper),
 		transferModule,
 		auraModule,
-		// wasmModule,
+		wasm.NewAppModule(appCodec, &app.WasmKeeper, app.StakingKeeper),
 		// this line is used by starport scaffolding # stargate/app/appModule
 	)
 
@@ -531,7 +550,7 @@ func New(
 		ibchost.ModuleName,
 		ibctransfertypes.ModuleName,
 		auramoduletypes.ModuleName,
-		// wasm.ModuleName,
+		wasm.ModuleName,
 	)
 
 	app.mm.SetOrderEndBlockers(
@@ -555,6 +574,7 @@ func New(
 		ibchost.ModuleName,
 		ibctransfertypes.ModuleName,
 		auramoduletypes.ModuleName,
+		wasm.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -582,7 +602,7 @@ func New(
 		vestingtypes.ModuleName,
 		paramstypes.ModuleName,
 		upgradetypes.ModuleName,
-		// wasmtypes.ModuleName,
+		wasm.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/initGenesis
 	)
 
@@ -611,6 +631,25 @@ func New(
 	// 		// wasmConfig,
 	// 	),
 	// )
+	anteHandler, err := NewAnteHandler(
+		HandlerOptions{
+			HandlerOptions: ante.HandlerOptions{AccountKeeper: app.AccountKeeper,
+				BankKeeper:      app.BankKeeper,
+				SignModeHandler: encodingConfig.TxConfig.SignModeHandler(),
+				FeegrantKeeper:  app.FeeGrantKeeper,
+				SigGasConsumer:  ante.DefaultSigVerificationGasConsumer},
+			IBCChannelkeeper:  app.IBCKeeper.ChannelKeeper,
+			WasmConfig:        &wasmConfig,
+			TXCounterStoreKey: keys[wasm.StoreKey],
+			Codec:             app.appCodec,
+		},
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	app.SetAnteHandler(anteHandler)
+
 	app.SetEndBlocker(app.EndBlocker)
 
 	if loadLatest {
@@ -621,6 +660,7 @@ func New(
 
 	app.ScopedIBCKeeper = scopedIBCKeeper
 	app.ScopedTransferKeeper = scopedTransferKeeper
+	app.ScopedWasmKeeper = scopedWasmKeeper
 	// this line is used by starport scaffolding # stargate/app/beforeInitReturn
 
 	return app
@@ -769,7 +809,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
 	paramsKeeper.Subspace(ibchost.ModuleName)
 	paramsKeeper.Subspace(auramoduletypes.ModuleName)
-	// paramsKeeper.Subspace(wasmtypes.ModuleName)
+	paramsKeeper.Subspace(wasm.ModuleName)
 	// this line is used by starport scaffolding # stargate/app/paramSubspace
 
 	return paramsKeeper

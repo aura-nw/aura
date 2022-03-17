@@ -8,8 +8,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	// "github.com/CosmWasm/wasmd/x/wasm"
-	// "github.com/CosmWasm/wasmd/x/wasm"
 	custommintkeeper "github.com/aura-nw/aura/custom/mint/keeper"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -74,16 +72,6 @@ import (
 	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
-	// old ibc
-	// "github.com/cosmos/ibc-go/modules/apps/transfer"
-	// ibctransferkeeper "github.com/cosmos/ibc-go/modules/apps/transfer/keeper"
-	// ibctransfertypes "github.com/cosmos/ibc-go/modules/apps/transfer/types"
-	// ibc "github.com/cosmos/ibc-go/modules/core"
-	// ibcclient "github.com/cosmos/ibc-go/modules/core/02-client"
-	// ibcporttypes "github.com/cosmos/ibc-go/modules/core/05-port/types"
-	// ibchost "github.com/cosmos/ibc-go/modules/core/24-host"
-	// ibckeeper "github.com/cosmos/ibc-go/modules/core/keeper"
-	//new ibc
 	"github.com/cosmos/ibc-go/v2/modules/apps/transfer"
 	ibctransferkeeper "github.com/cosmos/ibc-go/v2/modules/apps/transfer/keeper"
 	ibctransfertypes "github.com/cosmos/ibc-go/v2/modules/apps/transfer/types"
@@ -94,8 +82,6 @@ import (
 	ibchost "github.com/cosmos/ibc-go/v2/modules/core/24-host"
 	ibckeeper "github.com/cosmos/ibc-go/v2/modules/core/keeper"
 
-	// ibcclienttypes "github.com/cosmos/ibc-go/v2/modules/core/02-client/types"
-
 	"github.com/spf13/cast"
 	abci "github.com/tendermint/tendermint/abci/types"
 	tmjson "github.com/tendermint/tendermint/libs/json"
@@ -103,10 +89,6 @@ import (
 	tmos "github.com/tendermint/tendermint/libs/os"
 	dbm "github.com/tendermint/tm-db"
 
-	// "github.com/tendermint/spm/cosmoscmd"
-	// "github.com/tendermint/spm/openapiconsole"
-
-	// "github.com/tendermint/starport/starport/pkg/cosmoscmd"
 	"github.com/tendermint/spm/cosmoscmd"
 	"github.com/tendermint/starport/starport/pkg/openapiconsole"
 
@@ -116,19 +98,12 @@ import (
 	auramodulekeeper "github.com/aura-nw/aura/x/aura/keeper"
 	auramoduletypes "github.com/aura-nw/aura/x/aura/types"
 
-	// wasmmodule "github.com/aura-nw/aura/x/wasm"
-	// wasmkeeper "github.com/aura-nw/aura/x/wasm/keeper"
-	// wasmtypes "github.com/aura-nw/aura/x/wasm/types"
-
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmclient "github.com/CosmWasm/wasmd/x/wasm/client"
 
-	// "github.com/cosmos/cosmos-sdk/x/auth/ante"
-
 	// this line is used by starport scaffolding # stargate/app/moduleImport
 	custommint "github.com/aura-nw/aura/custom/mint"
-	// "github.com/aura-nw/aura/x/wasm"
-	// wasmclient "github.com/aura-nw/aura/x/wasm/client"
+	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 )
 
 const (
@@ -213,7 +188,6 @@ var (
 		vesting.AppModuleBasic{},
 		auramodule.AppModuleBasic{},
 		wasm.AppModuleBasic{},
-		// wasmmodule.AppModuleBasic{},
 		// this line is used by starport scaffolding # stargate/app/moduleBasic
 	)
 
@@ -228,7 +202,6 @@ var (
 		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
 		wasm.ModuleName:                {authtypes.Burner},
 		// this line is used by starport scaffolding # stargate/app/maccPerms
-		// wasm.ModuleName: {authtypes.Burner},
 	}
 )
 
@@ -288,7 +261,6 @@ type App struct {
 
 	AuraKeeper auramodulekeeper.Keeper
 
-	// WasmKeeper wasmkeeper.Keeper
 	// this line is used by starport scaffolding # stargate/app/keeperDeclaration
 
 	// the module manager
@@ -355,7 +327,6 @@ func New(
 	scopedTransferKeeper := app.CapabilityKeeper.ScopeToModule(ibctransfertypes.ModuleName)
 	// this line is used by starport scaffolding # stargate/app/scopedKeeper
 	scopedWasmKeeper := app.CapabilityKeeper.ScopeToModule(wasm.ModuleName)
-	app.CapabilityKeeper.Seal()
 
 	// add keepers
 	app.AccountKeeper = authkeeper.NewAccountKeeper(
@@ -444,11 +415,6 @@ func New(
 	if err != nil {
 		panic(fmt.Sprintf("error while reading wasm config: %s", err))
 	}
-
-	// custom messages
-	// registry := sgwasm.NewEncoderRegistry()
-	// registry.RegisterEncoder(sgwasm.DistributionRoute, sgwasm.CustomDistributionEncoder)
-	// registry.RegisterEncoder(claimmoduletypes.ModuleName, claimwasm.Encoder)
 
 	// The last arguments can contain custom message handlers, and custom query handlers,
 	// if we want to allow any custom callbacks
@@ -619,6 +585,7 @@ func New(
 	app.SetInitChainer(app.InitChainer)
 	app.SetBeginBlocker(app.BeginBlocker)
 
+	configurator := module.NewConfigurator(app.appCodec, app.MsgServiceRouter(), app.GRPCQueryRouter())
 	// app.SetAnteHandler(
 	// 	NewAnteHandler(
 	// 		app.AccountKeeper,
@@ -651,10 +618,16 @@ func New(
 	app.SetAnteHandler(anteHandler)
 
 	app.SetEndBlocker(app.EndBlocker)
-
+	app.RegisterUpgradeHandlers(configurator)
 	if loadLatest {
 		if err := app.LoadLatestVersion(); err != nil {
 			tmos.Exit(err.Error())
+		}
+		ctx := app.BaseApp.NewUncachedContext(true, tmproto.Header{})
+
+		// Initialize pinned codes in wasmvm as they are not persisted there
+		if err := app.WasmKeeper.InitializePinnedCodes(ctx); err != nil {
+			tmos.Exit(fmt.Sprintf("failed initialize pinned codes %s", err))
 		}
 	}
 

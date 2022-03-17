@@ -36,6 +36,10 @@ func main() {
 		cmd.AddGenesisVestingAccountCmd(app.DefaultNodeHome),
 	)
 
+	rootCmd.AddCommand(
+		cmd.AddGenesisWasmMsgCmd(app.DefaultNodeHome),
+	)
+
 	if err := svrcmd.Execute(rootCmd, app.DefaultNodeHome); err != nil {
 		os.Exit(1)
 	}

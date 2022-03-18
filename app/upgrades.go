@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/CosmWasm/wasmd/x/wasm"
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	store "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
@@ -18,26 +19,24 @@ func (app *App) RegisterUpgradeHandlers(cfg module.Configurator) {
 	app.UpgradeKeeper.SetUpgradeHandler(upgradeName, func(ctx sdk.Context, plan upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		// 1st-time running in-store migrations, using 1 as fromVersion to
 		// avoid running InitGenesis.
-		fromVM := map[string]uint64{
-			"auth":         1,
-			"bank":         1,
-			"capability":   1,
-			"crisis":       1,
-			"distribution": 1,
-			"evidence":     1,
-			"gov":          1,
-			"mint":         1,
-			"params":       1,
-			"slashing":     1,
-			"staking":      1,
-			"upgrade":      1,
-			"vesting":      1,
-			"ibc":          1,
-			"genutil":      1,
-			"transfer":     1,
+		// fromVM := map[string]uint64{
+		// 	"aura": 1,
+		// }
+		// return vm, nil
+		newVM, err := app.mm.RunMigrations(ctx, cfg, vm)
+		if err != nil {
+			return newVM, err
 		}
+		consensusParams := app.BaseApp.GetConsensusParams(ctx)
+		consensusParams.Block.MaxGas = 75_000_000 // 75M
+		app.BaseApp.StoreConsensusParams(ctx, consensusParams)
+		// wasm params
+		wasmParams := app.WasmKeeper.GetParams(ctx)
+		wasmParams.CodeUploadAccess = wasmtypes.AllowNobody
+		wasmParams.MaxWasmCodeSize = DefaultMaxWasmCodeSize
+		app.WasmKeeper.SetParams(ctx, wasmParams)
 
-		return app.mm.RunMigrations(ctx, cfg, fromVM)
+		return newVM, err
 	})
 
 	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()

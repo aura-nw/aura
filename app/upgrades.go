@@ -16,22 +16,28 @@ const upgradeName = "v3"
 // RegisterUpgradeHandlers returns upgrade handlers
 func (app *App) RegisterUpgradeHandlers(cfg module.Configurator) {
 	app.UpgradeKeeper.SetUpgradeHandler(upgradeName, func(ctx sdk.Context, plan upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
-		newVM, err := app.mm.RunMigrations(ctx, cfg, vm)
-		if err != nil {
-			return newVM, err
+		// 1st-time running in-store migrations, using 1 as fromVersion to
+		// avoid running InitGenesis.
+		fromVM := map[string]uint64{
+			"auth":         1,
+			"bank":         1,
+			"capability":   1,
+			"crisis":       1,
+			"distribution": 1,
+			"evidence":     1,
+			"gov":          1,
+			"mint":         1,
+			"params":       1,
+			"slashing":     1,
+			"staking":      1,
+			"upgrade":      1,
+			"vesting":      1,
+			"ibc":          1,
+			"genutil":      1,
+			"transfer":     1,
 		}
-		// // consensus params
-		// // increase max gas as part of the upgrade to handle cosmwam
-		// consensusParams := app.BaseApp.GetConsensusParams(ctx)
-		// consensusParams.Block.MaxGas = 75_000_000 // 75M
-		// app.BaseApp.StoreConsensusParams(ctx, consensusParams)
 
-		// // wasm params
-		// wasmParams := app.WasmKeeper.GetParams(ctx)
-		// wasmParams.CodeUploadAccess = wasmtypes.AllowNobody
-		// wasmParams.MaxWasmCodeSize = DefaultMaxWasmCodeSize
-		// app.WasmKeeper.SetParams(ctx, wasmParams)
-		return newVM, err
+		return app.mm.RunMigrations(ctx, cfg, fromVM)
 	})
 
 	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()

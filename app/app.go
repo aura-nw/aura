@@ -100,9 +100,11 @@ import (
 
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmclient "github.com/CosmWasm/wasmd/x/wasm/client"
+	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 
 	// this line is used by starport scaffolding # stargate/app/moduleImport
 	custommint "github.com/aura-nw/aura/custom/mint"
+	"github.com/prometheus/client_golang/prometheus"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 )
 
@@ -419,7 +421,7 @@ func New(
 	// The last arguments can contain custom message handlers, and custom query handlers,
 	// if we want to allow any custom callbacks
 	supportedFeatures := "iterator,staking,stargate"
-	// wasmOpts := GetWasmOpts(appOpts)
+	wasmOpts := GetWasmOpts(appOpts)
 	// if cast.ToBool(appOpts.Get("telemetry.enabled")) {
 	// 	wasmOpts = append(wasmOpts, wasmkeeper.WithVMCacheMetrics(prometheus.DefaultRegisterer))
 	// }
@@ -440,9 +442,11 @@ func New(
 		wasmDir,
 		wasmConfig,
 		supportedFeatures,
-		// wasmOpts...,
+		wasmOpts...,
 	)
-	// The gov proposal types can be individually enabled
+
+	// enabledProposals := GetEnabledProposals();
+	// // The gov proposal types can be individually enabled
 	// if len(enabledProposals) != 0 {
 	// 	govRouter.AddRoute(wasm.RouterKey, wasm.NewWasmProposalHandler(app.WasmKeeper, enabledProposals))
 	// }
@@ -788,13 +792,10 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	return paramsKeeper
 }
 
-// func GetWasmOpts(appOpts servertypes.AppOptions) []wasm.Option {
-// 	var wasmOpts []wasm.Option
-// 	if cast.ToBool(appOpts.Get("telemetry.enabled")) {
-// 		wasmOpts = append(wasmOpts, wasmkeeper.WithVMCacheMetrics(prometheus.DefaultRegisterer))
-// 	}
-
-// 	wasmOpts = append(wasmOpts, wasmkeeper.WithGasRegister(NewAuraWasmGasRegister()))
-
-// 	return wasmOpts
-// }
+func GetWasmOpts(appOpts servertypes.AppOptions) []wasm.Option {
+	var wasmOpts []wasm.Option
+	if cast.ToBool(appOpts.Get("telemetry.enabled")) {
+		wasmOpts = append(wasmOpts, wasmkeeper.WithVMCacheMetrics(prometheus.DefaultRegisterer))
+	}
+	return wasmOpts
+}

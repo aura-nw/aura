@@ -16,6 +16,10 @@ install: go.sum
 	@echo "--> Installing aurad"
 	@go install -mod=readonly $(BUILD_FLAGS) ./cmd/aurad
 
+build: go.sum
+	@echo "--> Build aurad"
+	@go build -mod=readonly $(BUILD_FLAGS) ./cmd/aurad
+
 go.sum: go.mod
 	@echo "--> Ensure dependencies have not been modified"
 	GO111MODULE=on go mod verify

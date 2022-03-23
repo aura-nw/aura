@@ -9,7 +9,8 @@ import (
 
 	// "github.com/tendermint/starport/starport/pkg/cosmoscmd"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/tendermint/spm/cosmoscmd"
+	// "github.com/tendermint/spm/cosmoscmd"
+	"github.com/tendermint/starport/starport/pkg/cosmoscmd"
 )
 
 func main() {

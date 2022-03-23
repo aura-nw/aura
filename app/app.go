@@ -89,7 +89,7 @@ import (
 	tmos "github.com/tendermint/tendermint/libs/os"
 	dbm "github.com/tendermint/tm-db"
 
-	"github.com/tendermint/spm/cosmoscmd"
+	"github.com/tendermint/starport/starport/pkg/cosmoscmd"
 	"github.com/tendermint/starport/starport/pkg/openapiconsole"
 
 	"github.com/aura-nw/aura/docs"
@@ -158,9 +158,15 @@ func getGovProposalHandlers() []govclient.ProposalHandler {
 		ibcclientclient.UpgradeProposalHandler,
 		// this line is used by starport scaffolding # stargate/app/govProposalHandler
 	)
-
-	// govProposalHandlers = append(govProposalHandlers, wasmclient.ProposalHandlers...)
 	return govProposalHandlers
+}
+
+func GetWasmOpts(appOpts servertypes.AppOptions) []wasm.Option {
+	var wasmOpts []wasm.Option
+	if cast.ToBool(appOpts.Get("telemetry.enabled")) {
+		wasmOpts = append(wasmOpts, wasmkeeper.WithVMCacheMetrics(prometheus.DefaultRegisterer))
+	}
+	return wasmOpts
 }
 
 var (
@@ -280,8 +286,6 @@ func New(
 	invCheckPeriod uint,
 	encodingConfig cosmoscmd.EncodingConfig,
 	appOpts servertypes.AppOptions,
-	// wasmOpts []wasm.Option,
-	// enabledProposals []wasm.ProposalType,
 	baseAppOptions ...func(*baseapp.BaseApp),
 ) cosmoscmd.App {
 	appCodec := encodingConfig.Marshaler
@@ -329,7 +333,7 @@ func New(
 	scopedTransferKeeper := app.CapabilityKeeper.ScopeToModule(ibctransfertypes.ModuleName)
 	// this line is used by starport scaffolding # stargate/app/scopedKeeper
 	scopedWasmKeeper := app.CapabilityKeeper.ScopeToModule(wasm.ModuleName)
-
+	app.CapabilityKeeper.Seal()
 	// add keepers
 	app.AccountKeeper = authkeeper.NewAccountKeeper(
 		appCodec, keys[authtypes.StoreKey], app.GetSubspace(authtypes.ModuleName), authtypes.ProtoBaseAccount, maccPerms,
@@ -400,11 +404,6 @@ func New(
 	// If evidence needs to be handled for the app, set routes in router here and seal
 	app.EvidenceKeeper = *evidenceKeeper
 
-	app.GovKeeper = govkeeper.NewKeeper(
-		appCodec, keys[govtypes.StoreKey], app.GetSubspace(govtypes.ModuleName), app.AccountKeeper, app.BankKeeper,
-		&stakingKeeper, govRouter,
-	)
-
 	auraModule := auramodule.NewAppModule(appCodec, app.AuraKeeper)
 	// this line is used by starport scaffolding # stargate/app/keeperDefinition
 
@@ -412,6 +411,7 @@ func New(
 	ibcRouter := ibcporttypes.NewRouter()
 	ibcRouter.AddRoute(ibctransfertypes.ModuleName, transferModule)
 
+	// ------ CosmWasm setup ------
 	wasmDir := filepath.Join(homePath, "wasm")
 	wasmConfig, err := wasm.ReadWasmConfig(appOpts)
 	if err != nil {
@@ -422,9 +422,6 @@ func New(
 	// if we want to allow any custom callbacks
 	supportedFeatures := "iterator,staking,stargate"
 	wasmOpts := GetWasmOpts(appOpts)
-	// if cast.ToBool(appOpts.Get("telemetry.enabled")) {
-	// 	wasmOpts = append(wasmOpts, wasmkeeper.WithVMCacheMetrics(prometheus.DefaultRegisterer))
-	// }
 	app.WasmKeeper = wasm.NewKeeper(
 		appCodec,
 		keys[wasm.StoreKey],
@@ -445,14 +442,18 @@ func New(
 		wasmOpts...,
 	)
 
-	// enabledProposals := GetEnabledProposals();
-	// // The gov proposal types can be individually enabled
-	// if len(enabledProposals) != 0 {
-	// 	govRouter.AddRoute(wasm.RouterKey, wasm.NewWasmProposalHandler(app.WasmKeeper, enabledProposals))
-	// }
+	// The gov proposal types can be individually enabled
+	enabledProposals := GetEnabledProposals()
+	if len(enabledProposals) != 0 {
+		govRouter.AddRoute(wasm.RouterKey, wasm.NewWasmProposalHandler(app.WasmKeeper, enabledProposals))
+	}
 
-	// wasmModule := wasmmodule.NewAppModule(appCodec, app.WasmKeeper, app.StakingKeeper)
+	app.GovKeeper = govkeeper.NewKeeper(
+		appCodec, keys[govtypes.StoreKey], app.GetSubspace(govtypes.ModuleName), app.AccountKeeper, app.BankKeeper,
+		&stakingKeeper, govRouter,
+	)
 
+	// Add wasm module route to the ibc router, then set and seal it
 	ibcRouter.AddRoute(wasm.ModuleName, wasm.NewIBCHandler(app.WasmKeeper, app.IBCKeeper.ChannelKeeper))
 	app.IBCKeeper.SetRouter(ibcRouter)
 
@@ -496,10 +497,6 @@ func New(
 	// CanWithdrawInvariant invariant.
 	// NOTE: staking module is required if HistoricalEntries param > 0
 	app.mm.SetOrderBeginBlockers(
-		// upgradetypes.ModuleName, capabilitytypes.ModuleName, minttypes.ModuleName, distrtypes.ModuleName, slashingtypes.ModuleName,
-		// evidencetypes.ModuleName, stakingtypes.ModuleName, ibchost.ModuleName,
-		// feegrant.ModuleName,
-
 		upgradetypes.ModuleName,
 		capabilitytypes.ModuleName,
 		minttypes.ModuleName,
@@ -512,7 +509,6 @@ func New(
 		govtypes.ModuleName,
 		crisistypes.ModuleName,
 		genutiltypes.ModuleName,
-		// authz.ModuleName,
 		feegrant.ModuleName,
 		paramstypes.ModuleName,
 		vestingtypes.ModuleName,
@@ -524,7 +520,6 @@ func New(
 	)
 
 	app.mm.SetOrderEndBlockers(
-		// crisistypes.ModuleName, govtypes.ModuleName, stakingtypes.ModuleName(
 		crisistypes.ModuleName,
 		govtypes.ModuleName,
 		stakingtypes.ModuleName,
@@ -576,6 +571,28 @@ func New(
 		// this line is used by starport scaffolding # stargate/app/initGenesis
 	)
 
+	app.mm.SetOrderMigrations(
+		authtypes.ModuleName,
+		auramoduletypes.ModuleName,
+		banktypes.ModuleName,
+		capabilitytypes.ModuleName,
+		distrtypes.ModuleName,
+		evidencetypes.ModuleName,
+		feegrant.ModuleName,
+		genutiltypes.ModuleName,
+		govtypes.ModuleName,
+		ibchost.ModuleName,
+		minttypes.ModuleName,
+		slashingtypes.ModuleName,
+		stakingtypes.ModuleName,
+		ibctransfertypes.ModuleName,
+		paramstypes.ModuleName,
+		upgradetypes.ModuleName,
+		vestingtypes.ModuleName,
+		wasm.ModuleName,
+		crisistypes.ModuleName,
+	)
+
 	app.mm.RegisterInvariants(&app.CrisisKeeper)
 	app.mm.RegisterRoutes(app.Router(), app.QueryRouter(), encodingConfig.Amino)
 	configurator := module.NewConfigurator(app.appCodec, app.MsgServiceRouter(), app.GRPCQueryRouter())
@@ -586,25 +603,10 @@ func New(
 	app.MountTransientStores(tkeys)
 	app.MountMemoryStores(memKeys)
 
-	// initialize BaseApp
-	app.SetInitChainer(app.InitChainer)
-	app.SetBeginBlocker(app.BeginBlocker)
-
-	// app.SetAnteHandler(
-	// 	NewAnteHandler(
-	// 		app.AccountKeeper,
-	// 		app.BankKeeper,
-	// 		ante.DefaultSigVerificationGasConsumer,
-	// 		encodingConfig.TxConfig.SignModeHandler(),
-	// 		// keys[wasm.StoreKey],
-	// 		app.IBCKeeper.ChannelKeeper,
-	// 		app.FeeGrantKeeper,
-	// 		// wasmConfig,
-	// 	),
-	// )
 	anteHandler, err := NewAnteHandler(
 		HandlerOptions{
-			HandlerOptions: ante.HandlerOptions{AccountKeeper: app.AccountKeeper,
+			HandlerOptions: ante.HandlerOptions{
+				AccountKeeper:   app.AccountKeeper,
 				BankKeeper:      app.BankKeeper,
 				SignModeHandler: encodingConfig.TxConfig.SignModeHandler(),
 				FeegrantKeeper:  app.FeeGrantKeeper,
@@ -620,6 +622,9 @@ func New(
 	}
 
 	app.SetAnteHandler(anteHandler)
+	// initialize BaseApp
+	app.SetInitChainer(app.InitChainer)
+	app.SetBeginBlocker(app.BeginBlocker)
 
 	app.SetEndBlocker(app.EndBlocker)
 	app.RegisterUpgradeHandlers(configurator)
@@ -639,7 +644,6 @@ func New(
 	app.ScopedTransferKeeper = scopedTransferKeeper
 	app.ScopedWasmKeeper = scopedWasmKeeper
 	// this line is used by starport scaffolding # stargate/app/beforeInitReturn
-
 	return app
 }
 
@@ -790,12 +794,4 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	// this line is used by starport scaffolding # stargate/app/paramSubspace
 
 	return paramsKeeper
-}
-
-func GetWasmOpts(appOpts servertypes.AppOptions) []wasm.Option {
-	var wasmOpts []wasm.Option
-	if cast.ToBool(appOpts.Get("telemetry.enabled")) {
-		wasmOpts = append(wasmOpts, wasmkeeper.WithVMCacheMetrics(prometheus.DefaultRegisterer))
-	}
-	return wasmOpts
 }

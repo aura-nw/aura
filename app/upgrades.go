@@ -26,6 +26,14 @@ func (app *App) RegisterUpgradeHandlers(cfg module.Configurator) {
 		wasmParams.CodeUploadAccess = wasmtypes.AllowNobody
 		wasmParams.MaxWasmCodeSize = DefaultMaxWasmCodeSize
 		app.WasmKeeper.SetParams(ctx, wasmParams)
+
+		govVotingParams := app.GovKeeper.GetVotingParams(ctx)
+		govVotingParams.VotingPeriod = DefaultVotingPeriod
+		app.GovKeeper.SetVotingParams(ctx, govVotingParams)
+
+		govDepositParams := app.GovKeeper.GetDepositParams(ctx)
+		govDepositParams.MaxDepositPeriod = DefaultDepositPeriod
+		app.GovKeeper.SetDepositParams(ctx, govDepositParams)
 		return vm, nil
 	})
 	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()

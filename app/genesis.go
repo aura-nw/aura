@@ -21,6 +21,9 @@ const (
 	// DefaultMaxWasmCodeSize limit max bytes read to prevent gzip bombs
 
 	DefaultMaxWasmCodeSize = 1000 * 1024 * 2
+
+	DefaultVotingPeriod  = 1000000000 * 60 * 60 * 12 // nano seconds = 12h
+	DefaultDepositPeriod = 1000000000 * 60 * 60 * 12 // nano seconds = 12h
 )
 
 // NewDefaultGenesisState generates the default state for the application.

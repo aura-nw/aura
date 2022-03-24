@@ -4,6 +4,7 @@
 - Upgrade to Cosmos SDK `V0.45.1`
 - Upgrade to ibc-go v2
 - Add wasm module from CosmWasm
+- Change value voting param and deposit param to 12 hours
 
 ## References
 

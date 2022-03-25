@@ -3,6 +3,8 @@ package app
 import (
 	"encoding/json"
 
+	"github.com/CosmWasm/wasmd/x/wasm"
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 )
 
@@ -15,7 +17,25 @@ import (
 // object provided to it during init.
 type GenesisState map[string]json.RawMessage
 
+const (
+	// DefaultMaxWasmCodeSize limit max bytes read to prevent gzip bombs
+
+	DefaultMaxWasmCodeSize = 1000 * 1024 * 2
+
+	DefaultVotingPeriod  = 1000000000 * 60 * 60 * 12 // nano seconds = 12h
+	DefaultDepositPeriod = 1000000000 * 60 * 60 * 12 // nano seconds = 12h
+)
+
 // NewDefaultGenesisState generates the default state for the application.
 func NewDefaultGenesisState(cdc codec.JSONCodec) GenesisState {
-	return ModuleBasics.DefaultGenesis(cdc)
+	genesis := ModuleBasics.DefaultGenesis(cdc)
+	wasmGen := wasm.GenesisState{
+		Params: wasmtypes.Params{
+			CodeUploadAccess:             wasmtypes.AllowNobody,
+			InstantiateDefaultPermission: wasmtypes.AccessTypeEverybody,
+			MaxWasmCodeSize:              DefaultMaxWasmCodeSize,
+		},
+	}
+	genesis[wasm.ModuleName] = cdc.MustMarshalJSON(&wasmGen)
+	return genesis
 }

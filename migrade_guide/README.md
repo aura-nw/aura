@@ -1,5 +1,12 @@
 ## Changelog
 
+### v0.1.1
+
+- Add module authz
+- Change Wasm param: allow every body can upload their smart contract
+
+### v0.1
+
 - Remove current custom wasm module
 - Upgrade to Cosmos SDK `V0.45.1`
 - Upgrade to ibc-go v2
@@ -30,6 +37,7 @@ make build
 - Deposit and vote for the proposal
 
 This is the first upgrade proposal for testnet.
+
 ```
 # query proposal
 aurad q gov proposals

@@ -11,29 +11,17 @@ import (
 )
 
 // next upgrade name
-const upgradeName = "v0.2"
+const upgradeName = "v0.1.1"
 
 // RegisterUpgradeHandlers returns upgrade handlers
 func (app *App) RegisterUpgradeHandlers(cfg module.Configurator) {
 	app.UpgradeKeeper.SetUpgradeHandler(upgradeName, func(ctx sdk.Context, plan upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
-		// consensus params
-		// increase max gas as part of the upgrade to handle cosmwam
-		consensusParams := app.BaseApp.GetConsensusParams(ctx)
-		consensusParams.Block.MaxGas = 75_000_000 // 75M
-		app.BaseApp.StoreConsensusParams(ctx, consensusParams)
-		// wasm params
+
+		// wasm params allow every body can upload smart contract
 		wasmParams := app.WasmKeeper.GetParams(ctx)
-		wasmParams.CodeUploadAccess = wasmtypes.AllowNobody
-		wasmParams.MaxWasmCodeSize = DefaultMaxWasmCodeSize
+		wasmParams.CodeUploadAccess = wasmtypes.AllowEverybody
 		app.WasmKeeper.SetParams(ctx, wasmParams)
 
-		govVotingParams := app.GovKeeper.GetVotingParams(ctx)
-		govVotingParams.VotingPeriod = DefaultVotingPeriod
-		app.GovKeeper.SetVotingParams(ctx, govVotingParams)
-
-		govDepositParams := app.GovKeeper.GetDepositParams(ctx)
-		govDepositParams.MaxDepositPeriod = DefaultDepositPeriod
-		app.GovKeeper.SetDepositParams(ctx, govDepositParams)
 		return vm, nil
 	})
 	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()

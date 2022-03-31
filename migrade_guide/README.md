@@ -1,11 +1,11 @@
 ## Changelog
 
-### v0.1.1
+### v0.2.1
 
 - Add module authz
 - Change Wasm param: allow every body can upload their smart contract
 
-### v0.1
+### v0.2
 
 - Remove current custom wasm module
 - Upgrade to Cosmos SDK `V0.45.1`

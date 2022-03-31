@@ -11,7 +11,7 @@ import (
 )
 
 // next upgrade name
-const upgradeName = "v0.1.1"
+const upgradeName = "v0.2.1"
 
 // RegisterUpgradeHandlers returns upgrade handlers
 func (app *App) RegisterUpgradeHandlers(cfg module.Configurator) {

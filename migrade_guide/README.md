@@ -1,5 +1,10 @@
 ## Changelog
 
+### v0.2.2
+
+- Upgrade x/wasm to 0.24.0
+- Upgrade cosmos sdk to 0.45.2
+
 ### v0.2.1
 
 - Add module authz

@@ -32,7 +32,11 @@ jobs:
         if: ${{ steps.vars.outputs.should_release == 'true' }}
         with:
           args: chain build
-
+          
+      - name: Increase Version
+        run: |
+              echo $GITHUB_REF_NAME > .version        
+        
       - name: Delete the "latest" Release
         uses: dev-drprasad/delete-tag-and-release@v0.2.0
         if: ${{ steps.vars.outputs.is_release_type_latest == 'true' }}

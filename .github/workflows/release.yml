@@ -42,13 +42,14 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Add SHORT_SHA env property with commit short sha
-        run: echo "SHORT_SHA=`echo ${GITHUB_SHA} | cut -c1-8`" >> $GITHUB_ENV
-
+        id: sha
+        run: echo "::set-output name=sha_short::${GITHUB_SHA} | cut -c1-8"
+        
       - name: Publish the Release
         uses: softprops/action-gh-release@v1
         if: ${{ steps.vars.outputs.should_release == 'true' }}
         with:
-          tag_name: ${{ github.head_ref || github.ref_name }}_${{SHORT_SHA}}
+          tag_name: ${{ github.head_ref || github.ref_name }}_${{ steps.sha.outputs.sha_short }}
           prerelease: true 
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

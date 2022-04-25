@@ -43,7 +43,7 @@ jobs:
       
       - name: Add SHORT_SHA env property with commit short sha
         id: sha
-        run: echo "::set-output name=sha_short::${GITHUB_SHA} | cut -c1-8"
+        run: echo "::set-output name=sha_short::${${GITHUB_SHA} | cut -c1-8}
         
       - name: Publish the Release
         uses: softprops/action-gh-release@v1

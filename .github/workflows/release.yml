@@ -34,8 +34,11 @@ jobs:
           args: chain build
           
       - name: Increase Version
+        env:
+          BRANCH_NAME: ${{ github.head_ref || github.ref_name }} 
         run: |
-              echo $GITHUB_REF_NAME > .version        
+              SHORT_SHA_COMMIT=$(git rev-parse --short HEAD)
+              echo "${BRANCH_NAME}_${SHORT_SHA_COMMIT} > .version        
         
       - name: Delete the "latest" Release
         uses: dev-drprasad/delete-tag-and-release@v0.2.0
@@ -50,7 +53,8 @@ jobs:
         uses: softprops/action-gh-release@v1
         if: ${{ steps.vars.outputs.should_release == 'true' }}
         with:
-          tag_name: ${{ steps.vars.outputs.tag_name }}
+          tag_name: ${{ github.head_ref || github.ref_name }}_${{ steps.vars.outputs.tag_name }}
+          files: .version  
           prerelease: true 
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

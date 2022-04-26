@@ -1,15 +1,15 @@
 accounts:
-  - name: Hanoi
-    coins: ["100000000000000uaura"]
-  - name: Saigon
+  - name: Cantho
     coins: ["50000000000000uaura"]
-  - name: Danang
+  - name: Vinh
     coins: ["50000000000000uaura"]
-  - name: Paris
+  - name: Hagiang
+    coins: ["50000000000000uaura"]
+  - name: Thaibinh
     coins: ["50000000000000uaura"]
 validator:
-  name: Hanoi
-  staked: "100000000uaura"
+  name: Cantho
+  staked: "10000000000uaura"
 client:
   openapi:
     path: "docs/static/openapi.yml"
@@ -47,6 +47,7 @@ genesis:
       params:
         bond_denom: "uaura"
         unbonding_time: "86400s"
+        max_validators: 5
     slashing:
       params:
         signed_blocks_window: "1000"

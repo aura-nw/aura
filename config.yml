@@ -7,6 +7,9 @@ accounts:
     coins: ["50000000000000uaura"]
   - name: Paris
     coins: ["50000000000000uaura"]
+validator:
+  name: Hanoi
+  staked: "100000000uaura"
 client:
   openapi:
     path: "docs/static/openapi.yml"

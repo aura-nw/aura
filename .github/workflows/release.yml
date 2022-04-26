@@ -50,6 +50,7 @@ jobs:
         #if: ${{ steps.vars.outputs.should_release == 'true' }}
         with:
           tag_name: ${{ github.head_ref || github.ref_name }}_${{ steps.sha.outputs.sha_short }}
-          prerelease: true 
+          prerelease: true
+          target_commitish: ${{ github.head_ref || github.ref_name }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

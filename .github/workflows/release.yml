@@ -29,7 +29,7 @@ jobs:
       
       - name: Issue Release Assets 
         uses: tendermint/starport/actions/cli@develop
-        if: ${{ steps.vars.outputs.should_release == 'true' }}
+        #if: ${{ steps.vars.outputs.should_release == 'true' }}
         with:
           args: chain build
 
@@ -47,7 +47,7 @@ jobs:
         
       - name: Publish the Release
         uses: softprops/action-gh-release@v1
-        if: ${{ steps.vars.outputs.should_release == 'true' }}
+        #if: ${{ steps.vars.outputs.should_release == 'true' }}
         with:
           tag_name: ${{ github.head_ref || github.ref_name }}_${{ steps.sha.outputs.sha_short }}
           prerelease: true 

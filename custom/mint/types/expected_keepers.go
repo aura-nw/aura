@@ -9,6 +9,7 @@ import (
 type StakingKeeper interface {
 	StakingTokenSupply(ctx sdk.Context) sdk.Int
 	BondedRatio(ctx sdk.Context) sdk.Dec
+	TotalBondedTokens(ctx sdk.Context) sdk.Int
 }
 
 // AccountKeeper defines the contract required for account APIs.
@@ -27,8 +28,11 @@ type BankKeeper interface {
 	SendCoinsFromModuleToModule(ctx sdk.Context, senderModule, recipientModule string, amt sdk.Coins) error
 	MintCoins(ctx sdk.Context, name string, amt sdk.Coins) error
 	GetSupply(ctx sdk.Context, denom string) sdk.Coin
+	GetBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
+	GetExcludeCirculatingAmount(ctx sdk.Context, denom string) sdk.Coin
 }
 
 type AuraKeeper interface {
 	GetMaxSupply(ctx sdk.Context) string
+	GetExcludeCirculatingAddr(ctx sdk.Context) []sdk.AccAddress
 }

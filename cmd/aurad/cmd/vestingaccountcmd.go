@@ -26,14 +26,16 @@ const (
 	flagVestingPeriod = "period-length"
 	flagVestingAmt    = "total-vesting-amount"
 	flagVestingTime   = "total-vesting-time"
+	flagCliffTime 	  = "cliff-time"
+	flagCliffAmount   = "cliff-amount"
 )
 
 // AddGenesisAccountCmd returns add-genesis-account cobra Command.
 func AddGenesisVestingAccountCmd(defaultNodeHome string) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "add-genesis-periodic-vesting-account [address_or_key_name] [coin][,[coin]]",
-		Short: "Add a genesis account to genesis.json",
-		Long: `Add a genesis account to genesis.json. The provided account must specify
+		Use:   "add-genesis-periodic-vesting-account [address_or_key_name] [coin]",
+		Short: "Add a genesis periodic vesting account to genesis.json",
+		Long: `Add a genesis periodic vesting account to genesis.json. The provided account must specify
 the account address or key name and a list of initial coins. If a key name is given,
 the address will be looked up in the local Keybase. The list of initial tokens must
 contain valid denominations. Accounts may optionally be supplied with vesting parameters.
@@ -92,10 +94,23 @@ contain valid denominations. Accounts may optionally be supplied with vesting pa
 			if err != nil {
 				return err
 			}
+			cliffTime, err := cmd.Flags().GetInt64(flagCliffTime)
+			if err != nil {
+				return err
+			}
+			cliffAmtStr, err := cmd.Flags().GetString(flagCliffAmount)
+			if err != nil {
+				return err
+			}
+
 
 			vestingAmt, err := sdk.ParseCoinsNormalized(vestingAmtStr)
 			if err != nil {
 				return fmt.Errorf("failed to parse vesting amount: %w", err)
+			}
+			cliffAmt, err := sdk.ParseCoinsNormalized(cliffAmtStr)
+			if err != nil {
+				return fmt.Errorf("failed to parse cliff amount: %w", err)
 			}
 
 			// create concrete account type based on input parameters
@@ -112,15 +127,21 @@ contain valid denominations. Accounts may optionally be supplied with vesting pa
 					return errors.New("vesting amount cannot be greater than total amount")
 				}
 
-				if vestingStart != 0 && periodLength != 0 {
+				if vestingStart != 0 && periodLength != 0 && cliffAmt[0].Amount.LTE(vestingAmt[0].Amount) && cliffTime <= vestingTime {
+					vestingTime = vestingTime - cliffTime
 					var numPeriod int64 = vestingTime / periodLength
-					var totalAmount sdk.Int = vestingAmt[0].Amount //Currently, only allow to vest 1 type of coin per account
+					
+					//Currently, only allow to vest 1 type of coin per account
+					//Add 1 period if set cliff
+					var totalAmount sdk.Int = vestingAmt[0].Amount.Sub(cliffAmt[0].Amount)
 					var periodicAmount sdk.Int = totalAmount.QuoRaw(numPeriod)
-
-					periods := caculateVestingPeriods(vestingTime, periodLength, vestingAmtStr, numPeriod, totalAmount, periodicAmount)
+					if (cliffTime > 0 ) {
+						numPeriod = numPeriod + 1
+					}
+					periods := caculateVestingPeriods(vestingTime, periodLength, vestingAmtStr, numPeriod, totalAmount, periodicAmount, cliffTime, cliffAmtStr)
 					genAccount = authvesting.NewPeriodicVestingAccountRaw(baseVestingAccount, vestingStart, periods)
 				} else {
-					return errors.New("invalid vesting parameters; must supply start and end time or end time")
+					return errors.New("invalid vesting parameters")
 				}
 			} else {
 				return errors.New("command is only allowed to create periodic vesting account")
@@ -189,19 +210,28 @@ contain valid denominations. Accounts may optionally be supplied with vesting pa
 	cmd.Flags().String(flags.FlagKeyringBackend, flags.DefaultKeyringBackend, "Select keyring's backend (os|file|kwallet|pass|test)")
 	cmd.Flags().String(flags.FlagHome, defaultNodeHome, "The application home directory")
 	cmd.Flags().String(flagVestingAmt, "", "amount of coins for vesting accounts")
-	cmd.Flags().Int64(flagVestingStart, 0, "schedule start time (unix epoch) for vesting accounts")
-	cmd.Flags().Int64(flagVestingPeriod, 0, "length of the period in seconds")
-	cmd.Flags().Int64(flagVestingTime, 0, "total vesting time")
+	cmd.Flags().Int64(flagVestingStart, 0, "schedule start time (unix epoch in seconds) for vesting accounts")
+	cmd.Flags().Int64(flagVestingPeriod, 0, "length of the period (in seconds)")
+	cmd.Flags().Int64(flagVestingTime, 0, "total vesting time (in seconds)")
+	cmd.Flags().Int64(flagCliffTime, 0, "Cliff time (in seconds)")
+	cmd.Flags().String(flagCliffAmount, "0uaura", "Cliff amount")
 	flags.AddQueryFlagsToCmd(cmd)
 
 	return cmd
 }
 
-func caculateVestingPeriods(vestingTime int64, periodLength int64, vestingAmtStr string, numPeriod int64, totalAmount sdk.Int, periodicAmount sdk.Int) authvesting.Periods {
+func caculateVestingPeriods(vestingTime int64, periodLength int64, vestingAmtStr string, numPeriod int64, totalAmount sdk.Int, periodicAmount sdk.Int, cliffTime int64, cliffAmtStr string) authvesting.Periods {
+	var counter int = 0
 	if vestingTime%periodLength != 0 {
 		//indivisible vesting time
 		periods := make([]authvesting.Period, numPeriod+1)
-		for i := 0; i < int(numPeriod+1); i++ {
+		if cliffTime > 0 {
+			periods[0].Length = cliffTime
+			periods[0].Amount, _ = sdk.ParseCoinsNormalized(cliffAmtStr)
+			counter = 1
+			numPeriod = numPeriod - 1
+		}
+		for i := counter; i < int(numPeriod+2); i++ {
 			periods[i].Length = periodLength
 			periods[i].Amount, _ = sdk.ParseCoinsNormalized(vestingAmtStr)
 			periods[i].Amount[0].Amount = periodicAmount
@@ -214,7 +244,13 @@ func caculateVestingPeriods(vestingTime int64, periodLength int64, vestingAmtStr
 	} else {
 		//divisible vesting time
 		periods := make([]authvesting.Period, numPeriod)
-		for i := 0; i < int(numPeriod); i++ {
+		if cliffTime > 0 {
+			periods[0].Length = cliffTime
+			periods[0].Amount, _ = sdk.ParseCoinsNormalized(cliffAmtStr)
+			counter = 1
+			numPeriod = numPeriod - 1
+		}
+		for i := counter; i < int(numPeriod+1); i++ {
 			periods[i].Length = periodLength
 			periods[i].Amount, _ = sdk.ParseCoinsNormalized(vestingAmtStr)
 			periods[i].Amount[0].Amount = periodicAmount

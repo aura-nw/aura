@@ -32,6 +32,24 @@ A genesis file is a JSON file which defines the initial state of your blockchain
 
 The docs about genesis customization: https://hub.cosmos.network/main/resources/genesis.html
 
+### Create your validator
+Create a local key pair for creating validator:
+```
+aurad keys add <key_name> 
+```
+Add some tokens to the wallet:
+```
+aurad add-genesis-account <key_name> <amount><denom>
+```
+Create a validtor generation transaction:
+```
+aurad gentx <key_name> <amount><denom> --chain-id <chain-id>
+```
+Collect the gentx to genesis file:
+```
+aurad collect-gentxs
+```
+
 ### Run a node
 ```
 aurad start 

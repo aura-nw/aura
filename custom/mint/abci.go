@@ -25,13 +25,17 @@ func BeginBlocker(ctx sdk.Context, k custommint.Keeper) {
 		panic(errors.New("panic convert max supply string to bigInt"))
 	}
 	k.Logger(ctx).Info("Get max supply from aura", "maxSupply", maxSupply.String())
-	currentSupply := k.GetSupply(ctx, params.MintDenom)
+	currentSupply := k.GetSupply(ctx, params.GetMintDenom())
 	k.Logger(ctx).Info("Get current supply from network", "currentSupply", currentSupply.String())
+
+	excludeAmount := k.GetExcludeCirculatingAmount(ctx, params.GetMintDenom())
+	k.Logger(ctx).Info("Exclude Addr", "exclude_addr", excludeAmount.String())
 
 	if currentSupply.LT(maxSupply) {
 		// recalculate inflation rate
-		totalStakingSupply := k.StakingTokenSupply(ctx)
-		bondedRatio := k.BondedRatio(ctx)
+		totalStakingSupply := k.CustomStakingTokenSupply(ctx, excludeAmount.Amount)
+		bondedRatio := k.CustomBondedRatio(ctx, excludeAmount.Amount)
+		k.Logger(ctx).Info("Value BondedRatio: ", "bondedRatio", bondedRatio.String())
 		minter.Inflation = minter.NextInflationRate(params, bondedRatio)
 		minter.AnnualProvisions = minter.NextAnnualProvisions(params, totalStakingSupply)
 		k.SetMinter(ctx, minter)

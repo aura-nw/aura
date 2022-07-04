@@ -10,7 +10,7 @@ ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=aura \
 
 BUILD_FLAGS := -ldflags '$(ldflags)'
 
-all: install
+all: build install
 
 install: go.sum
 	@echo "--> Installing aurad"
@@ -18,7 +18,7 @@ install: go.sum
 
 build: go.sum
 	@echo "--> Build aurad"
-	@go build -mod=readonly $(BUILD_FLAGS) ./cmd/aurad
+	@go build -mod=readonly $(BUILD_FLAGS) ./cmd/aurad -o ./build/aurad
 
 go.sum: go.mod
 	@echo "--> Ensure dependencies have not been modified"

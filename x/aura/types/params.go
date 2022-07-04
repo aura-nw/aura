@@ -11,7 +11,8 @@ import (
 
 // Parameter store keys
 var (
-	MaxSupply = []byte("MaxSupply")
+	MaxSupply              = []byte("MaxSupply")
+	ExcludeCirculatingAddr = []byte("ExcludeCirculatingAddr")
 )
 
 // Regex using check string is number
@@ -22,16 +23,18 @@ func ParamKeyTable() paramtypes.KeyTable {
 	return paramtypes.NewKeyTable().RegisterParamSet(&Params{})
 }
 
-func NewParams(maxSupply string) Params {
+func NewParams(maxSupply string, excludeCirculatingAddr []string) Params {
 	return Params{
-		MaxSupply: maxSupply,
+		MaxSupply:              maxSupply,
+		ExcludeCirculatingAddr: excludeCirculatingAddr,
 	}
 }
 
 // default aura module parameters
 func DefaultParams() Params {
 	return Params{
-		MaxSupply: "1000000000000000000000000000",
+		MaxSupply:              "1000000000000000000000000000",
+		ExcludeCirculatingAddr: []string{},
 	}
 }
 
@@ -48,6 +51,7 @@ func (p Params) Validate() error {
 func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 	return paramtypes.ParamSetPairs{
 		paramtypes.NewParamSetPair(MaxSupply, &p.MaxSupply, validateMaxSupply),
+		paramtypes.NewParamSetPair(ExcludeCirculatingAddr, &p.ExcludeCirculatingAddr, validateExcludeCirculatingAddr),
 	}
 }
 
@@ -65,5 +69,19 @@ func validateMaxSupply(i interface{}) error {
 		return errors.New("invalid max supply parameter, expected string as number")
 	}
 
+	return nil
+}
+
+func validateExcludeCirculatingAddr(i interface{}) error {
+	v, ok := i.([]string)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	for _, addBech32 := range v {
+		if strings.TrimSpace(addBech32) == "" {
+			return errors.New("exclude circulating address can not contain blank")
+		}
+	}
 	return nil
 }

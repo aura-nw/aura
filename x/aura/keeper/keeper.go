@@ -26,12 +26,12 @@ func NewKeeper(
 	memKey sdk.StoreKey,
 	paramSpace paramtypes.Subspace,
 
-) *Keeper {
+) Keeper {
 	// set KeyTable if it has not already been set
 	if !paramSpace.HasKeyTable() {
 		paramSpace = paramSpace.WithKeyTable(types.ParamKeyTable())
 	}
-	return &Keeper{
+	return Keeper{
 		cdc:        cdc,
 		storeKey:   storeKey,
 		memKey:     memKey,
@@ -58,4 +58,19 @@ func (k Keeper) SetParams(ctx sdk.Context, params types.Params) {
 func (k Keeper) GetMaxSupply(ctx sdk.Context) string {
 	params := k.GetParams(ctx)
 	return params.MaxSupply
+}
+
+// GetExcludeCirculatingAddr return list exclude address do not calculator for circulating
+func (k Keeper) GetExcludeCirculatingAddr(ctx sdk.Context) []sdk.AccAddress {
+	params := k.GetParams(ctx)
+	excludeAddr := make([]sdk.AccAddress, 0, len(params.ExcludeCirculatingAddr))
+	for _, addrBech32 := range params.ExcludeCirculatingAddr {
+		addr, err := sdk.AccAddressFromBech32(addrBech32)
+		if err != nil {
+			panic(err)
+		}
+		excludeAddr = append(excludeAddr, addr)
+	}
+
+	return excludeAddr
 }

@@ -14,7 +14,7 @@ Using Makefile
 ```
     make
 ```
-The **aurad** bin file is located on **${source_directory}/cmd/** and **GO_PATH** (default ~/go/bin/) 
+The **aurad** bin file is located on **${source_directory}/build/** or **GO_PATH** (default ~/go/bin/) 
 
 ## Setup a LocalNet
 
@@ -31,6 +31,24 @@ This command will initialize the home folder containing necessary components for
 A genesis file is a JSON file which defines the initial state of your blockchain. It can be seen as height 0 of your blockchain. The first block, at height 1, will reference the genesis file as its parent.
 
 The docs about genesis customization: https://hub.cosmos.network/main/resources/genesis.html
+
+### Create your validator
+Create a local key pair for creating validator:
+```
+aurad keys add <key_name> 
+```
+Add some tokens to the wallet:
+```
+aurad add-genesis-account <key_name> <amount><denom>
+```
+Create a validtor generation transaction:
+```
+aurad gentx <key_name> <amount><denom> --chain-id <chain-id>
+```
+Collect the gentx to genesis file:
+```
+aurad collect-gentxs
+```
 
 ### Run a node
 ```

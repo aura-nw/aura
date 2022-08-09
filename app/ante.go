@@ -7,8 +7,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
-	channelkeeper "github.com/cosmos/ibc-go/v2/modules/core/04-channel/keeper"
-	ibcante "github.com/cosmos/ibc-go/v2/modules/core/ante"
+	keeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
+	ibcante "github.com/cosmos/ibc-go/v3/modules/core/ante"
 	// stargazeante "github.com/public-awesome/stargaze/v3/internal/ante"
 )
 
@@ -16,7 +16,7 @@ import (
 // channel keeper.
 type HandlerOptions struct {
 	ante.HandlerOptions
-	IBCChannelkeeper  channelkeeper.Keeper
+	IBCKeeper  *keeper.Keeper
 	WasmConfig        *wasmTypes.WasmConfig
 	TXCounterStoreKey sdk.StoreKey
 	Codec             codec.BinaryCodec
@@ -70,7 +70,7 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 		ante.NewSigGasConsumeDecorator(options.AccountKeeper, sigGasConsumer),
 		ante.NewSigVerificationDecorator(options.AccountKeeper, options.SignModeHandler),
 		ante.NewIncrementSequenceDecorator(options.AccountKeeper),
-		ibcante.NewAnteDecorator(options.IBCChannelkeeper),
+		ibcante.NewAnteDecorator(options.IBCKeeper),
 	}
 
 	return sdk.ChainAnteDecorators(anteDecorators...), nil

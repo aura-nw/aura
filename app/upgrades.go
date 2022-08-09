@@ -10,14 +10,14 @@ import (
 )
 
 // next upgrade name
-const upgradeName = "v0.2.2"
+const upgradeName = "v0.5"
 
 // RegisterUpgradeHandlers returns upgrade handlers
 func (app *App) RegisterUpgradeHandlers(cfg module.Configurator) {
 	app.UpgradeKeeper.SetUpgradeHandler(upgradeName, func(ctx sdk.Context, plan upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
-
-		return vm, nil
+		return app.mm.RunMigrations(ctx, cfg, vm)
 	})
+
 	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
 	if err != nil {
 		panic(fmt.Sprintf("failed to read upgrade info from disk %s", err))

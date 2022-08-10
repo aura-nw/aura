@@ -111,6 +111,9 @@ import (
 	custommint "github.com/aura-nw/aura/custom/mint"
 	"github.com/prometheus/client_golang/prometheus"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
+
+	v0_3_0 "github.com/aura-nw/aura/app/upgrades/v0.3.0"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 )
 
 const (
@@ -280,6 +283,9 @@ type App struct {
 
 	// the module manager
 	mm *module.Manager
+
+	// the configurator
+	configurator module.Configurator
 }
 
 // New returns a reference to an initialized Gaia.
@@ -622,8 +628,8 @@ func New(
 
 	app.mm.RegisterInvariants(&app.CrisisKeeper)
 	app.mm.RegisterRoutes(app.Router(), app.QueryRouter(), encodingConfig.Amino)
-	configurator := module.NewConfigurator(app.appCodec, app.MsgServiceRouter(), app.GRPCQueryRouter())
-	app.mm.RegisterServices(configurator)
+	app.configurator = module.NewConfigurator(app.appCodec, app.MsgServiceRouter(), app.GRPCQueryRouter())
+	app.mm.RegisterServices(app.configurator)
 
 	// initialize stores
 	app.MountKVStores(keys)
@@ -654,7 +660,8 @@ func New(
 	app.SetBeginBlocker(app.BeginBlocker)
 
 	app.SetEndBlocker(app.EndBlocker)
-	app.RegisterUpgradeHandlers(configurator)
+	app.setupUpgradeHandlers()
+	//app.RegisterUpgradeHandlers(configurator)
 	if loadLatest {
 		if err := app.LoadLatestVersion(); err != nil {
 			tmos.Exit(err.Error())
@@ -821,4 +828,37 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	// this line is used by starport scaffolding # stargate/app/paramSubspace
 
 	return paramsKeeper
+}
+
+func (app *App) setupUpgradeHandlers() {
+	// v0.3.0 upgrade handler
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v0_3_0.UpgradeName,
+		v0_3_0.CreateUpgradeHandler(app.mm, app.configurator),
+	)
+
+	
+	// When a planned update height is reached, the old binary will panic
+	// writing on disk the height and name of the update that triggered it
+	// This will read that value, and execute the preparations for the upgrade.
+	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
+	if err != nil {
+		panic(fmt.Errorf("failed to read upgrade info from disk: %w", err))
+	}
+
+	if app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
+		return
+	}
+
+	var storeUpgrades *storetypes.StoreUpgrades
+
+	switch upgradeInfo.Name {
+		case v0_3_0.UpgradeName:
+			// no store upgrades in v0.3.0
+	}
+
+	if storeUpgrades != nil {
+		// configure store loader that checks if version == upgradeHeight and applies store upgrades
+		app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, storeUpgrades))
+	}
 }

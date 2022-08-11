@@ -5,9 +5,7 @@ This repository contains source code for Aurad (Aura Daemon). Aurad binary is th
 Aura Network is a NFT-centric blockchain platform that provides infrastructure assisting to bring user assets to the crypto market.
 
 ## Prerequisite
-- Go 1.17+
-- Starport 0.18.3
-- Cosmos SDK 0.44.4
+- Go 1.18
 
 ## Install Aura daemon
 Using Makefile

@@ -8,8 +8,6 @@ import (
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 )
 
-var ExcludeDenom = "uaura"
-
 type BaseKeeper struct {
 	keeper.BaseKeeper
 
@@ -39,8 +37,4 @@ func (k BaseKeeper) GetExcludeCirculatingAmount(ctx sdk.Context, denom string) s
 	}
 
 	return excludeAmount
-}
-
-func (k BaseKeeper) GetExcludeDenom() string {
-	return ExcludeDenom
 }

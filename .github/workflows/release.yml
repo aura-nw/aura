@@ -47,15 +47,16 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
-      - name: Add SHORT_SHA env property with commit short sha
-        id: sha
-        run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
+      - name: Set variables
+        run: |
+          VER=$(cat .VERSION)
+          echo "VERSION=$VER" >> $GITHUB_ENV
         
       - name: Publish the Release
         uses: softprops/action-gh-release@v1
         #if: ${{ steps.vars.outputs.should_release == 'true' }}
         with:
-          tag_name: ${{ github.head_ref || github.ref_name }}_${{ steps.sha.outputs.sha_short }}
+          tag_name: ${{ github.head_ref || github.ref_name }}_${{ env.VERSION }}
           prerelease: true
           target_commitish: ${{ github.head_ref || github.ref_name }}
         env:

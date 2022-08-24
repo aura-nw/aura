@@ -40,8 +40,8 @@ func (k BaseKeeper) SupplyOf(c context.Context, req *types.QuerySupplyOfRequest)
 	ctx := sdk.UnwrapSDKContext(c)
 	supply := k.GetSupply(ctx, req.Denom)
 
-	if req.GetDenom() == k.GetExcludeDenom() {
-		excludeCoin := k.GetExcludeCirculatingAmount(ctx, req.GetDenom())
+	excludeCoin := k.GetExcludeCirculatingAmount(ctx, req.GetDenom())
+	if !excludeCoin.IsZero() {
 		supply = supply.Sub(excludeCoin)
 	}
 

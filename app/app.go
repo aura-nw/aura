@@ -94,10 +94,6 @@ import (
 
 	"github.com/aura-nw/aura/docs"
 
-	auramodule "github.com/aura-nw/aura/x/aura"
-	auramodulekeeper "github.com/aura-nw/aura/x/aura/keeper"
-	auramoduletypes "github.com/aura-nw/aura/x/aura/types"
-
 	"github.com/cosmos/cosmos-sdk/x/authz"
 	authzkeeper "github.com/cosmos/cosmos-sdk/x/authz/keeper"
 	authzmodule "github.com/cosmos/cosmos-sdk/x/authz/module"

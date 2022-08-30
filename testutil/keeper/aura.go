@@ -3,8 +3,7 @@ package keeper
 import (
 	"testing"
 
-	"github.com/aura-nw/aura/x/aura/keeper"
-	"github.com/aura-nw/aura/x/aura/types"
+	"github.com/aura-nw/aura/custom/mint/keeper"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/store"
@@ -31,6 +30,7 @@ func AuraKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
 		codec.NewProtoCodec(registry),
 		storeKey,
 		memStoreKey,
+		types.ParamKeyTable(),
 	)
 
 	ctx := sdk.NewContext(stateStore, tmproto.Header{}, false, log.NewNopLogger())

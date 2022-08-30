@@ -3,6 +3,8 @@ package module
 import (
 	"context"
 	"encoding/json"
+	"math/rand"
+
 	customfeegrant "github.com/aura-nw/aura/custom/feegrant"
 	customcli "github.com/aura-nw/aura/custom/feegrant/cli"
 	sdkclient "github.com/cosmos/cosmos-sdk/client"
@@ -20,7 +22,6 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 	abci "github.com/tendermint/tendermint/abci/types"
-	"math/rand"
 )
 
 var (

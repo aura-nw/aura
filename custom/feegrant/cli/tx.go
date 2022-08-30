@@ -2,9 +2,10 @@ package cli
 
 import (
 	"fmt"
-	customfeegrant "github.com/aura-nw/aura/custom/feegrant"
 	"strings"
 	"time"
+
+	customfeegrant "github.com/aura-nw/aura/custom/feegrant"
 
 	"github.com/spf13/cobra"
 
@@ -65,7 +66,6 @@ Examples:
 		),
 		Args: cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-
 			cmd.Flags().Set(flags.FlagFrom, args[0])
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {

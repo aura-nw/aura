@@ -7,15 +7,11 @@ import (
 	"github.com/aura-nw/aura/cmd/aurad/cmd"
 	svrcmd "github.com/cosmos/cosmos-sdk/server/cmd"
 
-	// "github.com/tendermint/starport/starport/pkg/cosmoscmd"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	// "github.com/tendermint/spm/cosmoscmd"
 	"github.com/tendermint/starport/starport/pkg/cosmoscmd"
 )
 
 func main() {
-	// cmdOptions := cmd.GetWasmCmdOptions()
-	// cmdOptions = append(cmdOptions, cosmoscmd.AddSubCmd(tmcmds.RollbackStateCmd))
 	rootCmd, _ := cosmoscmd.NewRootCmd(
 		app.Name,
 		app.AccountAddressPrefix,
@@ -27,7 +23,7 @@ func main() {
 		// cmdOptions...,
 	)
 
-	//testnet cmd
+	// testnet cmd
 	rootCmd.AddCommand(
 		cmd.TestnetCmd(app.ModuleBasics, banktypes.GenesisBalancesIterator{}),
 	)

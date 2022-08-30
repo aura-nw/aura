@@ -7,8 +7,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
-	keeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
 	ibcante "github.com/cosmos/ibc-go/v3/modules/core/ante"
+	keeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
 	// stargazeante "github.com/public-awesome/stargaze/v3/internal/ante"
 )
 
@@ -16,7 +16,7 @@ import (
 // channel keeper.
 type HandlerOptions struct {
 	ante.HandlerOptions
-	IBCKeeper  *keeper.Keeper
+	IBCKeeper         *keeper.Keeper
 	WasmConfig        *wasmTypes.WasmConfig
 	TXCounterStoreKey sdk.StoreKey
 	Codec             codec.BinaryCodec
@@ -46,7 +46,7 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrLogic, "tx counter key is required for ante builder")
 	}
 
-	var sigGasConsumer = options.SigGasConsumer
+	sigGasConsumer := options.SigGasConsumer
 	if sigGasConsumer == nil {
 		sigGasConsumer = ante.DefaultSigVerificationGasConsumer
 	}

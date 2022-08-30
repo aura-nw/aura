@@ -1,32 +1,27 @@
 accounts:
-  - name: Hanoi
-    coins: ["5000000000000uaura"]
-  - name: Saigon
-    coins: ["5000000000000uaura"]
-  - name: Danang
-    coins: ["5000000000000uaura"]
+  - name: Cantho
+    coins: ["50000000000000uaura"]
+  - name: Vinh
+    coins: ["50000000000000uaura"]
+  - name: Hagiang
+    coins: ["50000000000000uaura"]
+  - name: Thaibinh
+    coins: ["50000000000000uaura"]
 validator:
-  name: Hanoi
-  staked: "100000000uaura"
-  name: Saigon
-  staked: "100000000uaura"
-  name: Danang
-  staked: "100000000uaura"
+  name: Cantho
+  staked: "10000000000uaura"
 client:
   openapi:
     path: "docs/static/openapi.yml"
-faucet:
-  name: Danang
-  coins: ["50000000uaura"]
 init:
   app:
-    minimum-gas-prices: "0.0001uaura"
+    minimum-gas-prices: "0.001uaura"
 genesis:
-  chain_id: "aura-testnet"
+  chain_id: "serenity-testnet-001"
   app_state:
     aura:
       params:
-        max_supply: "100000000000000000000000000000"
+        max_supply: "1000000000000000"
     crisis:
       constant_fee:
         denom: uaura
@@ -35,15 +30,25 @@ genesis:
         min_deposit: [
          {
            "denom": "uaura",
-           "amount": "10000000"
+           "amount": "1000000"
          }
         ]
-        max_deposit_period: "600s"
+        max_deposit_period: "172800s"
       voting_params:
-        voting_period: "600s"
+        voting_period: "172800s"
     mint:
       params:
         mint_denom: "uaura"
+        inflation_rate_change: "0.080000000000000000"
+        inflation_max: "0.120000000000000000"
+        inflation_min: "0.040000000000000000"
+        blocks_per_year: "5373084"
     staking:
       params:
         bond_denom: "uaura"
+        unbonding_time: "86400s"
+        max_validators: 5
+    slashing:
+      params:
+        signed_blocks_window: "1000"
+        downtime_jail_duration: "600s"

@@ -353,6 +353,7 @@ func New(
 		appCodec, keys[stakingtypes.StoreKey], app.AccountKeeper, app.BankKeeper, app.GetSubspace(stakingtypes.ModuleName),
 	)
 
+	// TODO: review why MintKeeper consumes app.AuraKeeper (which maybe did nothing?)
 	app.MintKeeper = custommintkeeper.NewKeeper(
 		appCodec, keys[minttypes.StoreKey], app.GetSubspace(minttypes.ModuleName), &stakingKeeper,
 		app.AccountKeeper, app.BankKeeper, app.AuraKeeper, authtypes.FeeCollectorName,

@@ -13,8 +13,10 @@ const (
 	gasCostPerIteration = uint64(10)
 )
 
-var _ feegrant.FeeAllowanceI = (*AllowedContractAllowance)(nil)
-var _ types.UnpackInterfacesMessage = (*AllowedContractAllowance)(nil)
+var (
+	_ feegrant.FeeAllowanceI        = (*AllowedContractAllowance)(nil)
+	_ types.UnpackInterfacesMessage = (*AllowedContractAllowance)(nil)
+)
 
 // NewAllowedContractAllowance creates new filtered fee allowance.
 func NewAllowedContractAllowance(allowance feegrant.FeeAllowanceI, allowedAddress []string) (*AllowedContractAllowance, error) {

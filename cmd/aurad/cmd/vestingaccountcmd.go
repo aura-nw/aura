@@ -10,7 +10,6 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/cosmos/cosmos-sdk/server"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -26,7 +25,7 @@ const (
 	flagVestingPeriod = "period-length"
 	flagVestingAmt    = "total-vesting-amount"
 	flagVestingTime   = "total-vesting-time"
-	flagCliffTime 	  = "cliff-time"
+	flagCliffTime     = "cliff-time"
 	flagCliffAmount   = "cliff-amount"
 )
 
@@ -43,8 +42,8 @@ contain valid denominations. Accounts may optionally be supplied with vesting pa
 		Args: cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)
-			depCdc := clientCtx.JSONCodec
-			cdc := depCdc.(codec.Codec)
+			depCdc := clientCtx.Codec
+			cdc := depCdc
 
 			serverCtx := server.GetServerContextFromCmd(cmd)
 			config := serverCtx.Config
@@ -103,7 +102,6 @@ contain valid denominations. Accounts may optionally be supplied with vesting pa
 				return err
 			}
 
-
 			vestingAmt, err := sdk.ParseCoinsNormalized(vestingAmtStr)
 			if err != nil {
 				return fmt.Errorf("failed to parse vesting amount: %w", err)
@@ -130,12 +128,12 @@ contain valid denominations. Accounts may optionally be supplied with vesting pa
 				if vestingStart != 0 && periodLength != 0 && cliffAmt[0].Amount.LTE(vestingAmt[0].Amount) && cliffTime <= vestingTime {
 					vestingTime = vestingTime - cliffTime
 					var numPeriod int64 = vestingTime / periodLength
-					
-					//Currently, only allow to vest 1 type of coin per account
-					//Add 1 period if set cliff
+
+					// Currently, only allow to vest 1 type of coin per account
+					// Add 1 period if set cliff
 					var totalAmount sdk.Int = vestingAmt[0].Amount.Sub(cliffAmt[0].Amount)
 					var periodicAmount sdk.Int = totalAmount.QuoRaw(numPeriod)
-					if (cliffTime > 0 ) {
+					if cliffTime > 0 {
 						numPeriod = numPeriod + 1
 					}
 					periods := caculateVestingPeriods(vestingTime, periodLength, vestingAmtStr, numPeriod, totalAmount, periodicAmount, cliffTime, cliffAmtStr)
@@ -223,7 +221,7 @@ contain valid denominations. Accounts may optionally be supplied with vesting pa
 func caculateVestingPeriods(vestingTime int64, periodLength int64, vestingAmtStr string, numPeriod int64, totalAmount sdk.Int, periodicAmount sdk.Int, cliffTime int64, cliffAmtStr string) authvesting.Periods {
 	var counter int = 0
 	if vestingTime%periodLength != 0 {
-		//indivisible vesting time
+		// indivisible vesting time
 		periods := make([]authvesting.Period, numPeriod+1)
 		if cliffTime > 0 {
 			periods[0].Length = cliffTime
@@ -242,7 +240,7 @@ func caculateVestingPeriods(vestingTime int64, periodLength int64, vestingAmtStr
 		}
 		return periods
 	} else {
-		//divisible vesting time
+		// divisible vesting time
 		periods := make([]authvesting.Period, numPeriod)
 		if cliffTime > 0 {
 			periods[0].Length = cliffTime

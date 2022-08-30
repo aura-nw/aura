@@ -23,7 +23,7 @@ func main() {
 		// cmdOptions...,
 	)
 
-	//testnet cmd
+	// testnet cmd
 	rootCmd.AddCommand(
 		cmd.TestnetCmd(app.ModuleBasics, banktypes.GenesisBalancesIterator{}),
 	)

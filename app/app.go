@@ -644,7 +644,7 @@ func New(
 				SignModeHandler: encodingConfig.TxConfig.SignModeHandler(),
 				FeegrantKeeper:  app.FeeGrantKeeper,
 				SigGasConsumer:  ante.DefaultSigVerificationGasConsumer},
-			IBCKeeper:  app.IBCKeeper,
+			IBCKeeper:         app.IBCKeeper,
 			WasmConfig:        &wasmConfig,
 			TXCounterStoreKey: keys[wasm.StoreKey],
 			Codec:             app.appCodec,
@@ -837,7 +837,6 @@ func (app *App) setupUpgradeHandlers() {
 		v0_3_0.CreateUpgradeHandler(app.mm, app.configurator),
 	)
 
-	
 	// When a planned update height is reached, the old binary will panic
 	// writing on disk the height and name of the update that triggered it
 	// This will read that value, and execute the preparations for the upgrade.
@@ -853,8 +852,8 @@ func (app *App) setupUpgradeHandlers() {
 	var storeUpgrades *storetypes.StoreUpgrades
 
 	switch upgradeInfo.Name {
-		case v0_3_0.UpgradeName:
-			// no store upgrades in v0.3.0
+	case v0_3_0.UpgradeName:
+		// no store upgrades in v0.3.0
 	}
 
 	if storeUpgrades != nil {

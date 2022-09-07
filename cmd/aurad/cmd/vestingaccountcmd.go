@@ -26,7 +26,7 @@ const (
 	flagVestingPeriod = "period-length"
 	flagVestingAmt    = "total-vesting-amount"
 	flagVestingTime   = "total-vesting-time"
-	flagCliffTime 	  = "cliff-time"
+	flagCliffTime     = "cliff-time"
 	flagCliffAmount   = "cliff-amount"
 )
 
@@ -103,7 +103,6 @@ contain valid denominations. Accounts may optionally be supplied with vesting pa
 				return err
 			}
 
-
 			vestingAmt, err := sdk.ParseCoinsNormalized(vestingAmtStr)
 			if err != nil {
 				return fmt.Errorf("failed to parse vesting amount: %w", err)
@@ -130,12 +129,12 @@ contain valid denominations. Accounts may optionally be supplied with vesting pa
 				if vestingStart != 0 && periodLength != 0 && cliffAmt[0].Amount.LTE(vestingAmt[0].Amount) && cliffTime <= vestingTime {
 					vestingTime = vestingTime - cliffTime
 					var numPeriod int64 = vestingTime / periodLength
-					
+
 					//Currently, only allow to vest 1 type of coin per account
 					//Add 1 period if set cliff
 					var totalAmount sdk.Int = vestingAmt[0].Amount.Sub(cliffAmt[0].Amount)
 					var periodicAmount sdk.Int = totalAmount.QuoRaw(numPeriod)
-					if (cliffTime > 0 ) {
+					if cliffTime > 0 {
 						numPeriod = numPeriod + 1
 					}
 					periods := caculateVestingPeriods(vestingTime, periodLength, vestingAmtStr, numPeriod, totalAmount, periodicAmount, cliffTime, cliffAmtStr)

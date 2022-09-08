@@ -37,6 +37,13 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 ## Unreleased
 
+## [v0.3.1] - 2022-09-07
+
+### Improvements
+
+- Bump cosmos-sdk to version `v0.45.6`
+- Exclude whitelist balances when querying current supply by specific denom
+
 ## [v0.3.0] - 2022-08-09
 
 ### Features

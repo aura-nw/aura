@@ -113,6 +113,8 @@ import (
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
 	v0_3_0 "github.com/aura-nw/aura/app/upgrades/v0.3.0"
+	v0_3_1 "github.com/aura-nw/aura/app/upgrades/v0.3.1"
+
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 )
 
@@ -644,7 +646,7 @@ func New(
 				SignModeHandler: encodingConfig.TxConfig.SignModeHandler(),
 				FeegrantKeeper:  app.FeeGrantKeeper,
 				SigGasConsumer:  ante.DefaultSigVerificationGasConsumer},
-			IBCKeeper:  app.IBCKeeper,
+			IBCKeeper:         app.IBCKeeper,
 			WasmConfig:        &wasmConfig,
 			TXCounterStoreKey: keys[wasm.StoreKey],
 			Codec:             app.appCodec,
@@ -837,7 +839,12 @@ func (app *App) setupUpgradeHandlers() {
 		v0_3_0.CreateUpgradeHandler(app.mm, app.configurator),
 	)
 
-	
+	// v0.3.1 upgrade handler
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v0_3_1.UpgradeName,
+		v0_3_1.CreateUpgradeHandler(app.mm, app.configurator),
+	)
+
 	// When a planned update height is reached, the old binary will panic
 	// writing on disk the height and name of the update that triggered it
 	// This will read that value, and execute the preparations for the upgrade.
@@ -853,8 +860,11 @@ func (app *App) setupUpgradeHandlers() {
 	var storeUpgrades *storetypes.StoreUpgrades
 
 	switch upgradeInfo.Name {
-		case v0_3_0.UpgradeName:
-			// no store upgrades in v0.3.0
+	case v0_3_0.UpgradeName:
+		// no store upgrades in v0.3.0
+
+	case v0_3_1.UpgradeName:
+		// no store upgrades in v0.3.1
 	}
 
 	if storeUpgrades != nil {

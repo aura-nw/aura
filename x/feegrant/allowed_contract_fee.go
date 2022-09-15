@@ -48,7 +48,13 @@ func (a *AllowedContractAllowance) Accept(ctx sdk.Context, fee sdk.Coins, msgs [
 		return false, err
 	}
 
-	return allowance.Accept(ctx, fee, msgs)
+	remove, err = allowance.Accept(ctx, fee, msgs)
+	if err == nil && !remove {
+		if err = a.SetAllowance(allowance); err != nil {
+			return false, err
+		}
+	}
+	return remove, err
 }
 
 func (a *AllowedContractAllowance) ValidateBasic() error {
@@ -103,4 +109,15 @@ func (a *AllowedContractAllowance) allowedAddressesToMap(ctx sdk.Context) map[st
 	}
 
 	return addressesMap
+}
+
+// SetAllowance sets allowed fee allowance.
+func (a *AllowedContractAllowance) SetAllowance(allowance feegrant.FeeAllowanceI) error {
+	var err error
+	a.Allowance, err = types.NewAnyWithValue(allowance.(proto.Message))
+	if err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrPackAny, "cannot proto marshal %T", allowance)
+	}
+
+	return nil
 }

@@ -2,15 +2,17 @@ package app
 
 import (
 	"fmt"
+	custombank "github.com/aura-nw/aura/x/bank"
+	custombankkeeper "github.com/aura-nw/aura/x/bank/keeper"
+	customfeegrantmodule "github.com/aura-nw/aura/x/feegrant/module"
+	custommint "github.com/aura-nw/aura/x/mint"
+	custommintkeeper "github.com/aura-nw/aura/x/mint/keeper"
 	"io"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 
-	custombankkeeper "github.com/aura-nw/aura/custom/bank/keeper"
-	customfeegrantmodule "github.com/aura-nw/aura/custom/feegrant/module"
-	custommintkeeper "github.com/aura-nw/aura/custom/mint/keeper"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
@@ -106,9 +108,6 @@ import (
 	wasmclient "github.com/CosmWasm/wasmd/x/wasm/client"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 
-	custombank "github.com/aura-nw/aura/custom/bank"
-	// this line is used by starport scaffolding # stargate/app/moduleImport
-	custommint "github.com/aura-nw/aura/custom/mint"
 	"github.com/prometheus/client_golang/prometheus"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 

@@ -2,9 +2,9 @@ package mint
 
 import (
 	"errors"
+	custommint "github.com/aura-nw/aura/x/mint/keeper"
 	"time"
 
-	custommint "github.com/aura-nw/aura/custom/mint/keeper"
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/mint/types"

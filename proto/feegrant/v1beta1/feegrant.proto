@@ -1,5 +1,5 @@
 // Since: cosmos-sdk 0.43
-    syntax = "proto3";
+syntax = "proto3";
 package cosmos.feegrant.v1beta1;
 
 import "gogoproto/gogo.proto";
@@ -9,7 +9,7 @@ import "cosmos/base/v1beta1/coin.proto";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/duration.proto";
 
-option go_package = "github.com/aura-nw/aura/custom/feegrant";
+option go_package = "github.com/aura-nw/aura/x/feegrant";
 
 // AllowedContractAllowance creates allowance only for specified contract address.
 message AllowedContractAllowance {

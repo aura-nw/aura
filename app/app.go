@@ -2,15 +2,17 @@ package app
 
 import (
 	"fmt"
+	custombank "github.com/aura-nw/aura/x/bank"
+	custombankkeeper "github.com/aura-nw/aura/x/bank/keeper"
+	customfeegrantmodule "github.com/aura-nw/aura/x/feegrant/module"
+	custommint "github.com/aura-nw/aura/x/mint"
+	custommintkeeper "github.com/aura-nw/aura/x/mint/keeper"
 	"io"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 
-	custombankkeeper "github.com/aura-nw/aura/custom/bank/keeper"
-	customfeegrantmodule "github.com/aura-nw/aura/custom/feegrant/module"
-	custommintkeeper "github.com/aura-nw/aura/custom/mint/keeper"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
@@ -106,14 +108,12 @@ import (
 	wasmclient "github.com/CosmWasm/wasmd/x/wasm/client"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 
-	custombank "github.com/aura-nw/aura/custom/bank"
-	// this line is used by starport scaffolding # stargate/app/moduleImport
-	custommint "github.com/aura-nw/aura/custom/mint"
 	"github.com/prometheus/client_golang/prometheus"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
 	v0_3_0 "github.com/aura-nw/aura/app/upgrades/v0.3.0"
 	v0_3_1 "github.com/aura-nw/aura/app/upgrades/v0.3.1"
+	v0_3_2 "github.com/aura-nw/aura/app/upgrades/v0.3.2"
 
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 )
@@ -664,6 +664,17 @@ func New(
 	app.SetEndBlocker(app.EndBlocker)
 	app.setupUpgradeHandlers()
 	//app.RegisterUpgradeHandlers(configurator)
+
+	// add wasm snapshot
+	if manager := app.SnapshotManager(); manager != nil {
+		err = manager.RegisterExtensions(
+			wasmkeeper.NewWasmSnapshotter(app.CommitMultiStore(), &app.WasmKeeper),
+		)
+		if err != nil {
+			panic("failed to register snapshot extension: " + err.Error())
+		}
+	}
+
 	if loadLatest {
 		if err := app.LoadLatestVersion(); err != nil {
 			tmos.Exit(err.Error())
@@ -845,6 +856,12 @@ func (app *App) setupUpgradeHandlers() {
 		v0_3_1.CreateUpgradeHandler(app.mm, app.configurator),
 	)
 
+	// v0.3.2 upgrade handler
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v0_3_2.UpgradeName,
+		v0_3_2.CreateUpgradeHandler(app.mm, app.configurator),
+	)
+
 	// When a planned update height is reached, the old binary will panic
 	// writing on disk the height and name of the update that triggered it
 	// This will read that value, and execute the preparations for the upgrade.
@@ -865,6 +882,9 @@ func (app *App) setupUpgradeHandlers() {
 
 	case v0_3_1.UpgradeName:
 		// no store upgrades in v0.3.1
+
+	case v0_3_2.UpgradeName:
+		// no store upgrades in v0.3.2
 	}
 
 	if storeUpgrades != nil {

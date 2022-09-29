@@ -37,6 +37,13 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 ## Unreleased
 
+## [v0.3.2] - 2022-09-29
+
+### Bug Fixes
+
+- Fix state-sync mode does not sync wasm data.
+- Fix spend limit feature when using feegrant to allow user execute specific contract. 
+
 ## [v0.3.1] - 2022-09-07
 
 ### Improvements

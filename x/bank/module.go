@@ -1,7 +1,7 @@
 package bank
 
 import (
-	custombank "github.com/aura-nw/aura/custom/bank/keeper"
+	custombank "github.com/aura-nw/aura/x/bank/keeper"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/bank"

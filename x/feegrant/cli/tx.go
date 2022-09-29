@@ -2,7 +2,7 @@ package cli
 
 import (
 	"fmt"
-	customfeegrant "github.com/aura-nw/aura/custom/feegrant"
+	customfeegrant "github.com/aura-nw/aura/x/feegrant"
 	"strings"
 	"time"
 

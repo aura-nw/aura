@@ -1,7 +1,7 @@
 package keeper
 
 import (
-	custommint "github.com/aura-nw/aura/custom/mint/types"
+	custommint "github.com/aura-nw/aura/x/mint/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	mintkeeper "github.com/cosmos/cosmos-sdk/x/mint/keeper"

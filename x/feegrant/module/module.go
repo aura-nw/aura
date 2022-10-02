@@ -3,8 +3,8 @@ package module
 import (
 	"context"
 	"encoding/json"
-	customfeegrant "github.com/aura-nw/aura/custom/feegrant"
-	customcli "github.com/aura-nw/aura/custom/feegrant/cli"
+	customfeegrant "github.com/aura-nw/aura/x/feegrant"
+	customcli "github.com/aura-nw/aura/x/feegrant/cli"
 	sdkclient "github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"

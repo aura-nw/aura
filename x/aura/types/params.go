@@ -13,6 +13,7 @@ import (
 var (
 	MaxSupply              = []byte("MaxSupply")
 	ExcludeCirculatingAddr = []byte("ExcludeCirculatingAddr")
+	ClaimDuration          = []byte("ClaimDuration")
 )
 
 // Regex using check string is number
@@ -23,10 +24,11 @@ func ParamKeyTable() paramtypes.KeyTable {
 	return paramtypes.NewKeyTable().RegisterParamSet(&Params{})
 }
 
-func NewParams(maxSupply string, excludeCirculatingAddr []string) Params {
+func NewParams(maxSupply string, excludeCirculatingAddr []string, claimDuration uint32) Params {
 	return Params{
 		MaxSupply:              maxSupply,
 		ExcludeCirculatingAddr: excludeCirculatingAddr,
+		ClaimDuration:          claimDuration,
 	}
 }
 
@@ -35,12 +37,17 @@ func DefaultParams() Params {
 	return Params{
 		MaxSupply:              "1000000000000000000000000000",
 		ExcludeCirculatingAddr: []string{},
+		ClaimDuration:          86400000, // default 1 day
 	}
 }
 
 // validate params
 func (p Params) Validate() error {
 	if err := validateMaxSupply(p.MaxSupply); err != nil {
+		return err
+	}
+
+	if err := validateClaimDuration(p.ClaimDuration); err != nil {
 		return err
 	}
 
@@ -52,6 +59,7 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 	return paramtypes.ParamSetPairs{
 		paramtypes.NewParamSetPair(MaxSupply, &p.MaxSupply, validateMaxSupply),
 		paramtypes.NewParamSetPair(ExcludeCirculatingAddr, &p.ExcludeCirculatingAddr, validateExcludeCirculatingAddr),
+		paramtypes.NewParamSetPair(ClaimDuration, &p.ClaimDuration, validateClaimDuration),
 	}
 }
 
@@ -83,5 +91,9 @@ func validateExcludeCirculatingAddr(i interface{}) error {
 			return errors.New("exclude circulating address can not contain blank")
 		}
 	}
+	return nil
+}
+
+func validateClaimDuration(i interface{}) error {
 	return nil
 }

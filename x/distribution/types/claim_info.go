@@ -1,20 +1,19 @@
 package types
 
 import (
+	"fmt"
 	"time"
 )
 
 type ClaimInfo struct {
 	ClaimTime     time.Time `json:"claim_time"`
 	ClaimBlockNum int64     `json:"claim_block_num"`
-	Address       string    `json:"address"`
 }
 
 func (c ClaimInfo) Reset() {}
 
 func (c ClaimInfo) String() string {
-	//TODO implement me
-	panic("implement me")
+	return fmt.Sprintf("claim_time: %s - claim_block_num: %d", c.ClaimTime.String(), c.ClaimBlockNum)
 }
 
 func (c ClaimInfo) ProtoMessage() {}

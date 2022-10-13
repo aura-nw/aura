@@ -11,4 +11,5 @@ message Params {
   // max_supply defines the max supply of aura coin.
   string max_supply = 1 [(gogoproto.moretags) = "yaml:\"max_supply\""];
   repeated string exclude_circulating_addr = 2 [(gogoproto.moretags) = "yaml:\"exclude_circulating_addr\""];
+  uint32 claim_duration = 3 [(gogoproto.moretags) = "yaml:\"claim_duration\""];
 }

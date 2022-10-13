@@ -14,19 +14,19 @@ import (
 type Keeper struct {
 	distributionkeeper.Keeper
 
-	storeKey storetypes.StoreKey
-	cdc      codec.BinaryCodec
+	storeKey   storetypes.StoreKey
+	auraKeeper customdistrtypes.AuraKeeper
 }
 
 func NewKeeper(
 	cdc codec.BinaryCodec, key storetypes.StoreKey, paramSpace paramtypes.Subspace,
 	ak types.AccountKeeper, bk types.BankKeeper, sk types.StakingKeeper,
-	feeCollectorName string, blockedAddrs map[string]bool,
+	feeCollectorName string, blockedAddrs map[string]bool, auraKeeper customdistrtypes.AuraKeeper,
 ) Keeper {
 	return Keeper{
-		Keeper:   distributionkeeper.NewKeeper(cdc, key, paramSpace, ak, bk, sk, feeCollectorName, blockedAddrs),
-		storeKey: key,
-		cdc:      cdc,
+		Keeper:     distributionkeeper.NewKeeper(cdc, key, paramSpace, ak, bk, sk, feeCollectorName, blockedAddrs),
+		storeKey:   key,
+		auraKeeper: auraKeeper,
 	}
 }
 
@@ -46,28 +46,24 @@ func (k Keeper) WithdrawDelegationRewards(ctx sdk.Context, delAddr sdk.AccAddres
 }
 
 func (k Keeper) IsClaimReward(ctx sdk.Context, delAddr sdk.AccAddress) (customdistrtypes.ClaimInfo, error) {
-	currentHeight := ctx.BlockHeight()
+	blockTime := ctx.BlockTime()
 
 	claimInfo, err := k.GetClaimInfo(ctx, delAddr)
 	if err != nil {
 		return claimInfo, err
 	}
-	k.Logger(ctx).Error("IsClaimReward", "number", claimInfo.ClaimBlockNum)
 
 	if claimInfo.IsEmpty() {
-		claimInfo.Address = delAddr.String()
-		claimInfo.ClaimBlockNum = currentHeight
-		claimInfo.ClaimTime = ctx.BlockTime()
+		claimInfo.ClaimBlockNum = ctx.BlockHeight()
+		claimInfo.ClaimTime = blockTime
 		return claimInfo, nil
 	}
 
-	// TODO: hardcode number 5000
-	if currentHeight-claimInfo.ClaimBlockNum < 500 {
-		k.Logger(ctx).Error("IsClaimReward", "currentHeight", currentHeight)
+	if blockTime.Sub(claimInfo.ClaimTime).Milliseconds() < k.auraKeeper.GetClaimDuration(ctx) {
 		return customdistrtypes.ClaimInfo{}, errors.New("unable claim reward in the period")
 	}
 
-	claimInfo.ClaimBlockNum = currentHeight
+	claimInfo.ClaimBlockNum = ctx.BlockHeight()
 	claimInfo.ClaimTime = ctx.BlockTime()
 	return claimInfo, nil
 }

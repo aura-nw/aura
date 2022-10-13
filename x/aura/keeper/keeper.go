@@ -74,3 +74,9 @@ func (k Keeper) GetExcludeCirculatingAddr(ctx sdk.Context) []sdk.AccAddress {
 
 	return excludeAddr
 }
+
+// GetClaimDuration return claim reward duration
+func (k Keeper) GetClaimDuration(ctx sdk.Context) int64 {
+	params := k.GetParams(ctx)
+	return int64(params.ClaimDuration)
+}

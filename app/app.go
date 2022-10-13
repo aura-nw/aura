@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	wasmTypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	custombank "github.com/aura-nw/aura/x/bank"
 	custombankkeeper "github.com/aura-nw/aura/x/bank/keeper"
 	customfeegrantmodule "github.com/aura-nw/aura/x/feegrant/module"
@@ -230,11 +231,12 @@ var (
 )
 
 func init() {
+	wasmTypes.MaxWasmSize = 1200 * 1024
+	wasmTypes.MaxLabelSize = 1000
 	userHomeDir, err := os.UserHomeDir()
 	if err != nil {
 		panic(err)
 	}
-
 	DefaultNodeHome = filepath.Join(userHomeDir, "."+Name)
 }
 

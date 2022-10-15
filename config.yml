@@ -1,3 +1,4 @@
+version: 1
 accounts:
   - name: Hanoi
     coins: ["5000000000000uaura"]

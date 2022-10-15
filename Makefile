@@ -18,7 +18,7 @@ SDK_PACK := $(shell go list -m github.com/cosmos/cosmos-sdk | sed  's/ /\@/g')
 TM_VERSION := $(shell go list -m github.com/tendermint/tendermint | sed 's:.* ::')
 
 ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=aura \
-	-X github.com/cosmos/cosmos-sdk/version.ServerName=aurad \
+	-X github.com/cosmos/cosmos-sdk/version.AppName=aurad \
 	-X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) \
 	-X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT) \
 	-X github.com/tendermint/tendermint/version.TMCoreSemVer=$(TM_VERSION)

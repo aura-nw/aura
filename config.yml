@@ -1,4 +1,3 @@
-version: 1
 accounts:
   - name: Hanoi
     coins: ["5000000000000uaura"]
@@ -13,6 +12,9 @@ validator:
   staked: "100000000uaura"
   name: Danang
   staked: "100000000uaura"
+build:
+  binary: "aurad"
+  main: "cmd/aurad"
 client:
   openapi:
     path: "docs/static/openapi.yml"

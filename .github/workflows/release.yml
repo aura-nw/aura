@@ -31,10 +31,10 @@ jobs:
         
       - name: Prepare Release Variables 
         id: vars
-        uses: tendermint/starport/actions/release/vars@develop
+        uses: ignite/cli/actions/release/vars@develop
       
       - name: Issue Release Assets 
-        uses: tendermint/starport/actions/cli@develop
+        uses: ignite/cli/actions/cli@develop
         #if: ${{ steps.vars.outputs.should_release == 'true' }}
         with:
           args: chain build

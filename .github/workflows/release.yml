@@ -29,15 +29,13 @@ jobs:
         with:
           fetch-depth: 0
         
-      - name: Prepare Release Variables 
-        id: vars
-        uses: ignite/cli/actions/release/vars@develop
-      
-      - name: Issue Release Assets 
-        uses: ignite/cli/actions/cli@develop
-        #if: ${{ steps.vars.outputs.should_release == 'true' }}
+      - name: "install go"
+        uses: actions/setup-go@v3
         with:
-          args: chain build
+          go-version: '1.19'
+      
+      - name: "build binary"
+        run: go build -o aurad cmd/aurad/main.go
 
       - name: Delete the "latest" Release
         uses: dev-drprasad/delete-older-releases@v0.2.0
@@ -54,7 +52,6 @@ jobs:
         
       - name: Publish the Release
         uses: softprops/action-gh-release@v1
-        #if: ${{ steps.vars.outputs.should_release == 'true' }}
         with:
           tag_name: ${{ github.head_ref || github.ref_name }}_${{ env.VERSION }}
           prerelease: true

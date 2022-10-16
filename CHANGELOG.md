@@ -37,6 +37,16 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 ## Unreleased
 
+## [v0.3.3] - 2022-10-15
+
+### Improvements
+- Bump cosmos-sdk to version `v0.45.9`
+- Bump wasmd to version `v0.29.1`
+- Bump ibc-go to version `v3.3.0`
+
+### Bug Fixes
+- Apply dragonberry patch
+
 ## [v0.3.2] - 2022-09-29
 
 ### Bug Fixes

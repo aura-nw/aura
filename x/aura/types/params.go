@@ -19,6 +19,8 @@ var (
 // Regex using check string is number
 var digitCheck = regexp.MustCompile(`^[0-9]+$`)
 
+var DefaultClaimDuration uint32 = 86400000 // default 1 day
+
 // ParamTable for aura module.
 func ParamKeyTable() paramtypes.KeyTable {
 	return paramtypes.NewKeyTable().RegisterParamSet(&Params{})
@@ -37,7 +39,7 @@ func DefaultParams() Params {
 	return Params{
 		MaxSupply:              "1000000000000000000000000000",
 		ExcludeCirculatingAddr: []string{},
-		ClaimDuration:          86400000, // default 1 day
+		ClaimDuration:          DefaultClaimDuration, // default 1 day
 	}
 }
 

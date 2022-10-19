@@ -116,6 +116,7 @@ import (
 	v0_3_0 "github.com/aura-nw/aura/app/upgrades/v0.3.0"
 	v0_3_1 "github.com/aura-nw/aura/app/upgrades/v0.3.1"
 	v0_3_2 "github.com/aura-nw/aura/app/upgrades/v0.3.2"
+	v0_3_3 "github.com/aura-nw/aura/app/upgrades/v0.3.3"
 
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 )
@@ -865,6 +866,12 @@ func (app *App) setupUpgradeHandlers() {
 	)
 
 	// v0.3.3 upgrade handler
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v0_3_3.UpgradeName,
+		v0_3_3.CreateUpgradeHandler(app.mm, app.configurator),
+	)
+
+	// v0.3.4 upgrade handler
 	app.UpgradeKeeper.SetUpgradeHandler(
 		v0_3_4.UpgradeName,
 		v0_3_4.CreateUpgradeHandler(app.mm, app.configurator, app.AuraKeeper),

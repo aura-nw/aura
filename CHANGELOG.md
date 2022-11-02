@@ -37,6 +37,12 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 ## Unreleased
 
+## [v0.4.0] - 2022-11-02
+
+### Features
+- Add tx type and CLI command to create periodic vesting account 
+
+
 ## [v0.3.3] - 2022-10-15
 
 ### Improvements

@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"github.com/aura-nw/aura/app/utils"
 	custombank "github.com/aura-nw/aura/x/bank"
 	custombankkeeper "github.com/aura-nw/aura/x/bank/keeper"
 	customfeegrantmodule "github.com/aura-nw/aura/x/feegrant/module"
@@ -110,7 +111,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
-	
+
 	v0_3_0 "github.com/aura-nw/aura/app/upgrades/v0.3.0"
 	v0_3_1 "github.com/aura-nw/aura/app/upgrades/v0.3.1"
 	v0_3_2 "github.com/aura-nw/aura/app/upgrades/v0.3.2"
@@ -237,6 +238,8 @@ func init() {
 	}
 
 	DefaultNodeHome = filepath.Join(userHomeDir, "."+Name)
+
+	//RegisterDenoms()
 }
 
 // App extends an ABCI application, but with most of its parameters exported.
@@ -715,6 +718,8 @@ func (app *App) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abci.Res
 		panic(err)
 	}
 	app.UpgradeKeeper.SetModuleVersionMap(ctx, app.mm.GetVersionMap())
+	fmt.Println(ctx.ChainID())
+	utils.RegisterDenoms(ctx)
 	return app.mm.InitGenesis(ctx, app.appCodec, genesisState)
 }
 
@@ -868,7 +873,6 @@ func (app *App) setupUpgradeHandlers() {
 		v0_3_3.UpgradeName,
 		v0_3_3.CreateUpgradeHandler(app.mm, app.configurator),
 	)
-
 
 	// When a planned update height is reached, the old binary will panic
 	// writing on disk the height and name of the update that triggered it

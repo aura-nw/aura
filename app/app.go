@@ -239,7 +239,7 @@ func init() {
 
 	DefaultNodeHome = filepath.Join(userHomeDir, "."+Name)
 
-	//RegisterDenoms()
+	utils.RegisterDenoms()
 }
 
 // App extends an ABCI application, but with most of its parameters exported.
@@ -718,8 +718,6 @@ func (app *App) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abci.Res
 		panic(err)
 	}
 	app.UpgradeKeeper.SetModuleVersionMap(ctx, app.mm.GetVersionMap())
-	fmt.Println(ctx.ChainID())
-	utils.RegisterDenoms(ctx)
 	return app.mm.InitGenesis(ctx, app.appCodec, genesisState)
 }
 

@@ -5,7 +5,10 @@ import (
 	"strings"
 )
 
-const AuraExponent = 6
+const (
+	AuraExponent = 6
+	BaseCoinUnit = "uaura"
+)
 
 var (
 	// DevnetChainID defines the Aura chain ID for devnet
@@ -34,21 +37,8 @@ func IsEuphoria(chainID string) bool {
 }
 
 // RegisterDenoms registers token denoms.
-func RegisterDenoms(ctx sdk.Context) {
-	baseCoinUnit := "uaura"
-	chainId := ctx.ChainID()
-
-	if IsDevnet(chainId) {
-		baseCoinUnit = "utaura"
-	}
-	if IsSerenity(chainId) {
-		baseCoinUnit = "uaura"
-	}
-	if IsEuphoria(chainId) {
-		baseCoinUnit = "ueaura"
-	}
-
-	err := sdk.RegisterDenom(baseCoinUnit, sdk.NewDecWithPrec(1, AuraExponent))
+func RegisterDenoms() {
+	err := sdk.RegisterDenom(BaseCoinUnit, sdk.NewDecWithPrec(1, AuraExponent))
 	if err != nil {
 		panic(err)
 	}

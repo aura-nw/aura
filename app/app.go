@@ -32,7 +32,6 @@ import (
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	"github.com/cosmos/cosmos-sdk/x/auth/vesting"
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -116,7 +115,9 @@ import (
 	v0_3_1 "github.com/aura-nw/aura/app/upgrades/v0.3.1"
 	v0_3_2 "github.com/aura-nw/aura/app/upgrades/v0.3.2"
 	v0_3_3 "github.com/aura-nw/aura/app/upgrades/v0.3.3"
+	v0_4_0 "github.com/aura-nw/aura/app/upgrades/v0.4.0"
 
+	customvesting "github.com/aura-nw/aura/x/auth/vesting"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 )
 
@@ -206,7 +207,7 @@ var (
 		upgrade.AppModuleBasic{},
 		evidence.AppModuleBasic{},
 		transfer.AppModuleBasic{},
-		vesting.AppModuleBasic{},
+		customvesting.AppModuleBasic{},
 		auramodule.AppModuleBasic{},
 		wasm.AppModuleBasic{},
 		// this line is used by starport scaffolding # stargate/app/moduleBasic
@@ -506,7 +507,7 @@ func New(
 			encodingConfig.TxConfig,
 		),
 		auth.NewAppModule(appCodec, app.AccountKeeper, nil),
-		vesting.NewAppModule(app.AccountKeeper, app.BankKeeper),
+		customvesting.NewAppModule(app.AccountKeeper, app.BankKeeper),
 		custombank.NewAppModule(appCodec, app.BankKeeper, app.AccountKeeper),
 		capability.NewAppModule(appCodec, *app.CapabilityKeeper),
 		customfeegrantmodule.NewAppModule(appCodec, app.AccountKeeper, app.BankKeeper, app.FeeGrantKeeper, app.interfaceRegistry),
@@ -872,6 +873,12 @@ func (app *App) setupUpgradeHandlers() {
 		v0_3_3.CreateUpgradeHandler(app.mm, app.configurator),
 	)
 
+	// v0.4.0 upgrade handler
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v0_4_0.UpgradeName,
+		v0_4_0.CreateUpgradeHandler(app.mm, app.configurator),
+	)
+
 	// When a planned update height is reached, the old binary will panic
 	// writing on disk the height and name of the update that triggered it
 	// This will read that value, and execute the preparations for the upgrade.
@@ -897,6 +904,9 @@ func (app *App) setupUpgradeHandlers() {
 		// no store upgrades in v0.3.2
 
 	case v0_3_3.UpgradeName:
+		// no store upgrades in v0.3.2
+
+	case v0_4_0.UpgradeName:
 		// no store upgrades in v0.3.2
 	}
 

@@ -27,7 +27,6 @@ require (
 	github.com/ChainSafe/go-schnorrkel v0.0.0-20200405005733-88cbf1b4c40d // indirect
 	github.com/CosmWasm/wasmvm v1.1.1 // indirect
 	github.com/Workiva/go-datastructures v1.0.53 // indirect
-	github.com/armon/go-metrics v0.4.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bgentry/speakeasy v0.1.0 // indirect
 	github.com/btcsuite/btcd v0.22.1 // indirect
@@ -127,7 +126,10 @@ require (
 	nhooyr.io/websocket v1.8.6 // indirect
 )
 
-require github.com/regen-network/cosmos-proto v0.3.1
+require (
+	github.com/armon/go-metrics v0.4.0
+	github.com/regen-network/cosmos-proto v0.3.1
+)
 
 replace (
 	github.com/99designs/keyring => github.com/cosmos/keyring v1.1.7-0.20210622111912-ef00f8ac3d76

@@ -2,17 +2,17 @@ package app
 
 import (
 	"fmt"
-	"io"
-	"net/http"
-	"os"
-	"path/filepath"
-	"strings"
-
+	"github.com/aura-nw/aura/app/utils"
 	custombank "github.com/aura-nw/aura/x/bank"
 	custombankkeeper "github.com/aura-nw/aura/x/bank/keeper"
 	customfeegrantmodule "github.com/aura-nw/aura/x/feegrant/module"
 	custommint "github.com/aura-nw/aura/x/mint"
 	custommintkeeper "github.com/aura-nw/aura/x/mint/keeper"
+	"io"
+	"net/http"
+	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -239,6 +239,8 @@ func init() {
 	}
 
 	DefaultNodeHome = filepath.Join(userHomeDir, "."+Name)
+
+	utils.RegisterDenoms()
 }
 
 // App extends an ABCI application, but with most of its parameters exported.

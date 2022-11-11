@@ -2,17 +2,18 @@ package app
 
 import (
 	"fmt"
+	"io"
+	"net/http"
+	"os"
+	"path/filepath"
+	"strings"
+
 	"github.com/aura-nw/aura/app/utils"
 	custombank "github.com/aura-nw/aura/x/bank"
 	custombankkeeper "github.com/aura-nw/aura/x/bank/keeper"
 	customfeegrantmodule "github.com/aura-nw/aura/x/feegrant/module"
 	custommint "github.com/aura-nw/aura/x/mint"
 	custommintkeeper "github.com/aura-nw/aura/x/mint/keeper"
-	"io"
-	"net/http"
-	"os"
-	"path/filepath"
-	"strings"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -116,6 +117,7 @@ import (
 	v0_3_2 "github.com/aura-nw/aura/app/upgrades/v0.3.2"
 	v0_3_3 "github.com/aura-nw/aura/app/upgrades/v0.3.3"
 	v0_4_0 "github.com/aura-nw/aura/app/upgrades/v0.4.0"
+	v0_4_1 "github.com/aura-nw/aura/app/upgrades/v0.4.1"
 
 	customvesting "github.com/aura-nw/aura/x/auth/vesting"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
@@ -879,6 +881,12 @@ func (app *App) setupUpgradeHandlers() {
 		v0_4_0.CreateUpgradeHandler(app.mm, app.configurator),
 	)
 
+	// v0.4.1 upgrade handler
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v0_4_1.UpgradeName,
+		v0_4_1.CreateUpgradeHandler(app.mm, app.configurator),
+	)
+
 	// When a planned update height is reached, the old binary will panic
 	// writing on disk the height and name of the update that triggered it
 	// This will read that value, and execute the preparations for the upgrade.
@@ -904,10 +912,13 @@ func (app *App) setupUpgradeHandlers() {
 		// no store upgrades in v0.3.2
 
 	case v0_3_3.UpgradeName:
-		// no store upgrades in v0.3.2
+		// no store upgrades in v0.3.3
 
 	case v0_4_0.UpgradeName:
-		// no store upgrades in v0.3.2
+		// no store upgrades in v0.4.0
+
+	case v0_4_1.UpgradeName:
+		// no store upgrades in v0.4.1
 	}
 
 	if storeUpgrades != nil {

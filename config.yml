@@ -17,7 +17,7 @@ init:
   app:
     minimum-gas-prices: "0.001uaura"
 genesis:
-  chain_id: "serenity-testnet-001"
+  chain_id: "aura-testnet"
   app_state:
     aura:
       params:

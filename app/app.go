@@ -2,6 +2,8 @@ package app
 
 import (
 	"fmt"
+	"github.com/aura-nw/aura/x/epochs"
+	epochstypes "github.com/aura-nw/aura/x/epochs/types"
 	"io"
 	"net/http"
 	"os"
@@ -120,6 +122,7 @@ import (
 	v0_4_1 "github.com/aura-nw/aura/app/upgrades/v0.4.1"
 
 	customvesting "github.com/aura-nw/aura/x/auth/vesting"
+	epochskeeper "github.com/aura-nw/aura/x/epochs/keeper"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 )
 
@@ -286,7 +289,8 @@ type App struct {
 	ScopedTransferKeeper capabilitykeeper.ScopedKeeper
 	ScopedWasmKeeper     capabilitykeeper.ScopedKeeper
 
-	AuraKeeper auramodulekeeper.Keeper
+	AuraKeeper   auramodulekeeper.Keeper
+	EpochsKeeper epochskeeper.Keeper
 
 	// this line is used by starport scaffolding # stargate/app/keeperDeclaration
 
@@ -328,6 +332,7 @@ func New(
 		authzkeeper.StoreKey,
 		wasm.StoreKey,
 		// this line is used by starport scaffolding # stargate/app/storeKey
+		epochstypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
 	memKeys := sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
@@ -368,6 +373,8 @@ func New(
 		keys[auramoduletypes.MemStoreKey],
 		app.GetSubspace(auramoduletypes.ModuleName),
 	)
+
+	app.EpochsKeeper = epochskeeper.NewKeeper(keys[epochstypes.StoreKey])
 
 	app.BankKeeper = custombankkeeper.NewBaseKeeper(
 		appCodec, keys[banktypes.StoreKey], app.AccountKeeper, app.GetSubspace(banktypes.ModuleName), app.ModuleAccountAddrs(), app.AuraKeeper,
@@ -528,6 +535,7 @@ func New(
 		auraModule,
 		wasm.NewAppModule(appCodec, &app.WasmKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper),
 		// this line is used by starport scaffolding # stargate/app/appModule
+		epochs.NewAppModule(app.EpochsKeeper),
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
@@ -556,6 +564,7 @@ func New(
 		ibctransfertypes.ModuleName,
 		auramoduletypes.ModuleName,
 		wasm.ModuleName,
+		epochstypes.ModuleName,
 	)
 
 	app.mm.SetOrderEndBlockers(
@@ -580,6 +589,7 @@ func New(
 		ibctransfertypes.ModuleName,
 		auramoduletypes.ModuleName,
 		wasm.ModuleName,
+		epochstypes.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -610,6 +620,7 @@ func New(
 		upgradetypes.ModuleName,
 		wasm.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/initGenesis
+		epochstypes.ModuleName,
 	)
 
 	app.mm.SetOrderMigrations(
@@ -633,6 +644,7 @@ func New(
 		vestingtypes.ModuleName,
 		wasm.ModuleName,
 		crisistypes.ModuleName,
+		epochstypes.ModuleName,
 	)
 
 	app.mm.RegisterInvariants(&app.CrisisKeeper)

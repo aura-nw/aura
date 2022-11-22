@@ -31,6 +31,11 @@ func NewKeeper(
 	}
 }
 
+// Return the wrapper struct.
+func (k Keeper) Hooks() Hooks {
+	return Hooks{k}
+}
+
 func (k Keeper) GetSupply(ctx sdk.Context, denom string) sdk.Int {
 	return k.bankKeeper.GetSupply(ctx, denom).Amount
 }
@@ -38,24 +43,6 @@ func (k Keeper) GetSupply(ctx sdk.Context, denom string) sdk.Int {
 func (k Keeper) GetMaxSupply(ctx sdk.Context) string {
 	return k.auraKeeper.GetMaxSupply(ctx)
 }
-
-//func (k Keeper) GetExcludeCirculatingAddr(ctx sdk.Context) []sdk.AccAddress {
-//	return k.auraKeeper.GetExcludeCirculatingAddr(ctx)
-//}
-
-//func (k Keeper) GetExcludeCirculatingAmount(ctx sdk.Context, denom string) sdk.Coin {
-//	excludeAddrs := k.auraKeeper.GetExcludeCirculatingAddr(ctx)
-//	excludeAmount := sdk.NewInt64Coin(denom, 0)
-//	for _, addr := range excludeAddrs {
-//		k.Logger(ctx).Info("GetExcludeCirculatingAmount", "addr", addr.String())
-//		amount := k.bankKeeper.GetBalance(ctx, addr, denom)
-//		k.Logger(ctx).Info("GetExcludeCirculatingAmount", "amount", amount.Amount)
-//		k.Logger(ctx).Info("GetExcludeCirculatingAmount", "amountString", amount.String())
-//		excludeAmount = excludeAmount.Add(amount)
-//		k.Logger(ctx).Info("GetExcludeCirculatingAmount", "excludeAmount", excludeAmount.String())
-//	}
-//	return excludeAmount
-//}
 
 func (k Keeper) GetExcludeCirculatingAmount(ctx sdk.Context, denom string) sdk.Coin {
 	return k.bankKeeper.GetExcludeCirculatingAmount(ctx, denom)

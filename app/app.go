@@ -215,6 +215,7 @@ var (
 		customvesting.AppModuleBasic{},
 		auramodule.AppModuleBasic{},
 		wasm.AppModuleBasic{},
+		epochs.AppModuleBasic{},
 		// this line is used by starport scaffolding # stargate/app/moduleBasic
 	)
 
@@ -374,8 +375,6 @@ func New(
 		app.GetSubspace(auramoduletypes.ModuleName),
 	)
 
-	app.EpochsKeeper = epochskeeper.NewKeeper(keys[epochstypes.StoreKey])
-
 	app.BankKeeper = custombankkeeper.NewBaseKeeper(
 		appCodec, keys[banktypes.StoreKey], app.AccountKeeper, app.GetSubspace(banktypes.ModuleName), app.ModuleAccountAddrs(), app.AuraKeeper,
 	)
@@ -412,6 +411,12 @@ func New(
 	)
 
 	// ... other modules keepers
+	app.EpochsKeeper = epochskeeper.NewKeeper(keys[epochstypes.StoreKey])
+	app.EpochsKeeper.SetHooks(
+		epochstypes.NewMultiEpochHooks(
+			app.MintKeeper.Hooks(),
+		),
+	)
 
 	// Create IBC Keeper
 	app.IBCKeeper = ibckeeper.NewKeeper(

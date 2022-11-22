@@ -2,16 +2,18 @@ package app
 
 import (
 	"fmt"
-	custombank "github.com/aura-nw/aura/x/bank"
-	custombankkeeper "github.com/aura-nw/aura/x/bank/keeper"
-	customfeegrantmodule "github.com/aura-nw/aura/x/feegrant/module"
-	custommint "github.com/aura-nw/aura/x/mint"
-	custommintkeeper "github.com/aura-nw/aura/x/mint/keeper"
 	"io"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/aura-nw/aura/app/utils"
+	custombank "github.com/aura-nw/aura/x/bank"
+	custombankkeeper "github.com/aura-nw/aura/x/bank/keeper"
+	customfeegrantmodule "github.com/aura-nw/aura/x/feegrant/module"
+	custommint "github.com/aura-nw/aura/x/mint"
+	custommintkeeper "github.com/aura-nw/aura/x/mint/keeper"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -31,7 +33,6 @@ import (
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	"github.com/cosmos/cosmos-sdk/x/auth/vesting"
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -110,12 +111,15 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
-	
+
 	v0_3_0 "github.com/aura-nw/aura/app/upgrades/v0.3.0"
 	v0_3_1 "github.com/aura-nw/aura/app/upgrades/v0.3.1"
 	v0_3_2 "github.com/aura-nw/aura/app/upgrades/v0.3.2"
 	v0_3_3 "github.com/aura-nw/aura/app/upgrades/v0.3.3"
+	v0_4_0 "github.com/aura-nw/aura/app/upgrades/v0.4.0"
+	v0_4_1 "github.com/aura-nw/aura/app/upgrades/v0.4.1"
 
+	customvesting "github.com/aura-nw/aura/x/auth/vesting"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 )
 
@@ -205,7 +209,7 @@ var (
 		upgrade.AppModuleBasic{},
 		evidence.AppModuleBasic{},
 		transfer.AppModuleBasic{},
-		vesting.AppModuleBasic{},
+		customvesting.AppModuleBasic{},
 		auramodule.AppModuleBasic{},
 		wasm.AppModuleBasic{},
 		// this line is used by starport scaffolding # stargate/app/moduleBasic
@@ -237,6 +241,8 @@ func init() {
 	}
 
 	DefaultNodeHome = filepath.Join(userHomeDir, "."+Name)
+
+	utils.RegisterDenoms()
 }
 
 // App extends an ABCI application, but with most of its parameters exported.
@@ -503,7 +509,7 @@ func New(
 			encodingConfig.TxConfig,
 		),
 		auth.NewAppModule(appCodec, app.AccountKeeper, nil),
-		vesting.NewAppModule(app.AccountKeeper, app.BankKeeper),
+		customvesting.NewAppModule(app.AccountKeeper, app.BankKeeper),
 		custombank.NewAppModule(appCodec, app.BankKeeper, app.AccountKeeper),
 		capability.NewAppModule(appCodec, *app.CapabilityKeeper),
 		customfeegrantmodule.NewAppModule(appCodec, app.AccountKeeper, app.BankKeeper, app.FeeGrantKeeper, app.interfaceRegistry),
@@ -869,6 +875,17 @@ func (app *App) setupUpgradeHandlers() {
 		v0_3_3.CreateUpgradeHandler(app.mm, app.configurator),
 	)
 
+	// v0.4.0 upgrade handler
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v0_4_0.UpgradeName,
+		v0_4_0.CreateUpgradeHandler(app.mm, app.configurator),
+	)
+
+	// v0.4.1 upgrade handler
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v0_4_1.UpgradeName,
+		v0_4_1.CreateUpgradeHandler(app.mm, app.configurator),
+	)
 
 	// When a planned update height is reached, the old binary will panic
 	// writing on disk the height and name of the update that triggered it
@@ -895,7 +912,13 @@ func (app *App) setupUpgradeHandlers() {
 		// no store upgrades in v0.3.2
 
 	case v0_3_3.UpgradeName:
-		// no store upgrades in v0.3.2
+		// no store upgrades in v0.3.3
+
+	case v0_4_0.UpgradeName:
+		// no store upgrades in v0.4.0
+
+	case v0_4_1.UpgradeName:
+		// no store upgrades in v0.4.1
 	}
 
 	if storeUpgrades != nil {

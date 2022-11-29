@@ -120,7 +120,6 @@ require (
 	golang.org/x/term v0.2.0 // indirect
 	golang.org/x/text v0.4.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
-	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	nhooyr.io/websocket v1.8.6 // indirect
 )
@@ -129,6 +128,7 @@ require (
 	github.com/armon/go-metrics v0.4.0
 	github.com/golang/protobuf v1.5.2
 	github.com/regen-network/cosmos-proto v0.3.1
+	gopkg.in/yaml.v2 v2.4.0
 )
 
 replace (

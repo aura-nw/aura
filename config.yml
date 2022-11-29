@@ -39,10 +39,11 @@ genesis:
     mint:
       params:
         mint_denom: "uaura"
+        epoch_identifier: "hour"
         inflation_rate_change: "0.080000000000000000"
         inflation_max: "0.120000000000000000"
         inflation_min: "0.040000000000000000"
-        blocks_per_year: "5373084"
+        epochs_per_year: "365"
     staking:
       params:
         bond_denom: "uaura"

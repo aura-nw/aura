@@ -1,0 +1,60 @@
+syntax = "proto3";
+package aura.mint.v1beta1;
+
+option go_package = "github.com/aura-nw/aura/x/mint/types";
+
+import "gogoproto/gogo.proto";
+import "cosmos_proto/cosmos.proto";
+
+// Minter represents the minting state.
+message Minter {
+  // inflation represent current annual inflation rate
+  string inflation = 1
+  [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
+
+  // epoch_provisions represent rewards for the current epoch.
+  string epoch_provisions = 2 [
+    (gogoproto.moretags) = "yaml:\"epoch_provisions\"",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+}
+
+// Params holds parameters for the mint module.
+message Params {
+  option (gogoproto.goproto_stringer) = false;
+
+  // type of coin to mint
+  string mint_denom = 1;
+
+  // epoch_identifier mint epoch identifier e.g. (day, week).
+  string epoch_identifier = 2
+  [(gogoproto.moretags) = "yaml:\"epoch_identifier\""];
+
+  // maximum annual change in inflation rate
+  string inflation_rate_change = 3 [
+    (gogoproto.moretags) = "yaml:\"inflation_rate_change\"",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+  // maximum inflation rate
+  string inflation_max = 4 [
+    (gogoproto.moretags) = "yaml:\"inflation_max\"",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+  // minimum inflation rate
+  string inflation_min = 5 [
+    (gogoproto.moretags) = "yaml:\"inflation_min\"",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+  // goal of percent bonded atoms
+  string goal_bonded = 6 [
+    (gogoproto.moretags) = "yaml:\"goal_bonded\"",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+  // expected epochs per year
+  uint64 epochs_per_year = 7[(gogoproto.moretags) = "yaml:\"epochs_per_year\""];
+}

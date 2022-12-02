@@ -19,25 +19,21 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumb
 		if !ok {
 			panic(errors.New("panic convert max supply string to bigInt"))
 		}
-		k.Logger(ctx).Info("Get max supply from aura", "maxSupply", maxSupply.String())
 		currentSupply := k.GetSupply(ctx, params.GetMintDenom())
-		k.Logger(ctx).Info("Get current supply from network", "currentSupply", currentSupply.String())
-
 		excludeAmount := k.GetExcludeCirculatingAmount(ctx, params.GetMintDenom())
-		k.Logger(ctx).Info("Exclude Addr", "exclude_addr", excludeAmount.String())
 
 		if currentSupply.LT(maxSupply) {
 			// recalculate inflation rate
 			totalStakingSupply := k.CustomStakingTokenSupply(ctx, excludeAmount.Amount)
 			bondedRatio := k.CustomBondedRatio(ctx, excludeAmount.Amount)
-			k.Logger(ctx).Info("Value BondedRatio: ", "bondedRatio", bondedRatio.String())
 			minter.Inflation = minter.NextInflationRate(params, bondedRatio)
-			minter.EpochProvision(params, totalStakingSupply)
+			minter.EpochProvisions = minter.EpochProvision(params, totalStakingSupply)
 			k.SetMinter(ctx, minter)
 
 			// mint coins, update supply
 			mintedCoin := minter.EpochReward(params)
 			mintedCoins := sdk.NewCoins(mintedCoin)
+			k.Logger(ctx).Info("AfterEpochEnd", "mintedCoin", mintedCoin)
 
 			supplyNext := currentSupply.Add(mintedCoin.Amount)
 			if supplyNext.GT(maxSupply) {

@@ -69,8 +69,7 @@ func (m Minter) NextInflationRate(params Params, bondedRatio sdk.Dec) sdk.Dec {
 // EpochProvision returns the epoch provisions based on current total
 // supply and inflation rate.
 func (m Minter) EpochProvision(params Params, totalSupply sdk.Int) sdk.Dec {
-	m.EpochProvisions = m.Inflation.MulInt(totalSupply).QuoInt(sdk.NewInt(int64(params.EpochsPerYear)))
-	return m.EpochProvisions
+	return m.Inflation.MulInt(totalSupply).QuoInt(sdk.NewInt(int64(params.EpochsPerYear)))
 }
 
 // EpochReward returns the coin will mint new base on epoch provision

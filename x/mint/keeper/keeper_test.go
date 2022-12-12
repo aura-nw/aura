@@ -1,24 +1,23 @@
 package keeper_test
 
 import (
+	"testing"
+
 	"github.com/aura-nw/aura/utils/testutil"
 	"github.com/aura-nw/aura/x/mint"
 	"github.com/aura-nw/aura/x/mint/keeper"
 	minttestutil "github.com/aura-nw/aura/x/mint/testutil"
 	"github.com/aura-nw/aura/x/mint/types"
-	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authTypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/suite"
-	"testing"
 )
 
 type KeeperTestSuite struct {
 	suite.Suite
 
-	cdc codec.Codec
 	ctx sdk.Context
 
 	mintKeeper    keeper.Keeper
@@ -62,7 +61,7 @@ func TestKeeperTestSuite(t *testing.T) {
 	suite.Run(t, new(KeeperTestSuite))
 }
 
-func (s *KeeperTestSuite) TestCustomStaking() {
+func (s *KeeperTestSuite) TestStaking() {
 	stakingTokenSupply := sdk.NewIntFromUint64(1_000_000)
 	s.stakingKeeper.EXPECT().StakingTokenSupply(s.ctx).Return(stakingTokenSupply)
 

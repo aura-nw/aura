@@ -3,6 +3,8 @@ package module
 import (
 	"context"
 	"encoding/json"
+	"math/rand"
+
 	customfeegrant "github.com/aura-nw/aura/x/feegrant"
 	customcli "github.com/aura-nw/aura/x/feegrant/cli"
 	sdkclient "github.com/cosmos/cosmos-sdk/client"
@@ -20,7 +22,6 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 	abci "github.com/tendermint/tendermint/abci/types"
-	"math/rand"
 )
 
 var (
@@ -74,7 +75,7 @@ func (AppModuleBasic) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {
 func (a AppModuleBasic) ValidateGenesis(cdc codec.JSONCodec, config sdkclient.TxEncodingConfig, bz json.RawMessage) error {
 	var data feegrant.GenesisState
 	if err := cdc.UnmarshalJSON(bz, &data); err != nil {
-		sdkerrors.Wrapf(err, "failed to unmarshal %s genesis state", feegrant.ModuleName)
+		_ = sdkerrors.Wrapf(err, "failed to unmarshal %s genesis state", feegrant.ModuleName)
 	}
 
 	return feegrant.ValidateGenesis(data)
@@ -85,7 +86,7 @@ func (AppModuleBasic) RegisterRESTRoutes(ctx sdkclient.Context, rtr *mux.Router)
 
 // RegisterGRPCGatewayRoutes registers the gRPC Gateway routes for the feegrant module.
 func (AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx sdkclient.Context, mux *runtime.ServeMux) {
-	feegrant.RegisterQueryHandlerClient(context.Background(), mux, feegrant.NewQueryClient(clientCtx))
+	_ = feegrant.RegisterQueryHandlerClient(context.Background(), mux, feegrant.NewQueryClient(clientCtx))
 }
 
 // GetTxCmd returns the root tx command for the feegrant module.

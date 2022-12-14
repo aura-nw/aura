@@ -61,7 +61,7 @@ func TestKeeperTestSuite(t *testing.T) {
 	suite.Run(t, new(KeeperTestSuite))
 }
 
-func (s *KeeperTestSuite) TestStaking() {
+func (s *KeeperTestSuite) TestCustomStakingTokenSupply() {
 	stakingTokenSupply := sdk.NewIntFromUint64(1_000_000)
 	s.stakingKeeper.EXPECT().StakingTokenSupply(s.ctx).Return(stakingTokenSupply)
 
@@ -74,4 +74,19 @@ func (s *KeeperTestSuite) TestMintCoins() {
 	s.bankKeeper.EXPECT().MintCoins(s.ctx, types.ModuleName, coins).Return(nil)
 	s.Require().Equal(s.mintKeeper.MintCoins(s.ctx, sdk.NewCoins()), nil)
 	s.Require().Nil(s.mintKeeper.MintCoins(s.ctx, coins))
+}
+
+func (s *KeeperTestSuite) TestCustomBondedRatio() {
+	stakingSupply := sdk.NewIntFromUint64(1_000_000)
+	s.stakingKeeper.EXPECT().StakingTokenSupply(s.ctx).Return(stakingSupply).AnyTimes()
+
+	excludeAmount := sdk.NewIntFromUint64(100_000)
+
+	customStaking := s.mintKeeper.CustomStakingTokenSupply(s.ctx, excludeAmount)
+
+	bonded := sdk.NewIntFromUint64(500_000)
+	s.stakingKeeper.EXPECT().TotalBondedTokens(s.ctx).Return(bonded)
+
+	s.Require().Equal(s.mintKeeper.CustomBondedRatio(s.ctx, excludeAmount), bonded.ToDec().QuoInt(customStaking))
+
 }

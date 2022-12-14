@@ -41,3 +41,6 @@ go.sum: go.mod
 
 test:
 	@go test -mod=readonly $(PACKAGES)
+
+test-x:
+	@go test -mod=readonly $(PACKAGES)/x/...

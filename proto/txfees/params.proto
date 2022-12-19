@@ -1,0 +1,19 @@
+syntax = "proto3";
+package auranw.aura.txfees;
+
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/aura-nw/aura/x/txfees/types";
+
+// Params defines the parameters for the module.
+message Params {
+  option (gogoproto.goproto_stringer) = false;
+
+  // type of coin to pay fee
+  string fee_denom = 1;
+
+  // epoch_identifier mint epoch identifier e.g. (day, week).
+  string epoch_identifier = 2
+  [(gogoproto.moretags) = "yaml:\"epoch_identifier\""];
+  
+}

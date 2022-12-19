@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/aura-nw/aura/x/epochs"
 	epochstypes "github.com/aura-nw/aura/x/epochs/types"
+	"github.com/aura-nw/aura/x/txfees"
 	"io"
 	"net/http"
 	"os"
@@ -122,6 +123,8 @@ import (
 
 	customvesting "github.com/aura-nw/aura/x/auth/vesting"
 	epochskeeper "github.com/aura-nw/aura/x/epochs/keeper"
+	txfeeskeeper "github.com/aura-nw/aura/x/txfees/keeper"
+	txfeestypes "github.com/aura-nw/aura/x/txfees/types"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 )
 
@@ -216,6 +219,7 @@ var (
 		wasm.AppModuleBasic{},
 		epochs.AppModuleBasic{},
 		// this line is used by starport scaffolding # stargate/app/moduleBasic
+		txfees.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -229,6 +233,8 @@ var (
 		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
 		wasm.ModuleName:                {authtypes.Burner},
 		// this line is used by starport scaffolding # stargate/app/maccPerms
+		txfeestypes.ModuleName:         nil,
+		txfeestypes.TxFeeCollectorName: nil,
 	}
 )
 
@@ -291,6 +297,7 @@ type App struct {
 
 	AuraKeeper   auramodulekeeper.Keeper
 	EpochsKeeper epochskeeper.Keeper
+	TxFeesKeeper txfeeskeeper.Keeper
 
 	// this line is used by starport scaffolding # stargate/app/keeperDeclaration
 
@@ -333,6 +340,7 @@ func New(
 		wasm.StoreKey,
 		// this line is used by starport scaffolding # stargate/app/storeKey
 		epochstypes.StoreKey,
+		txfeestypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
 	memKeys := sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
@@ -410,10 +418,13 @@ func New(
 	)
 
 	// ... other modules keepers
+	app.TxFeesKeeper = txfeeskeeper.NewKeeper(appCodec, keys[txfeestypes.StoreKey], app.AccountKeeper,
+		app.BankKeeper, app.GetSubspace(txfeestypes.ModuleName))
 	app.EpochsKeeper = epochskeeper.NewKeeper(keys[epochstypes.StoreKey])
 	app.EpochsKeeper.SetHooks(
 		epochstypes.NewMultiEpochHooks(
 			app.MintKeeper.Hooks(),
+			app.TxFeesKeeper.Hooks(),
 		),
 	)
 
@@ -540,6 +551,7 @@ func New(
 		wasm.NewAppModule(appCodec, &app.WasmKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper),
 		// this line is used by starport scaffolding # stargate/app/appModule
 		epochs.NewAppModule(app.EpochsKeeper),
+		txfees.NewAppModule(appCodec, app.TxFeesKeeper, app.AccountKeeper, app.BankKeeper),
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
@@ -569,6 +581,7 @@ func New(
 		auramoduletypes.ModuleName,
 		wasm.ModuleName,
 		epochstypes.ModuleName,
+		txfeestypes.ModuleName,
 	)
 
 	app.mm.SetOrderEndBlockers(
@@ -594,6 +607,7 @@ func New(
 		auramoduletypes.ModuleName,
 		wasm.ModuleName,
 		epochstypes.ModuleName,
+		txfeestypes.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -625,6 +639,7 @@ func New(
 		wasm.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/initGenesis
 		epochstypes.ModuleName,
+		txfeestypes.ModuleName,
 	)
 
 	app.mm.SetOrderMigrations(
@@ -649,6 +664,7 @@ func New(
 		wasm.ModuleName,
 		crisistypes.ModuleName,
 		epochstypes.ModuleName,
+		txfeestypes.ModuleName,
 	)
 
 	app.mm.RegisterInvariants(&app.CrisisKeeper)
@@ -673,6 +689,7 @@ func New(
 			WasmConfig:        &wasmConfig,
 			TXCounterStoreKey: keys[wasm.StoreKey],
 			Codec:             app.appCodec,
+			TxFeesBank:        app.BankKeeper,
 		},
 	)
 	if err != nil {
@@ -862,6 +879,8 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(auramoduletypes.ModuleName)
 	paramsKeeper.Subspace(wasm.ModuleName)
 	// this line is used by starport scaffolding # stargate/app/paramSubspace
+	paramsKeeper.Subspace(epochstypes.ModuleName)
+	paramsKeeper.Subspace(txfeestypes.ModuleName)
 
 	return paramsKeeper
 }

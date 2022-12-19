@@ -93,7 +93,8 @@ func (suite *KeeperTestSuite) TestEpochInfoBeginBlockChanges() {
 			suite.SetupTest()
 			suite.Ctx = suite.Ctx.WithBlockHeight(1).WithBlockTime(block1Time)
 			initialEpoch := initializeBlankEpochInfoFields(test.initialEpochInfo, defaultIdentifier, defaultDuration)
-			suite.App.EpochsKeeper.AddEpochInfo(suite.Ctx, initialEpoch)
+			err := suite.App.EpochsKeeper.AddEpochInfo(suite.Ctx, initialEpoch)
+			suite.Require().Nil(err)
 			suite.App.EpochsKeeper.BeginBlocker(suite.Ctx)
 
 			// get sorted heights

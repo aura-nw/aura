@@ -1,4 +1,4 @@
-package v041
+package v042
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -7,7 +7,7 @@ import (
 )
 
 // next upgrade name
-const UpgradeName = "v0.4.1"
+const UpgradeName = "v0.4.2"
 
 func CreateUpgradeHandler(
 	mm *module.Manager,

@@ -21,10 +21,11 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumb
 		feeAddress := k.accountKeeper.GetModuleAddress(types.TxFeeCollectorName)
 		baseDenomCoins := sdk.NewCoins(k.bankKeeper.GetBalance(ctx, feeAddress, params.FeeDenom))
 		if !baseDenomCoins.IsZero() {
-			utils.ApplyFuncIfNoError(ctx, func(cacheCtx sdk.Context) error {
+			err := utils.ApplyFuncIfNoError(ctx, func(cacheCtx sdk.Context) error {
 				err := k.bankKeeper.SendCoinsFromModuleToModule(ctx, types.TxFeeCollectorName, types.FeeCollectorName, baseDenomCoins)
 				return err
 			})
+			return err
 		}
 	}
 	return nil

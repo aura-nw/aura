@@ -37,6 +37,11 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 ## Unreleased
 
+## [v0.4.2] - 2022-12-05
+
+### Improvements
+- Allow IBC clients to be recoverd after expired
+
 ## [v0.4.1] - 2022-11-11
 
 ### Improvements

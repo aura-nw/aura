@@ -33,16 +33,29 @@ Each validator has the opportunity to charge delegators commission on the reward
 
 At epoch `e`, suppose there are `n` blocks with `v` validators (it means have `n` validator is proposer, `n < v`) and collects a total `T` in fees.
 
+A validator participate in epoch has define by struct
+
+```
+ValidatorInfo {
+    proposer_blocks: int
+    active_blocks: int
+    power: int
+}
+    
+```
+
+So validator `Vi` is participate `Mi = active_blocks - proposer_blocks` times on epoch as non-proposer
+
 First a `communitytax` is applied. The fee go to the community pool (aka reserve pool). Reserve pool's funds can be allocated through governance to fund bouties and upgrades.
 
 Let `R` is reward for each validator received in the epoch `e`.
 
 We have:
 ```
-v*R + (baseproposerreward + bonusproposerreward)*R = T 
+n * [R + (baseproposerreward + bonusproposerreward) * R] + Sum(Mi) * R = T
 ```
 
-$$=>R = {T \over (v + baseproposerreward + bonusproposerreward)}$$
+$$=>R = {T \over [n + n*(baseproposerreward + bonusproposerreward) + Sum(Mi)]}$$
 
 So
 
@@ -66,6 +79,10 @@ So
 
     Delegator's reward: `NVR * (1-self_bonded) - commission`
 
+
+Notes:
+
+* All fees are distributed among all the bonded validators, in proportion to their consensus power.
 
 
 

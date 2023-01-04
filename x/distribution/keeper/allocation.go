@@ -11,11 +11,13 @@ import (
 // AllocateTokens handles distribution of the collected fees on one epoch
 func (k Keeper) AllocateTokens(
 	ctx sdk.Context,
-	numberBlocks int64,
-	totalPreviousPower int64,
-	bondedEpochVotes []types.EpochVoteInfo,
+	epochVotesInfo types.EpochVotesInfo,
 ) {
 	logger := k.Logger(ctx)
+
+	var totalPreviousPower int64
+	var parts int64
+	var numberBlocks int64
 
 	// get total fees in epoch
 	feeCollector := k.authKeeper.GetModuleAccount(ctx, authtypes.FeeCollectorName)
@@ -31,6 +33,12 @@ func (k Keeper) AllocateTokens(
 	}
 
 	feePool := k.GetFeePool(ctx)
+
+	for _, voteInfo := range epochVotesInfo.Validators {
+		totalPreviousPower += voteInfo.AccPower
+		parts += voteInfo.ActiveBlocks - voteInfo.ProposerBlocks
+		numberBlocks += voteInfo.ProposerBlocks
+	}
 	if totalPreviousPower == 0 {
 		logger.Info("No previous power")
 		feePool.CommunityPool = feePool.CommunityPool.Add(feesCollected...)
@@ -48,18 +56,18 @@ func (k Keeper) AllocateTokens(
 	feePool.CommunityPool = feePool.CommunityPool.Add(feeCommunityTax...)
 	feesCollectedAfterTax := feesCollected.Sub(feeCommunityTax)
 
-	var parts int64
-	for _, voteInfo := range bondedEpochVotes {
-		parts += voteInfo.ActiveBlocks - voteInfo.ProposerBlocks
-	}
-
 	dec := sdk.NewDec(parts).Add(sdk.NewDec(numberBlocks).Mul(proposerMultiplier.Add(sdk.OneDec())))
 	rewardUnit := feesCollectedAfterTax.MulDecTruncate(dec)
 
 	remaining := feesCollectedAfterTax
 
-	for _, voteInfo := range bondedEpochVotes {
-		validator := k.stakingKeeper.ValidatorByConsAddr(ctx, voteInfo.Validator.Address)
+	for _, voteInfo := range epochVotesInfo.Validators {
+		addr, err := sdk.ConsAddressFromBech32(voteInfo.ValidatorAddress)
+		if err != nil {
+			logger.Error("invalid address")
+			panic(err)
+		}
+		validator := k.stakingKeeper.ValidatorByConsAddr(ctx, addr)
 
 		// Rewards for proposer
 		proposerReward := rewardUnit.MulDecTruncate(proposerMultiplier.Add(sdk.OneDec())).MulDecTruncate(sdk.NewDec(voteInfo.ProposerBlocks))

@@ -1,5 +1,5 @@
 package types
 
 var (
-	EpochVoteInfoKey = []byte{0x11}
+	EpochVotesInfoKey = []byte{0x11}
 )

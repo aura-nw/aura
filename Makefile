@@ -44,3 +44,6 @@ test:
 
 test-x:
 	@go test -mod=readonly $(PACKAGES)/x/...
+
+lint:
+	@golangci-lint run -v

@@ -5,9 +5,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	distkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
-	disttypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
-	"github.com/tendermint/tendermint/libs/log"
 )
 
 type Keeper struct {
@@ -31,8 +29,4 @@ func NewKeeper(cdc codec.BinaryCodec, key sdk.StoreKey, paramSpace paramtypes.Su
 		storeKey:      key,
 		cdc:           cdc,
 	}
-}
-
-func (k Keeper) Logger(ctx sdk.Context) log.Logger {
-	return ctx.Logger().With("module", "x/"+disttypes.ModuleName)
 }

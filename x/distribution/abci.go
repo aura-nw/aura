@@ -31,7 +31,7 @@ func BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock, k customdistkeepe
 			}
 			if bytes.Equal(previousVote.Validator.Address, valAddr.Bytes()) {
 				proposerBlocks := lastVote.ProposerBlocks
-				if bytes.Compare(previousVote.Validator.Address, previousProposer.Bytes()) == 0 {
+				if bytes.Equal(previousVote.Validator.Address, previousProposer.Bytes()) {
 					proposerBlocks += 1
 				}
 				updateVote := types.ValidatorEpochVoteInfo{

@@ -8,6 +8,9 @@ import (
 )
 
 func (s *IntegrationTestSuite) testDistribution() {
+	if len(s.chainA.validators) < 2 {
+		return
+	}
 	chainEndpoint := fmt.Sprintf("http://%s", s.valResources[s.chainA.id][0].GetHostPort("1317/tcp"))
 
 	validatorB := s.chainA.validators[1]

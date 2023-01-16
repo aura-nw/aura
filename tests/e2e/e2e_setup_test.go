@@ -100,7 +100,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 }
 
 func (s *IntegrationTestSuite) TearDownSuite() {
-	if str := os.Getenv("GAIA_E2E_SKIP_CLEANUP"); len(str) > 0 {
+	if str := os.Getenv("AURA_E2E_SKIP_CLEANUP"); len(str) > 0 {
 		skipCleanup, err := strconv.ParseBool(str)
 		s.Require().NoError(err)
 
@@ -271,7 +271,7 @@ func (s *IntegrationTestSuite) initValidatorConfigs(c *chain) {
 
 		customAppTemplate := `
 ###############################################################################
-###                        Custom Gaia Configuration                        ###
+###                        Custom Aura Configuration                        ###
 ###############################################################################
 # bypass-min-fee-msg-types defines custom message types the operator may set that
 # will bypass minimum fee checks during CheckTx.
@@ -287,7 +287,7 @@ bypass-min-fee-msg-types = ["/cosmos.distribution.v1beta1.MsgWithdrawDelegatorRe
 
 // runValidators runs the validators in the chain
 func (s *IntegrationTestSuite) runValidators(c *chain, portOffset int) {
-	s.T().Logf("starting Gaia %s validator containers...", c.id)
+	s.T().Logf("starting Aurad %s validator containers...", c.id)
 
 	s.T().Logf("Number validators = %d", len(c.validators))
 
@@ -329,7 +329,7 @@ func (s *IntegrationTestSuite) runValidators(c *chain, portOffset int) {
 		s.Require().NoError(err)
 
 		s.valResources[c.id][i] = resource
-		s.T().Logf("started Gaia %s validator container: %s", c.id, resource.Container.ID)
+		s.T().Logf("started Aurad %s validator container: %s", c.id, resource.Container.ID)
 	}
 
 	rpcClient, err := rpchttp.New("tcp://localhost:26657", "/websocket")
@@ -341,8 +341,6 @@ func (s *IntegrationTestSuite) runValidators(c *chain, portOffset int) {
 			defer cancel()
 
 			status, err := rpcClient.Status(ctx)
-			s.T().Logf("Status:-----%v", status)
-			s.T().Logf("Error:-----%v", err)
 			if err != nil {
 				return false
 			}
@@ -356,7 +354,7 @@ func (s *IntegrationTestSuite) runValidators(c *chain, portOffset int) {
 		},
 		5*time.Minute,
 		time.Second,
-		"Gaia node failed to produce blocks",
+		"Aura node failed to produce blocks",
 	)
 }
 

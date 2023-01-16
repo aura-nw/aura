@@ -20,13 +20,13 @@ func (s *IntegrationTestSuite) testStaking() {
 
 	delegatorAddress := s.chainA.genesisAccounts[2].keyInfo.GetAddress().String()
 
-	fees := sdk.NewCoin(uatomDenom, sdk.NewInt(10))
+	fees := sdk.NewCoin(uauraDenom, sdk.NewInt(10))
 
 	delegationAmount := sdk.NewInt(500000000)
-	delegation := sdk.NewCoin(uatomDenom, delegationAmount) // 500 atom
+	delegation := sdk.NewCoin(uauraDenom, delegationAmount) // 500 atom
 
 	// Alice delegate uatom to Validator A
-	s.executeDelegate(s.chainA, 0, delegation.String(), validatorAddressA, delegatorAddress, gaiaHomePath, fees.String())
+	s.executeDelegate(s.chainA, 0, delegation.String(), validatorAddressA, delegatorAddress, auraHomePath, fees.String())
 
 	// Validate delegation successful
 	s.Require().Eventually(
@@ -42,7 +42,7 @@ func (s *IntegrationTestSuite) testStaking() {
 	)
 
 	// Alice re-delegate uatom from Validator A to Validator B
-	s.executeRedelegate(s.chainA, 0, delegation.String(), validatorAddressA, validatorAddressB, delegatorAddress, gaiaHomePath, fees.String())
+	s.executeRedelegate(s.chainA, 0, delegation.String(), validatorAddressA, validatorAddressB, delegatorAddress, auraHomePath, fees.String())
 
 	// Validate re-delegation successful
 	s.Require().Eventually(

@@ -53,7 +53,7 @@ func applyOptions(chainID string, options []flagOption) map[string]interface{} {
 		flagBroadcastMode:  "sync",
 		flagGasAdjustment:  "1.5",
 		flagChainID:        chainID,
-		flagHome:           gaiaHomePath,
+		flagHome:           auraHomePath,
 		flagFees:           standardFees.String(),
 	}
 	for _, apply := range options {
@@ -73,7 +73,7 @@ func (s *IntegrationTestSuite) execEncode(
 
 	s.T().Logf("%s - Executing gaiad encoding with %v", c.id, txPath)
 	gaiaCommand := []string{
-		gaiadBinary,
+		auradBinary,
 		txCommand,
 		"encode",
 		txPath,
@@ -105,7 +105,7 @@ func (s *IntegrationTestSuite) execDecode(
 
 	s.T().Logf("%s - Executing gaiad decoding with %v", c.id, txPath)
 	gaiaCommand := []string{
-		gaiadBinary,
+		auradBinary,
 		txCommand,
 		"decode",
 		txPath,
@@ -138,7 +138,7 @@ func (s *IntegrationTestSuite) execVestingTx(
 
 	s.T().Logf("%s - Executing gaiad %s with %v", c.id, method, args)
 	gaiaCommand := []string{
-		gaiadBinary,
+		auradBinary,
 		txCommand,
 		vestingtypes.ModuleName,
 		method,
@@ -175,7 +175,7 @@ func (s *IntegrationTestSuite) execUnjail(
 
 	s.T().Logf("Executing gaiad slashing unjail %s with options: %v", c.id, opt)
 	gaiaCommand := []string{
-		gaiadBinary,
+		auradBinary,
 		txCommand,
 		slashingtypes.ModuleName,
 		"unjail",
@@ -201,7 +201,7 @@ func (s *IntegrationTestSuite) execFeeGrant(c *chain, valIdx int, granter, grant
 	s.T().Logf("granting %s fee from %s on chain %s", grantee, granter, c.id)
 
 	gaiaCommand := []string{
-		gaiadBinary,
+		auradBinary,
 		txCommand,
 		feegrant.ModuleName,
 		"grant",
@@ -226,7 +226,7 @@ func (s *IntegrationTestSuite) execFeeGrantRevoke(c *chain, valIdx int, granter,
 	s.T().Logf("revoking %s fee grant from %s on chain %s", grantee, granter, c.id)
 
 	gaiaCommand := []string{
-		gaiadBinary,
+		auradBinary,
 		txCommand,
 		feegrant.ModuleName,
 		"revoke",
@@ -262,7 +262,7 @@ func (s *IntegrationTestSuite) execBankSend(
 	s.T().Logf("sending %s tokens from %s to %s on chain %s", amt, from, to, c.id)
 
 	gaiaCommand := []string{
-		gaiadBinary,
+		auradBinary,
 		txCommand,
 		banktypes.ModuleName,
 		"send",
@@ -313,7 +313,7 @@ func (s *IntegrationTestSuite) execWithdrawAllRewards(c *chain, valIdx int, paye
 	defer cancel()
 
 	gaiaCommand := []string{
-		gaiadBinary,
+		auradBinary,
 		txCommand,
 		distributiontypes.ModuleName,
 		"withdraw-all-rewards",
@@ -335,7 +335,7 @@ func (s *IntegrationTestSuite) execDistributionFundCommunityPool(c *chain, valId
 	s.T().Logf("Executing gaiad tx distribution fund-community-pool on chain %s", c.id)
 
 	gaiaCommand := []string{
-		gaiadBinary,
+		auradBinary,
 		txCommand,
 		distributiontypes.ModuleName,
 		"fund-community-pool",
@@ -357,7 +357,7 @@ func (s *IntegrationTestSuite) runGovExec(c *chain, valIdx int, submitterAddr, g
 	defer cancel()
 
 	gaiaCommand := []string{
-		gaiadBinary,
+		auradBinary,
 		txCommand,
 		govtypes.ModuleName,
 		govCommand,
@@ -384,7 +384,7 @@ func (s *IntegrationTestSuite) executeGKeysAddCommand(c *chain, valIdx int, name
 	defer cancel()
 
 	gaiaCommand := []string{
-		gaiadBinary,
+		auradBinary,
 		keysCommand,
 		"add",
 		name,
@@ -409,7 +409,7 @@ func (s *IntegrationTestSuite) executeKeysList(c *chain, valIdx int, home string
 	defer cancel()
 
 	gaiaCommand := []string{
-		gaiadBinary,
+		auradBinary,
 		keysCommand,
 		"list",
 		"--keyring-backend=test",
@@ -429,7 +429,7 @@ func (s *IntegrationTestSuite) executeDelegate(c *chain, valIdx int, amount, val
 	s.T().Logf("Executing gaiad tx staking delegate %s", c.id)
 
 	gaiaCommand := []string{
-		gaiadBinary,
+		auradBinary,
 		txCommand,
 		stakingtypes.ModuleName,
 		"delegate",
@@ -458,7 +458,7 @@ func (s *IntegrationTestSuite) executeRedelegate(c *chain, valIdx int, amount, o
 	s.T().Logf("Executing gaiad tx staking redelegate %s", c.id)
 
 	gaiaCommand := []string{
-		gaiadBinary,
+		auradBinary,
 		txCommand,
 		stakingtypes.ModuleName,
 		"redelegate",
@@ -490,7 +490,7 @@ func (s *IntegrationTestSuite) getLatestBlockHeight(c *chain, valIdx int) int {
 	}
 
 	var currentHeight int
-	gaiaCommand := []string{gaiadBinary, "status"}
+	gaiaCommand := []string{auradBinary, "status"}
 	s.executeGaiaTxCommand(ctx, c, gaiaCommand, valIdx, func(stdOut []byte, stdErr []byte) bool {
 		var (
 			err   error
@@ -507,7 +507,7 @@ func (s *IntegrationTestSuite) getLatestBlockHeight(c *chain, valIdx int) int {
 func (s *IntegrationTestSuite) verifyBalanceChange(endpoint string, expectedAmount sdk.Coin, recipientAddress string) {
 	s.Require().Eventually(
 		func() bool {
-			afterAtomBalance, err := getSpecificBalance(endpoint, recipientAddress, uatomDenom)
+			afterAtomBalance, err := getSpecificBalance(endpoint, recipientAddress, uauraDenom)
 			s.Require().NoError(err)
 
 			return afterAtomBalance.IsEqual(expectedAmount)
@@ -530,7 +530,7 @@ func (s *IntegrationTestSuite) execSetWithdrawAddress(
 
 	s.T().Logf("Setting distribution withdrawal address on chain %s for %s to %s", c.id, delegatorAddress, newWithdrawalAddress)
 	gaiaCommand := []string{
-		gaiadBinary,
+		auradBinary,
 		txCommand,
 		distributiontypes.ModuleName,
 		"set-withdraw-addr",
@@ -560,7 +560,7 @@ func (s *IntegrationTestSuite) execWithdrawReward(
 
 	s.T().Logf("Withdrawing distribution rewards on chain %s for delegator %s from %s validator", c.id, delegatorAddress, validatorAddress)
 	gaiaCommand := []string{
-		gaiadBinary,
+		auradBinary,
 		txCommand,
 		distributiontypes.ModuleName,
 		"withdraw-rewards",

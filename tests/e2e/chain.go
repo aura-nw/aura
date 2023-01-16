@@ -37,11 +37,9 @@ func init() {
 }
 
 type chain struct {
-	dataDir    string
-	id         string
-	validators []*validator
-	accounts   []*account //nolint:unused
-	// initial accounts in genesis
+	dataDir                string
+	id                     string
+	validators             []*validator
 	genesisAccounts        []*account
 	genesisVestingAccounts map[string]sdk.AccAddress
 }
@@ -119,6 +117,6 @@ func (c *chain) createValidator(index int) *validator {
 	return &validator{
 		chain:   c,
 		index:   index,
-		moniker: fmt.Sprintf("%s-gaia-%d", c.id, index),
+		moniker: fmt.Sprintf("%s-aurad-%d", c.id, index),
 	}
 }

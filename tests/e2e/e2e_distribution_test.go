@@ -18,15 +18,15 @@ func (s *IntegrationTestSuite) testDistribution() {
 	delegatorAddress := s.chainA.genesisAccounts[2].keyInfo.GetAddress().String()
 
 	newWithdrawalAddress := s.chainA.genesisAccounts[3].keyInfo.GetAddress().String()
-	fees := sdk.NewCoin(uatomDenom, sdk.NewInt(1000))
+	fees := sdk.NewCoin(uauraDenom, sdk.NewInt(1000))
 
-	beforeBalance, err := getSpecificBalance(chainEndpoint, newWithdrawalAddress, uatomDenom)
+	beforeBalance, err := getSpecificBalance(chainEndpoint, newWithdrawalAddress, uauraDenom)
 	s.Require().NoError(err)
 	if beforeBalance.IsNil() {
-		beforeBalance = sdk.NewCoin(uatomDenom, sdk.NewInt(0))
+		beforeBalance = sdk.NewCoin(uauraDenom, sdk.NewInt(0))
 	}
 
-	s.execSetWithdrawAddress(s.chainA, 0, fees.String(), delegatorAddress, newWithdrawalAddress, gaiaHomePath)
+	s.execSetWithdrawAddress(s.chainA, 0, fees.String(), delegatorAddress, newWithdrawalAddress, auraHomePath)
 
 	// Verify
 	s.Require().Eventually(
@@ -40,10 +40,10 @@ func (s *IntegrationTestSuite) testDistribution() {
 		5*time.Second,
 	)
 
-	s.execWithdrawReward(s.chainA, 0, delegatorAddress, valOperAddressA, gaiaHomePath)
+	s.execWithdrawReward(s.chainA, 0, delegatorAddress, valOperAddressA, auraHomePath)
 	s.Require().Eventually(
 		func() bool {
-			afterBalance, err := getSpecificBalance(chainEndpoint, newWithdrawalAddress, uatomDenom)
+			afterBalance, err := getSpecificBalance(chainEndpoint, newWithdrawalAddress, uauraDenom)
 			s.Require().NoError(err)
 
 			return afterBalance.IsGTE(beforeBalance)
@@ -67,13 +67,13 @@ func (s *IntegrationTestSuite) fundCommunityPool() {
 	beforeDistUatomBalance, _ := getSpecificBalance(chainAAPIEndpoint, distModuleAddress, tokenAmount.Denom)
 	if beforeDistUatomBalance.IsNil() {
 		// Set balance to 0 if previous balance does not exist
-		beforeDistUatomBalance = sdk.NewInt64Coin(uatomDenom, 0)
+		beforeDistUatomBalance = sdk.NewInt64Coin(uauraDenom, 0)
 	}
 
 	s.execDistributionFundCommunityPool(s.chainA, 0, sender.String(), tokenAmount.String(), standardFees.String())
 
 	// there are still tokens being added to the community pool through block production rewards but they should be less than 500 tokens
-	marginOfErrorForBlockReward := sdk.NewInt64Coin(uatomDenom, 500)
+	marginOfErrorForBlockReward := sdk.NewInt64Coin(uauraDenom, 500)
 
 	s.Require().Eventually(
 		func() bool {

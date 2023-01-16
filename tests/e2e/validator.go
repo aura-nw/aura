@@ -185,7 +185,11 @@ func (c *chain) addAccountFromMnemonic(counts int) error {
 		if err != nil {
 			return err
 		}
+		sdk.GetConfig().SetBech32PrefixForAccount("aura", "aurapub")
+		sdk.GetConfig().SetBech32PrefixForValidator("auravaloper", "auravaloperpub")
+		sdk.GetConfig().SetBech32PrefixForConsensusNode("auravalcons", "auravalconspub")
 		info, err := kb.NewAccount(name, mnemonic, "", sdk.FullFundraiserPath, algo)
+
 		if err != nil {
 			return err
 		}

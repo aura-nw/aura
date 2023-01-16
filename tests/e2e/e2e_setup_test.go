@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/davecgh/go-spew/spew"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -33,27 +32,25 @@ import (
 )
 
 const (
-	gaiadBinary         = "/usr/bin/aurad"
-	txCommand           = "tx"
-	keysCommand         = "keys"
-	gaiaHomePath        = "/root/.aura"
-	uatomDenom          = "uatom"
-	initBalanceStr      = "110000000000uaura,100000000000000000uaura,100000000000000000uaura"
-	minGasPrice         = "0.00001"
-	initialGlobalFeeAmt = "0.00001"
-	gas                 = 200000
-	numberOfEvidences   = 10
+	auradBinary  = "/usr/bin/aurad"
+	txCommand    = "tx"
+	keysCommand  = "keys"
+	auraHomePath = "/root/.aura"
+	uauraDenom   = "uaura"
+	minGasPrice  = "0.00001"
+	gas          = 200000
 )
 
 var (
-	gaiaConfigPath    = filepath.Join(gaiaHomePath, "config")
+	auraConfigPath    = filepath.Join(auraHomePath, "config")
 	stakingAmount     = sdk.NewInt(100000000000)
-	stakingAmountCoin = sdk.NewCoin(uatomDenom, stakingAmount)
-	tokenAmount       = sdk.NewCoin(uatomDenom, sdk.NewInt(3300000000)) // 3,300uatom
-	standardFees      = sdk.NewCoin(uatomDenom, sdk.NewInt(330000))     // 0.33uatom
-	depositAmount     = sdk.NewCoin(uatomDenom, sdk.NewInt(10000000))   // 10uatom
+	stakingAmountCoin = sdk.NewCoin(uauraDenom, stakingAmount)
+	tokenAmount       = sdk.NewCoin(uauraDenom, sdk.NewInt(3300000000)) // 3,300uatom
+	standardFees      = sdk.NewCoin(uauraDenom, sdk.NewInt(330000))     // 0.33uatom
+	depositAmount     = sdk.NewCoin(uauraDenom, sdk.NewInt(10000000))   // 10uatom
 	distModuleAddress = authtypes.NewModuleAddress(distrtypes.ModuleName).String()
 	proposalCounter   = 0
+	initBalanceStr    = "100000000000000000uaura"
 )
 
 type IntegrationTestSuite struct {
@@ -131,15 +128,10 @@ func (s *IntegrationTestSuite) TearDownSuite() {
 
 func (s *IntegrationTestSuite) initNodes(c *chain) {
 	s.Require().NoError(c.createAndInitValidators(1))
-	/* Adding 4 accounts to val0 local directory
-	c.genesisAccounts[0]: Relayer Wallet
-	c.genesisAccounts[1]: ICA Owner
-	c.genesisAccounts[2]: Test Account 1
-	c.genesisAccounts[3]: Test Account 2
-	*/
 	s.Require().NoError(c.addAccountFromMnemonic(4))
 	// Initialize a genesis file for the first validator
 	val0ConfigDir := c.validators[0].configDir()
+
 	var addrAll []sdk.AccAddress
 	for _, val := range c.validators {
 		address := val.keyInfo.GetAddress()
@@ -150,6 +142,9 @@ func (s *IntegrationTestSuite) initNodes(c *chain) {
 		acctAddr := addr.keyInfo.GetAddress()
 		addrAll = append(addrAll, acctAddr)
 	}
+
+	err := modifyGenesis(val0ConfigDir, "", initBalanceStr, addrAll, uauraDenom)
+	s.Require().NoError(err)
 
 	// copy the genesis file to the remaining validators
 	for _, val := range c.validators[1:] {
@@ -177,25 +172,6 @@ func (s *IntegrationTestSuite) initGenesis(c *chain) {
 	appGenState, genDoc, err := genutiltypes.GenesisStateFromGenFile(genFilePath)
 	s.Require().NoError(err)
 
-	//var evidenceGenState evidencetypes.GenesisState
-	//s.Require().NoError(cdc.UnmarshalJSON(appGenState[evidencetypes.ModuleName], &evidenceGenState))
-	//
-	//evidenceGenState.Evidence = make([]*codectypes.Any, numberOfEvidences)
-	//for i := range evidenceGenState.Evidence {
-	//	pk := ed25519.GenPrivKey()
-	//	evidence := &evidencetypes.Equivocation{
-	//		Height:           1,
-	//		Power:            100,
-	//		Time:             time.Now().UTC(),
-	//		ConsensusAddress: sdk.ConsAddress(pk.PubKey().Address().Bytes()).String(),
-	//	}
-	//	evidenceGenState.Evidence[i], err = codectypes.NewAnyWithValue(evidence)
-	//	s.Require().NoError(err)
-	//}
-	//
-	//appGenState[evidencetypes.ModuleName], err = cdc.MarshalJSON(&evidenceGenState)
-	//s.Require().NoError(err)
-
 	var genUtilGenState genutiltypes.GenesisState
 	s.Require().NoError(cdc.UnmarshalJSON(appGenState[genutiltypes.ModuleName], &genUtilGenState))
 
@@ -221,9 +197,6 @@ func (s *IntegrationTestSuite) initGenesis(c *chain) {
 
 	genDoc.AppState, err = json.MarshalIndent(appGenState, "", "  ")
 	s.Require().NoError(err)
-
-	s.T().Logf("genDoc")
-	spew.Dump(genDoc)
 
 	bz, err := tmjson.MarshalIndent(genDoc, "", "  ")
 	s.Require().NoError(err)
@@ -282,7 +255,7 @@ func (s *IntegrationTestSuite) initValidatorConfigs(c *chain) {
 
 		appConfig := srvconfig.DefaultConfig()
 		appConfig.API.Enable = true
-		appConfig.MinGasPrices = fmt.Sprintf("%s%s", minGasPrice, uatomDenom)
+		appConfig.MinGasPrices = fmt.Sprintf("%s%s", minGasPrice, uauraDenom)
 
 		//	 srvconfig.WriteConfigFile(appCfgPath, appConfig)
 		appCustomConfig := params.CustomAppConfig{
@@ -325,7 +298,7 @@ func (s *IntegrationTestSuite) runValidators(c *chain, portOffset int) {
 			Name:      val.instanceName(),
 			NetworkID: s.dkrNet.Network.ID,
 			Mounts: []string{
-				fmt.Sprintf("%s/:%s", val.configDir(), gaiaHomePath),
+				fmt.Sprintf("%s/:%s", val.configDir(), auraHomePath),
 			},
 			Repository: "tiennv83/aurade2e",
 			Tag:        "latest",

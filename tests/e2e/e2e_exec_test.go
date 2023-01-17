@@ -593,7 +593,7 @@ func (s *IntegrationTestSuite) executeAuraTxCommand(ctx context.Context, c *chai
 		AttachStdout: true,
 		AttachStderr: true,
 		Container:    s.valResources[c.id][valIdx].Container.ID,
-		User:         "nonroot",
+		User:         "root",
 		Cmd:          auraCommand,
 	})
 	s.Require().NoError(err)

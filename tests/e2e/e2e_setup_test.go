@@ -32,13 +32,15 @@ import (
 )
 
 const (
-	auradBinary  = "/usr/bin/aurad"
-	txCommand    = "tx"
-	keysCommand  = "keys"
-	auraHomePath = "/root/.aura"
-	uauraDenom   = "uaura"
-	minGasPrice  = "0.00001"
-	gas          = 200000
+	auradBinary          = "/usr/bin/aurad"
+	txCommand            = "tx"
+	keysCommand          = "keys"
+	auraHomePath         = "/root/.aura"
+	uauraDenom           = "uaura"
+	minGasPrice          = "0.00001"
+	gas                  = 200000
+	numberInitValidators = 2
+	numberInitAccounts   = 4
 )
 
 var (
@@ -127,8 +129,8 @@ func (s *IntegrationTestSuite) TearDownSuite() {
 }
 
 func (s *IntegrationTestSuite) initNodes(c *chain) {
-	s.Require().NoError(c.createAndInitValidators(1))
-	s.Require().NoError(c.addAccountFromMnemonic(4))
+	s.Require().NoError(c.createAndInitValidators(numberInitValidators))
+	s.Require().NoError(c.addAccountFromMnemonic(numberInitAccounts))
 	// Initialize a genesis file for the first validator
 	val0ConfigDir := c.validators[0].configDir()
 

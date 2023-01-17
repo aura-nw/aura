@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package auranw.aura.distribution;
+
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/aura-nw/aura/x/distribution/types";
+
+message ValidatorEpochVoteInfo {
+  string validator_address = 1;
+  int64 proposer_blocks = 2;
+  int64 active_blocks = 3;
+  int64 acc_power = 4;
+}
+
+message EpochVotesInfo {
+  repeated ValidatorEpochVoteInfo validators = 1 [(gogoproto.nullable) = false];
+}

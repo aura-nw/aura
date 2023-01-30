@@ -126,7 +126,7 @@ require (
 )
 
 require (
-	github.com/armon/go-metrics v0.4.0
+	github.com/armon/go-metrics v0.4.1
 	github.com/golang/mock v1.6.0
 	github.com/regen-network/cosmos-proto v0.3.1
 )

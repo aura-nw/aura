@@ -36,8 +36,6 @@ BUILD_FLAGS := -ldflags '$(ldflags)'
 
 all: build install
 
-	@@ -33,11 +46,14 @@ install: go.sum
-
 build: go.sum
 	@echo "--> Build aurad"
 	@go build -mod=readonly $(BUILD_FLAGS) -o ./build/aurad ./cmd/aurad

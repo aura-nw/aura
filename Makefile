@@ -30,23 +30,17 @@ ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=aura \
 	-X github.com/cosmos/cosmos-sdk/version.AppName=aurad \
 	-X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) \
 	-X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT) \
-	-X github.com/tendermint/tendermint/version.TMCoreSemVer=$(TM_VERSION) \
-	-X "github.com/cosmos/cosmos-sdk/version.BuildTags=$(build_tags_comma_sep)"
+	-X github.com/tendermint/tendermint/version.TMCoreSemVer=$(TM_VERSION)
 
-ldflags += -w -s
-ldflags += -linkmode "external" -extldflags "-Wl,-z,muldefs -L/lib -lwasmvm_muslc -static"
-
-BUILD_FLAGS := -tags "$(build_tags_comma_sep)" -ldflags '$(ldflags)'
+BUILD_FLAGS := -ldflags '$(ldflags)'
 
 all: build install
 
-install: go.sum
-	@echo "--> Installing aurad"
-	@go install -mod=readonly $(BUILD_FLAGS) ./cmd/aurad
+	@@ -33,11 +46,14 @@ install: go.sum
 
 build: go.sum
 	@echo "--> Build aurad"
-	go build -mod=readonly $(BUILD_FLAGS) -o ./build/aurad ./cmd/aurad
+	@go build -mod=readonly $(BUILD_FLAGS) -o ./build/aurad ./cmd/aurad
 
 go.sum: go.mod
 	@echo "--> Ensure dependencies have not been modified"

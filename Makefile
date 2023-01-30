@@ -17,15 +17,6 @@ endif
 SDK_PACK := $(shell go list -m github.com/cosmos/cosmos-sdk | sed  's/ /\@/g')
 TM_VERSION := $(shell go list -m github.com/tendermint/tendermint | sed 's:.* ::')
 
-build_tags = netgo
-build_tags += $(BUILD_TAGS)
-build_tags := $(strip $(build_tags))
-
-whitespace :=
-empty = $(whitespace) $(whitespace)
-comma := ,
-build_tags_comma_sep := $(subst $(empty),$(comma),$(build_tags))
-
 ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=aura \
 	-X github.com/cosmos/cosmos-sdk/version.AppName=aurad \
 	-X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) \
@@ -35,6 +26,10 @@ ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=aura \
 BUILD_FLAGS := -ldflags '$(ldflags)'
 
 all: build install
+
+install: go.sum
+	@echo "--> Installing aurad"
+	@go install -mod=readonly $(BUILD_FLAGS) ./cmd/aurad
 
 build: go.sum
 	@echo "--> Build aurad"

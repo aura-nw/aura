@@ -3,3 +3,5 @@ vue/dist
 release/
 .idea
 config.yml
+build/
+coverage.out

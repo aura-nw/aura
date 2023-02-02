@@ -90,3 +90,25 @@ func (s *KeeperTestSuite) TestCustomBondedRatio() {
 	s.Require().Equal(s.mintKeeper.CustomBondedRatio(s.ctx, excludeAmount), bonded.ToDec().QuoInt(customStaking))
 
 }
+
+func (s *KeeperTestSuite) TestGetExcludeCirculatingAmount() {
+	denom := "aura"
+	s.bankKeeper.EXPECT().GetExcludeCirculatingAmount(s.ctx, denom).Return(sdk.Coin{})
+	s.Require().NotNil(s.mintKeeper.GetExcludeCirculatingAmount(s.ctx, denom))
+}
+
+func (s *KeeperTestSuite) TestGetSupply() {
+	coin := sdk.Coin{
+		Denom:  "aura",
+		Amount: sdk.NewInt(1_000_000),
+	}
+	s.bankKeeper.EXPECT().GetSupply(s.ctx, coin.Denom).Return(coin)
+	s.Require().Equal(s.mintKeeper.GetSupply(s.ctx, coin.Denom), sdk.NewInt(1_000_000))
+}
+
+func (s *KeeperTestSuite) TestGetMaxSupply() {
+	maxSupllyStr := sdk.NewInt(1_000_000).String()
+
+	s.auraKeeper.EXPECT().GetMaxSupply(s.ctx).Return(maxSupllyStr)
+	s.Require().Equal(s.mintKeeper.GetMaxSupply(s.ctx), maxSupllyStr)
+}

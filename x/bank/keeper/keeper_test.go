@@ -48,7 +48,26 @@ func TestKeeperTestSuite(t *testing.T) {
 	suite.Run(t, new(KeeperTestSuite))
 }
 
-func (s *KeeperTestSuite) TestGetExcludeCirculatingAmount() {
+func (s *KeeperTestSuite) TestGetExcludeCirculatingAmount_EmptyAcc() {
 	s.auraKeeper.EXPECT().GetExcludeCirculatingAddr(s.ctx).Return([]sdk.AccAddress{})
 	s.Require().NotNil(s.bankKeeper.GetExcludeCirculatingAmount(s.ctx, "uaura"))
+}
+
+func (s *KeeperTestSuite) TestGetExcludeCirculatingAmount_BasicAcc() {
+	acc1 := sdk.MustAccAddressFromBech32("cosmos14l0fp639yudfl46zauvv8rkzjgd4u0zk0fyvgr")
+	acc2 := sdk.MustAccAddressFromBech32("cosmos19rtrx4aylvqxnpp75lr3g39ehc23tcz43zynuk")
+
+	denom := "uaura"
+	listAcc := []sdk.AccAddress{acc1, acc2}
+
+	s.auraKeeper.EXPECT().GetExcludeCirculatingAddr(s.ctx).Return(listAcc)
+
+	excludeAmount := sdk.NewInt64Coin(denom, sdk.ZeroInt().Int64())
+
+	for _, addr := range listAcc {
+		amount := s.bankKeeper.GetBalance(s.ctx, addr, denom)
+		excludeAmount = excludeAmount.Add(amount)
+	}
+
+	s.Require().Equal(s.bankKeeper.GetExcludeCirculatingAmount(s.ctx, denom), excludeAmount)
 }

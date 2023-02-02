@@ -38,7 +38,7 @@ jobs:
         run: go build -o aurad cmd/aurad/main.go
 
       - name: Delete the "latest" Release
-        uses: dev-drprasad/delete-older-releases@v0.2.0
+        uses: dev-drprasad/delete-older-releases@v0.2.1
         with:
           keep_latest: 0
           delete_tag_pattern: ${{ github.head_ref || github.ref_name }}

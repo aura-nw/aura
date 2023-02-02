@@ -15,7 +15,10 @@
 on: 
   push:
     branches:
-    - main
+    - dev
+    - halo
+    - serenity
+    - euphoria
 
 jobs:
   might_release:
@@ -33,6 +36,14 @@ jobs:
       
       - name: "build binary"
         run: go build -o aurad cmd/aurad/main.go
+
+      - name: Delete the "latest" Release
+        uses: dev-drprasad/delete-older-releases@v0.2.0
+        with:
+          keep_latest: 0
+          delete_tag_pattern: ${{ github.head_ref || github.ref_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Set variables
         run: |
@@ -42,8 +53,8 @@ jobs:
       - name: Publish the Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: Aura_${{ env.VERSION }}
-          prerelease: false
+          tag_name: ${{ github.head_ref || github.ref_name }}_${{ env.VERSION }}
+          prerelease: true
           target_commitish: ${{ github.head_ref || github.ref_name }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

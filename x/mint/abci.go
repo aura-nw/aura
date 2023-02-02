@@ -24,18 +24,18 @@ func BeginBlocker(ctx sdk.Context, k custommint.Keeper) {
 	if !ok {
 		panic(errors.New("panic convert max supply string to bigInt"))
 	}
-	k.Logger(ctx).Info("Get max supply from aura", "maxSupply", maxSupply.String())
+	k.Logger(ctx).Debug("Get max supply from aura", "maxSupply", maxSupply.String())
 	currentSupply := k.GetSupply(ctx, params.GetMintDenom())
-	k.Logger(ctx).Info("Get current supply from network", "currentSupply", currentSupply.String())
+	k.Logger(ctx).Debug("Get current supply from network", "currentSupply", currentSupply.String())
 
 	excludeAmount := k.GetExcludeCirculatingAmount(ctx, params.GetMintDenom())
-	k.Logger(ctx).Info("Exclude Addr", "exclude_addr", excludeAmount.String())
+	k.Logger(ctx).Debug("Exclude Addr", "exclude_addr", excludeAmount.String())
 
 	if currentSupply.LT(maxSupply) {
 		// recalculate inflation rate
 		totalStakingSupply := k.CustomStakingTokenSupply(ctx, excludeAmount.Amount)
 		bondedRatio := k.CustomBondedRatio(ctx, excludeAmount.Amount)
-		k.Logger(ctx).Info("Value BondedRatio: ", "bondedRatio", bondedRatio.String())
+		k.Logger(ctx).Debug("Value BondedRatio: ", "bondedRatio", bondedRatio.String())
 		minter.Inflation = minter.NextInflationRate(params, bondedRatio)
 		minter.AnnualProvisions = minter.NextAnnualProvisions(params, totalStakingSupply)
 		k.SetMinter(ctx, minter)

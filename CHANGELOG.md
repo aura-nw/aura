@@ -37,6 +37,13 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 ## Unreleased
 
+## [v0.4.3] - 2023-02-02
+
+### Improvements
+- Upgrade Comos SDK from v0.45.9 -> v0.45.11
+- Change tendermint repo to InformalSystem
+- Refactor some code unused
+
 ## [v0.4.2] - 2022-12-05
 
 ### Improvements

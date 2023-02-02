@@ -2,8 +2,8 @@ package keeper_test
 
 import (
 	"github.com/aura-nw/aura/tests"
+	"github.com/aura-nw/aura/tests/mocks/bank"
 	keeper "github.com/aura-nw/aura/x/bank/keeper"
-	"github.com/aura-nw/aura/x/bank/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"

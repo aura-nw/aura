@@ -52,3 +52,14 @@ genesis:
       params:
         signed_blocks_window: "1000"
         downtime_jail_duration: "600s"
+
+
+"# Upgrade Aurad version to v0.4.2
+
+This is a proposal to upgrade **aurad** version at height 2,187,716 ~ Wed 7th, 5:30 PM UTC+7 
+
+## Changelog
+
+### Improvements
+
+Allow IBC clients to be recoverd after expired"

@@ -1,0 +1,14 @@
+syntax = "proto3";
+package auranw.aura.aura;
+
+// this line is used by starport scaffolding # genesis/proto/import
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/aura-nw/aura/x/aura/types";
+
+// Params defines the parameters for the aura module.
+message Params {
+  // max_supply defines the max supply of aura coin.
+  string max_supply = 1 [(gogoproto.moretags) = "yaml:\"max_supply\""];
+  repeated string exclude_circulating_addr = 2 [(gogoproto.moretags) = "yaml:\"exclude_circulating_addr\""];
+}

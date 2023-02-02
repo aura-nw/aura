@@ -1,0 +1,65 @@
+accounts:
+  - name: Cantho
+    coins: ["50000000000000uaura"]
+  - name: Vinh
+    coins: ["50000000000000uaura"]
+  - name: Hagiang
+    coins: ["50000000000000uaura"]
+  - name: Thaibinh
+    coins: ["50000000000000uaura"]
+validator:
+  name: Cantho
+  staked: "10000000000uaura"
+client:
+  openapi:
+    path: "docs/static/openapi.yml"
+init:
+  app:
+    minimum-gas-prices: "0.001uaura"
+genesis:
+  chain_id: "aura-testnet"
+  app_state:
+    aura:
+      params:
+        max_supply: "1000000000000000"
+    crisis:
+      constant_fee:
+        denom: uaura
+    gov:
+      deposit_params:
+        min_deposit: [
+         {
+           "denom": "uaura",
+           "amount": "1000000"
+         }
+        ]
+        max_deposit_period: "172800s"
+      voting_params:
+        voting_period: "172800s"
+    mint:
+      params:
+        mint_denom: "uaura"
+        inflation_rate_change: "0.080000000000000000"
+        inflation_max: "0.120000000000000000"
+        inflation_min: "0.040000000000000000"
+        blocks_per_year: "5373084"
+    staking:
+      params:
+        bond_denom: "uaura"
+        unbonding_time: "86400s"
+        max_validators: 5
+    slashing:
+      params:
+        signed_blocks_window: "1000"
+        downtime_jail_duration: "600s"
+
+
+"# Upgrade Aurad version to v0.4.2
+
+This is a proposal to upgrade **aurad** version at height 2,187,716 ~ Wed 7th, 5:30 PM UTC+7 
+
+## Changelog
+
+### Improvements
+
+Allow IBC clients to be recoverd after expired"

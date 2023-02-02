@@ -1,0 +1,60 @@
+# This workflow is useful if you want to automate the process of:
+#
+# a) Creating a new prelease when you push a new tag with a "v" prefix (version).
+#
+#    This type of prerelease is meant to be used for production: alpha, beta, rc, etc. types of releases.
+#    After the prerelease is created, you need to make your changes on the release page at the relevant
+#    Github page and publish your release.
+#
+# b) Creating/updating the "latest" prerelease when you push to your default branch.
+#
+#    This type of prelease is useful to make your bleeding-edge binaries available to advanced users.
+#
+# The workflow will not run if there is no tag pushed with a "v" prefix and no change pushed to your 
+# default branch.
+on: 
+  push:
+    branches:
+    - dev
+    - halo
+    - serenity
+    - euphoria
+
+jobs:
+  might_release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+        
+      - name: "install go"
+        uses: actions/setup-go@v3
+        with:
+          go-version: '1.19'
+      
+      - name: "build binary"
+        run: go build -o aurad cmd/aurad/main.go
+
+      - name: Delete the "latest" Release
+        uses: dev-drprasad/delete-older-releases@v0.2.0
+        with:
+          keep_latest: 0
+          delete_tag_pattern: ${{ github.head_ref || github.ref_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Set variables
+        run: |
+          VER=$(cat .VERSION)
+          echo "VERSION=$VER" >> $GITHUB_ENV
+        
+      - name: Publish the Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.head_ref || github.ref_name }}_${{ env.VERSION }}
+          prerelease: true
+          target_commitish: ${{ github.head_ref || github.ref_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

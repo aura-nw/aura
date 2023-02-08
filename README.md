@@ -1,6 +1,7 @@
 # Aura
 [![go-test](https://github.com/aura-nw/aura/actions/workflows/test.yml/badge.svg)](https://github.com/aura-nw/aura/actions/workflows/test.yml)
 [![golangci-lint](https://github.com/aura-nw/aura/actions/workflows/golangci-lint.yml/badge.svg)](https://github.com/aura-nw/aura/actions/workflows/golangci-lint.yml)
+[![codecov](https://codecov.io/gh/aura-nw/aura/branch/dev/graph/badge.svg)](https://codecov.io/gh/aura-nw/aura)
 
 This repository contains source code for Aurad (Aura Daemon). Aurad binary is the official client for Aura Network. Aurad is built using Cosmos SDK
 

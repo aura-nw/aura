@@ -1,26 +1,37 @@
 package mint_test
 
 import (
+	"github.com/aura-nw/aura/tests"
 	"github.com/aura-nw/aura/x/mint"
-	"github.com/aura-nw/aura/x/mint/keeper"
-	"github.com/cosmos/cosmos-sdk/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/mint/types"
+	abci "github.com/tendermint/tendermint/abci/types"
+	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	"testing"
 )
 
 func TestBeginBlocker(t *testing.T) {
-	type args struct {
-		ctx types.Context
-		k   keeper.Keeper
+	app := tests.Setup(false)
+	ctx := app.BaseApp.NewContext(false, tmproto.Header{})
+
+	app.InitChain(
+		abci.RequestInitChain{
+			AppStateBytes: []byte("{}"),
+			ChainId:       "test-chain-id",
+		},
+	)
+
+	dparams := app.MintKeeper.GetParams(ctx)
+	params := types.Params{
+		MintDenom:           "uaura",
+		InflationMax:        sdk.NewDecWithPrec(12, 2),
+		InflationRateChange: sdk.NewDecWithPrec(8, 2),
+		InflationMin:        sdk.NewDecWithPrec(4, 2),
+		BlocksPerYear:       5373084,
+		GoalBonded:          dparams.GoalBonded,
 	}
-	tests := []struct {
-		name string
-		args args
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			mint.BeginBlocker(tt.args.ctx, tt.args.k)
-		})
-	}
+	app.MintKeeper.SetParams(ctx, params)
+
+	mint.BeginBlocker(ctx, app.MintKeeper)
+
 }

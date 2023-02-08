@@ -10,7 +10,7 @@ import (
 	"testing"
 )
 
-func TestBeginBlocker(t *testing.T) {
+func TestBeginBlocker_Basic(t *testing.T) {
 	app := tests.Setup(false)
 	ctx := app.BaseApp.NewContext(false, tmproto.Header{})
 
@@ -33,5 +33,4 @@ func TestBeginBlocker(t *testing.T) {
 	app.MintKeeper.SetParams(ctx, params)
 
 	mint.BeginBlocker(ctx, app.MintKeeper)
-
 }

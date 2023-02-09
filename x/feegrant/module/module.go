@@ -7,17 +7,19 @@ import (
 
 	customfeegrant "github.com/aura-nw/aura/x/feegrant"
 	customcli "github.com/aura-nw/aura/x/feegrant/cli"
+	customfeegrantkeeper "github.com/aura-nw/aura/x/feegrant/keeper"
 	sdkclient "github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	"github.com/cosmos/cosmos-sdk/x/feegrant/keeper"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/cosmos/cosmos-sdk/x/feegrant"
 	"github.com/cosmos/cosmos-sdk/x/feegrant/client/cli"
-	"github.com/cosmos/cosmos-sdk/x/feegrant/keeper"
 	"github.com/cosmos/cosmos-sdk/x/feegrant/simulation"
+	db "github.com/aura-nw/aura/database"
 	"github.com/gorilla/mux"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
@@ -36,7 +38,8 @@ var (
 
 // AppModuleBasic defines the basic application module used by the feegrant module.
 type AppModuleBasic struct {
-	cdc codec.Codec
+	cdc     codec.Codec
+	indexer *db.Db
 }
 
 // Name returns the feegrant module's name.
@@ -47,7 +50,7 @@ func (AppModuleBasic) Name() string {
 // RegisterServices registers a gRPC query service to respond to the
 // module-specific gRPC queries.
 func (am AppModule) RegisterServices(cfg module.Configurator) {
-	feegrant.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServerImpl(am.keeper))
+	feegrant.RegisterMsgServer(cfg.MsgServer(), customfeegrantkeeper.NewMsgServerImpl(am.keeper, am.indexer))
 	feegrant.RegisterQueryServer(cfg.QueryServer(), am.keeper)
 }
 
@@ -115,12 +118,16 @@ type AppModule struct {
 // NewAppModule creates a new AppModule object
 func NewAppModule(cdc codec.Codec, ak feegrant.AccountKeeper, bk feegrant.BankKeeper, keeper keeper.Keeper, registry cdctypes.InterfaceRegistry) AppModule {
 	return AppModule{
-		AppModuleBasic: AppModuleBasic{cdc: cdc},
+		AppModuleBasic: AppModuleBasic{cdc: cdc, indexer: nil},
 		keeper:         keeper,
 		accountKeeper:  ak,
 		bankKeeper:     bk,
 		registry:       registry,
 	}
+}
+
+func (am AppModule) WithIndexer(indexer *db.Db) {
+	am.AppModuleBasic.indexer = indexer
 }
 
 // Name returns the feegrant module's name.

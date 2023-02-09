@@ -14,6 +14,7 @@ import (
 	customfeegrantmodule "github.com/aura-nw/aura/x/feegrant/module"
 	custommint "github.com/aura-nw/aura/x/mint"
 	custommintkeeper "github.com/aura-nw/aura/x/mint/keeper"
+	"github.com/forbole/juno/v3/logging"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -24,6 +25,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/server/api"
 	"github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
+	appparams "github.com/cosmos/cosmos-sdk/simapp/params"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/version"
@@ -92,10 +94,11 @@ import (
 	tmos "github.com/tendermint/tendermint/libs/os"
 	dbm "github.com/tendermint/tm-db"
 
+	"github.com/aura-nw/aura/docs"
+	junodb "github.com/forbole/juno/v3/database"
+
 	"github.com/tendermint/starport/starport/pkg/cosmoscmd"
 	"github.com/tendermint/starport/starport/pkg/openapiconsole"
-
-	"github.com/aura-nw/aura/docs"
 
 	auramodule "github.com/aura-nw/aura/x/aura"
 	auramodulekeeper "github.com/aura-nw/aura/x/aura/keeper"
@@ -120,6 +123,7 @@ import (
 	v0_4_1 "github.com/aura-nw/aura/app/upgrades/v0.4.1"
 	v0_4_2 "github.com/aura-nw/aura/app/upgrades/v0.4.2"
 
+	"github.com/aura-nw/aura/database"
 	customvesting "github.com/aura-nw/aura/x/auth/vesting"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	ibcclienttypes "github.com/cosmos/ibc-go/v3/modules/core/02-client/types"
@@ -504,7 +508,19 @@ func New(
 
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.
-
+	indexerConfig, err := LoadIndexerConfig(homePath)
+	feegrantModule := customfeegrantmodule.NewAppModule(appCodec, app.AccountKeeper, app.BankKeeper, app.FeeGrantKeeper, app.interfaceRegistry)
+	if err == nil {
+		indexer, err := database.Builder(junodb.NewContext(indexerConfig,
+			&appparams.EncodingConfig{
+				InterfaceRegistry: encodingConfig.InterfaceRegistry,
+				Marshaler:         encodingConfig.Marshaler, TxConfig: encodingConfig.TxConfig,
+				Amino: encodingConfig.Amino},
+			logging.DefaultLogger()))
+		if err != nil {
+			feegrantModule.WithIndexer(database.Cast(indexer))
+		}
+	}
 	app.mm = module.NewManager(
 		genutil.NewAppModule(
 			app.AccountKeeper, app.StakingKeeper, app.BaseApp.DeliverTx,
@@ -514,7 +530,7 @@ func New(
 		customvesting.NewAppModule(app.AccountKeeper, app.BankKeeper),
 		custombank.NewAppModule(appCodec, app.BankKeeper, app.AccountKeeper),
 		capability.NewAppModule(appCodec, *app.CapabilityKeeper),
-		customfeegrantmodule.NewAppModule(appCodec, app.AccountKeeper, app.BankKeeper, app.FeeGrantKeeper, app.interfaceRegistry),
+		feegrantModule,
 		authzmodule.NewAppModule(appCodec, app.AuthzKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
 		crisis.NewAppModule(&app.CrisisKeeper, skipGenesisInvariants),
 		gov.NewAppModule(appCodec, app.GovKeeper, app.AccountKeeper, app.BankKeeper),

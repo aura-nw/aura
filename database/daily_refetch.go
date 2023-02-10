@@ -1,10 +1,10 @@
 package database
 
 // GetTotalBlocks implements database.Database
-func (db *Db) GetTotalBlocks() (int64, error) {
+func (db *Db) GetTotalBlocks() int64 {
 	var blockCount int64
-	err := db.Sql.QueryRow(`SELECT count(*) FROM block;`).Scan(&blockCount)
-	return blockCount, err
+	db.Sqlx.QueryRow(`SELECT count(*) FROM block;`).Scan(&blockCount)
+	return blockCount
 }
 
 // GetMissingBlocks returns an array of missing blocks from one day ago

@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	dbconfig "github.com/forbole/juno/v3/database/config"
+	dbconfig "github.com/forbole/juno/v4/database/config"
 	"github.com/spf13/viper"
 )
 
@@ -44,13 +44,7 @@ func LoadIndexerConfig(homePath string) (indexerConfig dbconfig.Config, err erro
 
 	err = v.Unmarshal(&cfgToml)
 	indexerConfig = dbconfig.Config{
-		Name:               cfgToml.Name,
-		Host:               cfgToml.Host,
-		Port:               cfgToml.Port,
-		User:               cfgToml.User,
-		Password:           cfgToml.Password,
-		SSLMode:            cfgToml.SSLMode,
-		Schema:             cfgToml.Schema,
+		URL:                fmt.Sprintf("postgresql://%s:%s@%s:%d/%s?sslmode=%s&schema=%s", cfgToml.User, cfgToml.Password, cfgToml.Host, cfgToml.Port, cfgToml.Name, cfgToml.SSLMode, cfgToml.Schema),
 		MaxOpenConnections: cfgToml.MaxOpenConnections,
 		MaxIdleConnections: cfgToml.MaxIdleConnections,
 		PartitionSize:      cfgToml.PartitionSize,

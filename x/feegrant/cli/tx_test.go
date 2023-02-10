@@ -8,5 +8,5 @@ import (
 
 func TestGetTxCmd(t *testing.T) {
 	txCmd := cli.GetTxCmd()
-	require.NotNil(t, txCmd)
+	require.Equal(t, len(txCmd.Commands()), 2)
 }

@@ -1,0 +1,28 @@
+version: '3.3'
+
+services:
+  psql:
+    container_name: psql_indexer
+    build: ./docker/psql/
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_PASSWORD: phamphong9981
+      POSTGRES_USER: phamphong
+      POSTGRES_DB: app_indexer
+      POSTGRES_DB_TEST: test
+    networks:
+      - dev_network
+  adminer:
+    image: adminer:4-standalone
+    restart: always
+    ports:
+      - "8080:8080"
+    container_name: "dev-adminer"
+    networks:
+      - dev_network
+networks:
+  dev_network:
+
+volumes:
+  data:

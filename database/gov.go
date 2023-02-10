@@ -44,7 +44,7 @@ package database
 // 		tally_params = excluded.tally_params,
 // 		height = excluded.height
 // WHERE gov_params.height <= excluded.height`
-// 	_, err = db.Sql.Exec(stmt, string(depositParamsBz), string(votingParamsBz), string(tallyingParams), params.Height)
+// 	_, err = db.Sqlx.Exec(stmt, string(depositParamsBz), string(votingParamsBz), string(tallyingParams), params.Height)
 // 	if err != nil {
 // 		return fmt.Errorf("error while storing gov params: %s", err)
 // 	}
@@ -157,7 +157,7 @@ package database
 // 	// Store the proposals
 // 	proposalsQuery = proposalsQuery[:len(proposalsQuery)-1] // Remove trailing ","
 // 	proposalsQuery += " ON CONFLICT DO NOTHING"
-// 	_, err = db.Sql.Exec(proposalsQuery, proposalsParams...)
+// 	_, err = db.Sqlx.Exec(proposalsQuery, proposalsParams...)
 // 	if err != nil {
 // 		return fmt.Errorf("error while storing proposals: %s", err)
 // 	}
@@ -229,7 +229,7 @@ package database
 // // UpdateProposal updates a proposal stored inside the database
 // func (db *Db) UpdateProposal(update types.ProposalUpdate) error {
 // 	query := `UPDATE proposal SET status = $1, voting_start_time = $2, voting_end_time = $3 where id = $4`
-// 	_, err := db.Sql.Exec(query,
+// 	_, err := db.Sqlx.Exec(query,
 // 		update.Status,
 // 		update.VotingStartTime,
 // 		update.VotingEndTime,
@@ -268,7 +268,7 @@ package database
 // 		timestamp = excluded.timestamp,
 // 		height = excluded.height
 // WHERE proposal_deposit.height <= excluded.height`
-// 	_, err := db.Sql.Exec(query, param...)
+// 	_, err := db.Sqlx.Exec(query, param...)
 // 	if err != nil {
 // 		return fmt.Errorf("error while storing deposits: %s", err)
 // 	}
@@ -295,7 +295,7 @@ package database
 // 		return fmt.Errorf("error while storing voter account: %s", err)
 // 	}
 
-// 	_, err = db.Sql.Exec(query, vote.ProposalID, vote.Voter, vote.Option.String(), vote.Timestamp, vote.Height)
+// 	_, err = db.Sqlx.Exec(query, vote.ProposalID, vote.Voter, vote.Option.String(), vote.Timestamp, vote.Height)
 // 	if err != nil {
 // 		return fmt.Errorf("error while storing vote: %s", err)
 // 	}
@@ -333,7 +333,7 @@ package database
 // 	    no_with_veto = excluded.no_with_veto,
 // 	    height = excluded.height
 // WHERE proposal_tally_result.height <= excluded.height`
-// 	_, err := db.Sql.Exec(query, param...)
+// 	_, err := db.Sqlx.Exec(query, param...)
 // 	if err != nil {
 // 		return fmt.Errorf("error while storing tally result: %s", err)
 // 	}
@@ -355,7 +355,7 @@ package database
 // 	height = excluded.height
 // WHERE proposal_staking_pool_snapshot.height <= excluded.height`
 
-// 	_, err := db.Sql.Exec(stmt,
+// 	_, err := db.Sqlx.Exec(stmt,
 // 		snapshot.ProposalID, snapshot.Pool.BondedTokens.String(), snapshot.Pool.NotBondedTokens.String(), snapshot.Pool.Height)
 // 	if err != nil {
 // 		return fmt.Errorf("error while storing proposal staking pool snapshot: %s", err)
@@ -394,7 +394,7 @@ package database
 // 		jailed = excluded.jailed,
 // 		height = excluded.height
 // WHERE proposal_validator_status_snapshot.height <= excluded.height`
-// 	_, err := db.Sql.Exec(stmt, args...)
+// 	_, err := db.Sqlx.Exec(stmt, args...)
 // 	if err != nil {
 // 		return fmt.Errorf("error while storing proposal validator statuses snapshot: %s", err)
 // 	}
@@ -415,7 +415,7 @@ package database
 // 	height = excluded.height
 // WHERE software_upgrade_plan.height <= excluded.height`
 
-// 	_, err := db.Sql.Exec(stmt,
+// 	_, err := db.Sqlx.Exec(stmt,
 // 		proposalID, plan.Name, plan.Height, plan.Info, height)
 // 	if err != nil {
 // 		return fmt.Errorf("error while storing software upgrade plan: %s", err)
@@ -428,7 +428,7 @@ package database
 // func (db *Db) DeleteSoftwareUpgradePlan(proposalID uint64) error {
 // 	stmt := `DELETE FROM software_upgrade_plan WHERE proposal_id = $1`
 
-// 	_, err := db.Sql.Exec(stmt, proposalID)
+// 	_, err := db.Sqlx.Exec(stmt, proposalID)
 // 	if err != nil {
 // 		return fmt.Errorf("error while deleting software upgrade plan: %s", err)
 // 	}
@@ -441,7 +441,7 @@ package database
 // 	var exist bool
 
 // 	stmt := `SELECT EXISTS (SELECT 1 FROM software_upgrade_plan WHERE upgrade_height=$1)`
-// 	err := db.Sql.QueryRow(stmt, upgradeHeight).Scan(&exist)
+// 	err := db.Sqlx.QueryRow(stmt, upgradeHeight).Scan(&exist)
 // 	if err != nil {
 // 		return exist, fmt.Errorf("error while checking software upgrade plan existence: %s", err)
 // 	}
@@ -453,7 +453,7 @@ package database
 // func (db *Db) TruncateSoftwareUpgradePlan(height int64) error {
 // 	stmt := `DELETE FROM software_upgrade_plan WHERE upgrade_height <= $1`
 
-// 	_, err := db.Sql.Exec(stmt, height)
+// 	_, err := db.Sqlx.Exec(stmt, height)
 // 	if err != nil {
 // 		return fmt.Errorf("error while deleting software upgrade plan: %s", err)
 // 	}

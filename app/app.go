@@ -14,7 +14,7 @@ import (
 	customfeegrantmodule "github.com/aura-nw/aura/x/feegrant/module"
 	custommint "github.com/aura-nw/aura/x/mint"
 	custommintkeeper "github.com/aura-nw/aura/x/mint/keeper"
-	"github.com/forbole/juno/v3/logging"
+	"github.com/forbole/juno/v4/logging"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -95,7 +95,7 @@ import (
 	dbm "github.com/tendermint/tm-db"
 
 	"github.com/aura-nw/aura/docs"
-	junodb "github.com/forbole/juno/v3/database"
+	junodb "github.com/forbole/juno/v4/database"
 
 	"github.com/tendermint/starport/starport/pkg/cosmoscmd"
 	"github.com/tendermint/starport/starport/pkg/openapiconsole"

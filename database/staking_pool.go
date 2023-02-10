@@ -19,7 +19,7 @@ package database
 //         height = excluded.height
 // WHERE staking_pool.height <= excluded.height`
 
-// 	_, err := db.Sql.Exec(stmt,
+// 	_, err := db.Sqlx.Exec(stmt,
 // 		pool.BondedTokens.String(),
 // 		pool.NotBondedTokens.String(),
 // 		pool.UnbondingTokens.String(),

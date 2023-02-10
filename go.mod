@@ -128,8 +128,7 @@ require (
 
 require (
 	github.com/armon/go-metrics v0.4.0
-	github.com/forbole/bdjuno/v3 v3.2.0
-	github.com/forbole/juno/v3 v3.4.0
+	github.com/forbole/juno/v4 v4.0.0
 	github.com/golang/mock v1.6.0
 	github.com/jmoiron/sqlx v1.3.5
 	github.com/lib/pq v1.10.6
@@ -144,5 +143,5 @@ replace (
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 	// Informal Tendermint fork
 	github.com/tendermint/tendermint => github.com/informalsystems/tendermint v0.34.24
-	google.golang.org/grpc => google.golang.org/grpc v1.33.2
+	google.golang.org/grpc => google.golang.org/grpc v1.34.0
 )

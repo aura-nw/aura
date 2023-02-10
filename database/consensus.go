@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/forbole/bdjuno/v3/types"
+	"github.com/aura-nw/aura/types"
 
-	dbtypes "github.com/forbole/bdjuno/v3/database/types"
+	dbtypes "github.com/aura-nw/aura/database/types"
 )
 
 // GetLastBlock returns the last block stored inside the database based on the heights

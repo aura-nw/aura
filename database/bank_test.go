@@ -3,9 +3,9 @@ package database_test
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	dbtypes "github.com/forbole/bdjuno/v3/database/types"
+	dbtypes "github.com/aura-nw/aura/database/types"
 
-	bddbtypes "github.com/forbole/bdjuno/v3/database/types"
+	bddbtypes "github.com/aura-nw/aura/database/types"
 )
 
 func (suite *DbTestSuite) TestBigDipperDb_SaveSupply() {

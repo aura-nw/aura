@@ -6,8 +6,8 @@ import (
 
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	dbtypes "github.com/forbole/bdjuno/v3/database/types"
-	"github.com/forbole/bdjuno/v3/types"
+	dbtypes "github.com/aura-nw/aura/database/types"
+	"github.com/aura-nw/aura/types"
 )
 
 // SaveStakingParams allows to store the given params into the database

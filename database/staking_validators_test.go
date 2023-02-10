@@ -3,12 +3,12 @@ package database_test
 // import (
 // 	tmtypes "github.com/tendermint/tendermint/proto/tendermint/types"
 
-// 	"github.com/forbole/bdjuno/v3/types"
+// 	"github.com/aura-nw/aura/types"
 
 // 	sdk "github.com/cosmos/cosmos-sdk/types"
 // 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-// 	dbtypes "github.com/forbole/bdjuno/v3/database/types"
+// 	dbtypes "github.com/aura-nw/aura/database/types"
 // )
 
 // func newDecPts(value int64, prec int64) *sdk.Dec {
@@ -208,13 +208,13 @@ package database_test
 // 	suite.getAccount("cosmos184ma3twcfjqef6k95ne8w2hk80x2kah7vcwy4a")
 // 	// Insert test data
 // 	_, err := suite.database.Sql.Exec(`
-// INSERT INTO validator (consensus_address, consensus_pubkey) 
-// VALUES ('cosmosvalcons1qqqqrezrl53hujmpdch6d805ac75n220ku09rl', 
+// INSERT INTO validator (consensus_address, consensus_pubkey)
+// VALUES ('cosmosvalcons1qqqqrezrl53hujmpdch6d805ac75n220ku09rl',
 //         'cosmosvalconspub1zcjduepq7mft6gfls57a0a42d7uhx656cckhfvtrlmw744jv4q0mvlv0dypskehfk8')`)
 // 	suite.Require().NoError(err)
 
 // 	_, err = suite.database.Sql.Exec(`
-// INSERT INTO validator_info (consensus_address, operator_address,self_delegate_address,max_change_rate,max_rate,height) 
+// INSERT INTO validator_info (consensus_address, operator_address,self_delegate_address,max_change_rate,max_rate,height)
 // VALUES ('cosmosvalcons1qqqqrezrl53hujmpdch6d805ac75n220ku09rl',
 //         'cosmosvaloper1rcp29q3hpd246n6qak7jluqep4v006cdsc2kkl',
 //         'cosmos184ma3twcfjqef6k95ne8w2hk80x2kah7vcwy4a',

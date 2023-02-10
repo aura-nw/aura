@@ -10,9 +10,9 @@ package database
 // 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 // 	"github.com/gogo/protobuf/proto"
 
-// 	"github.com/forbole/bdjuno/v3/types"
+// 	"github.com/aura-nw/aura/types"
 
-// 	dbtypes "github.com/forbole/bdjuno/v3/database/types"
+// 	dbtypes "github.com/aura-nw/aura/database/types"
 
 // 	"github.com/lib/pq"
 // )
@@ -36,9 +36,9 @@ package database
 // 	}
 
 // 	stmt := `
-// INSERT INTO gov_params(deposit_params, voting_params, tally_params, height) 
+// INSERT INTO gov_params(deposit_params, voting_params, tally_params, height)
 // VALUES ($1, $2, $3, $4)
-// ON CONFLICT (one_row_id) DO UPDATE 
+// ON CONFLICT (one_row_id) DO UPDATE
 // 	SET deposit_params = excluded.deposit_params,
 //   		voting_params = excluded.voting_params,
 // 		tally_params = excluded.tally_params,
@@ -102,7 +102,7 @@ package database
 
 // 	proposalsQuery := `
 // INSERT INTO proposal(
-// 	id, title, description, content, proposer_address, proposal_route, proposal_type, status, 
+// 	id, title, description, content, proposer_address, proposal_route, proposal_type, status,
 //     submit_time, deposit_end_time, voting_start_time, voting_end_time
 // ) VALUES`
 // 	var proposalsParams []interface{}
@@ -281,8 +281,8 @@ package database
 // // SaveVote allows to save for the given height and the message vote
 // func (db *Db) SaveVote(vote types.Vote) error {
 // 	query := `
-// INSERT INTO proposal_vote (proposal_id, voter_address, option, timestamp, height) 
-// VALUES ($1, $2, $3, $4, $5) 
+// INSERT INTO proposal_vote (proposal_id, voter_address, option, timestamp, height)
+// VALUES ($1, $2, $3, $4, $5)
 // ON CONFLICT ON CONSTRAINT unique_vote DO UPDATE
 // 	SET option = excluded.option,
 // 		timestamp = excluded.timestamp,
@@ -326,10 +326,10 @@ package database
 
 // 	query = query[:len(query)-1] // Remove trailing ","
 // 	query += `
-// ON CONFLICT ON CONSTRAINT unique_tally_result DO UPDATE 
-// 	SET yes = excluded.yes, 
-// 	    abstain = excluded.abstain, 
-// 	    no = excluded.no, 
+// ON CONFLICT ON CONSTRAINT unique_tally_result DO UPDATE
+// 	SET yes = excluded.yes,
+// 	    abstain = excluded.abstain,
+// 	    no = excluded.no,
 // 	    no_with_veto = excluded.no_with_veto,
 // 	    height = excluded.height
 // WHERE proposal_tally_result.height <= excluded.height`
@@ -351,7 +351,7 @@ package database
 // ON CONFLICT ON CONSTRAINT unique_staking_pool_snapshot DO UPDATE SET
 // 	proposal_id = excluded.proposal_id,
 //     bonded_tokens = excluded.bonded_tokens,
-// 	not_bonded_tokens = excluded.not_bonded_tokens, 
+// 	not_bonded_tokens = excluded.not_bonded_tokens,
 // 	height = excluded.height
 // WHERE proposal_staking_pool_snapshot.height <= excluded.height`
 
@@ -371,7 +371,7 @@ package database
 // 	}
 
 // 	stmt := `
-// INSERT INTO proposal_validator_status_snapshot(proposal_id, validator_address, voting_power, status, jailed, height) 
+// INSERT INTO proposal_validator_status_snapshot(proposal_id, validator_address, voting_power, status, jailed, height)
 // VALUES `
 
 // 	var args []interface{}
@@ -386,11 +386,11 @@ package database
 
 // 	stmt = stmt[:len(stmt)-1]
 // 	stmt += `
-// ON CONFLICT ON CONSTRAINT unique_validator_status_snapshot DO UPDATE 
+// ON CONFLICT ON CONSTRAINT unique_validator_status_snapshot DO UPDATE
 // 	SET proposal_id = excluded.proposal_id,
 // 		validator_address = excluded.validator_address,
-// 		voting_power = excluded.voting_power, 
-// 		status = excluded.status, 
+// 		voting_power = excluded.voting_power,
+// 		status = excluded.status,
 // 		jailed = excluded.jailed,
 // 		height = excluded.height
 // WHERE proposal_validator_status_snapshot.height <= excluded.height`
@@ -406,13 +406,13 @@ package database
 // func (db *Db) SaveSoftwareUpgradePlan(proposalID uint64, plan upgradetypes.Plan, height int64) error {
 
 // 	stmt := `
-// INSERT INTO software_upgrade_plan(proposal_id, plan_name, upgrade_height, info, height) 
+// INSERT INTO software_upgrade_plan(proposal_id, plan_name, upgrade_height, info, height)
 // VALUES ($1, $2, $3, $4, $5)
 // ON CONFLICT (proposal_id) DO UPDATE SET
-// 	plan_name = excluded.plan_name, 
-// 	upgrade_height = excluded.upgrade_height, 
-// 	info = excluded.info, 
-// 	height = excluded.height 
+// 	plan_name = excluded.plan_name,
+// 	upgrade_height = excluded.upgrade_height,
+// 	info = excluded.info,
+// 	height = excluded.height
 // WHERE software_upgrade_plan.height <= excluded.height`
 
 // 	_, err := db.Sql.Exec(stmt,

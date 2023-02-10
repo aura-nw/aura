@@ -4,10 +4,10 @@ import (
 	"context"
 
 	db "github.com/aura-nw/aura/database"
+	"github.com/aura-nw/aura/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/feegrant"
 	"github.com/cosmos/cosmos-sdk/x/feegrant/keeper"
-	"github.com/forbole/bdjuno/v3/types"
 )
 
 type msgServer struct {
@@ -38,6 +38,6 @@ func (k msgServer) GrantAllowance(goCtx context.Context, msg *feegrant.MsgGrantA
 func (k msgServer) RevokeAllowance(goCtx context.Context, msg *feegrant.MsgRevokeAllowance) (*feegrant.MsgRevokeAllowanceResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	k.MsgServer.RevokeAllowance(goCtx, msg)
-	k.Indexer.DeleteFeeGrantAllowance(types.GrantRemoval{Granter: msg.Granter, Grantee: msg.Grantee,Height: ctx.BlockHeight()})
+	k.Indexer.DeleteFeeGrantAllowance(types.GrantRemoval{Granter: msg.Granter, Grantee: msg.Grantee, Height: ctx.BlockHeight()})
 	return &feegrant.MsgRevokeAllowanceResponse{}, nil
 }

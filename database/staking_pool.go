@@ -3,17 +3,17 @@ package database
 // import (
 // 	"fmt"
 
-// 	"github.com/forbole/bdjuno/v3/types"
+// 	"github.com/aura-nw/aura/types"
 // )
 
 // // SaveStakingPool allows to save for the given height the given stakingtypes pool
 // func (db *Db) SaveStakingPool(pool *types.Pool) error {
 // 	stmt := `
-// INSERT INTO staking_pool (bonded_tokens, not_bonded_tokens, unbonding_tokens, staked_not_bonded_tokens, height) 
+// INSERT INTO staking_pool (bonded_tokens, not_bonded_tokens, unbonding_tokens, staked_not_bonded_tokens, height)
 // VALUES ($1, $2, $3, $4, $5)
-// ON CONFLICT (one_row_id) DO UPDATE 
-//     SET bonded_tokens = excluded.bonded_tokens, 
-//         not_bonded_tokens = excluded.not_bonded_tokens, 
+// ON CONFLICT (one_row_id) DO UPDATE
+//     SET bonded_tokens = excluded.bonded_tokens,
+//         not_bonded_tokens = excluded.not_bonded_tokens,
 // 		unbonding_tokens = excluded.unbonding_tokens,
 // 		staked_not_bonded_tokens = excluded.staked_not_bonded_tokens,
 //         height = excluded.height

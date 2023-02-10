@@ -1,6 +1,6 @@
 package utils
 
-import "github.com/forbole/bdjuno/v3/types"
+import "github.com/aura-nw/aura/types"
 
 const (
 	maxPostgreSQLParams = 65535

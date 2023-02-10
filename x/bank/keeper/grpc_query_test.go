@@ -1,11 +1,8 @@
 package keeper_test
 
-import (
-	"testing"
-)
+func (s *KeeperTestSuite) TestBaseKeeper_SupplyOf() {
 
-func TestBaseKeeper_SupplyOf(t *testing.T) {
 }
 
-func TestBaseKeeper_TotalSupply(t *testing.T) {
+func (s *KeeperTestSuite) TestBaseKeeper_TotalSupply() {
 }

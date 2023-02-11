@@ -1,8 +1,6 @@
 syntax = "proto3";
 package auranw.aura;
 
-import "gogoproto/gogo.proto";
-
 option go_package = "github.com/aura-nw/aura/x/aura/types";
 
 // Msg defines the Msg service.

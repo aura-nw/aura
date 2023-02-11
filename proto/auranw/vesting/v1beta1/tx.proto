@@ -1,0 +1,32 @@
+syntax = "proto3";
+package auranw.vesting.v1beta1;
+
+import "gogoproto/gogo.proto";
+import "cosmos/vesting/v1beta1/vesting.proto";
+
+option go_package = "github.com/aura-nw/aura/x/auth/vesting/types";
+
+// Msg defines the bank Msg service.
+service MsgExtend {
+  // Aura move from cosmos-sdk 0.46
+  rpc CreatePeriodicVestingAccount(MsgCreatePeriodicVestingAccount)
+      returns (MsgCreatePeriodicVestingAccountResponse);
+}
+
+// MsgCreatePeriodicVestingAccount defines a message that enables creating a
+// periodic vesting account.
+//
+message MsgCreatePeriodicVestingAccount {
+
+  option (gogoproto.equal) = false;
+
+  string from_address = 1;
+  string to_address = 2;
+  int64 start_time = 3;
+  repeated cosmos.vesting.v1beta1.Period vesting_periods = 4 [ (gogoproto.nullable) = false ];
+}
+
+// MsgCreateVestingAccountResponse defines the Msg/CreatePeriodicVestingAccount
+// response type.
+//
+message MsgCreatePeriodicVestingAccountResponse {}

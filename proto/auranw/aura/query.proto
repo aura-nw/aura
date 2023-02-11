@@ -1,15 +1,13 @@
 syntax = "proto3";
-package auranw.aura.aura;
+package auranw.aura;
 
-import "google/api/annotations.proto";
-import "cosmos/base/query/v1beta1/pagination.proto";
 // this line is used by starport scaffolding # 1
 
 option go_package = "github.com/aura-nw/aura/x/aura/types";
 
 // Query defines the gRPC querier service.
 service Query {
-    // this line is used by starport scaffolding # 2
+  // this line is used by starport scaffolding # 2
 }
 
 // this line is used by starport scaffolding # 3

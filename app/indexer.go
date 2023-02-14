@@ -23,7 +23,7 @@ type IndexerConfigFromToml struct {
 	PartitionBatchSize int64  `mapstructure:"partition_batch"`
 }
 
-func LoadIndexerConfig(homePath string) (indexerConfig dbconfig.Config, err error) {
+func LoadIndexerConfig(homePath string) (indexerConfig *dbconfig.Config, err error) {
 	cfgToml := IndexerConfigFromToml{}
 	v := viper.New()
 	configPath := filepath.Join(homePath, "config")
@@ -43,7 +43,7 @@ func LoadIndexerConfig(homePath string) (indexerConfig dbconfig.Config, err erro
 	}
 
 	err = v.Unmarshal(&cfgToml)
-	indexerConfig = dbconfig.Config{
+	indexerConfig = &dbconfig.Config{
 		URL:                fmt.Sprintf("postgresql://%s:%s@%s:%d/%s?sslmode=%s", cfgToml.User, cfgToml.Password, cfgToml.Host, cfgToml.Port, cfgToml.Name, cfgToml.SSLMode),
 		MaxOpenConnections: cfgToml.MaxOpenConnections,
 		MaxIdleConnections: cfgToml.MaxIdleConnections,

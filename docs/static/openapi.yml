@@ -19568,6 +19568,7 @@ paths:
                     code_id:
                       type: string
                       format: uint64
+                      title: id for legacy support
                     creator:
                       type: string
                     data_hash:
@@ -19886,6 +19887,7 @@ paths:
                   code_id:
                     type: string
                     format: uint64
+                    title: id for legacy support
                   creator:
                     type: string
                   data_hash:
@@ -20116,6 +20118,7 @@ paths:
                         }
       parameters:
         - name: code_id
+          description: grpc-gateway_out does not support Go style CodID
           in: path
           required: true
           type: string
@@ -20345,6 +20348,7 @@ paths:
                         }
       parameters:
         - name: code_id
+          description: grpc-gateway_out does not support Go style CodID
           in: path
           required: true
           type: string
@@ -49852,6 +49856,7 @@ definitions:
       code_id:
         type: string
         format: uint64
+        title: id for legacy support
       creator:
         type: string
       data_hash:
@@ -50320,6 +50325,7 @@ definitions:
           code_id:
             type: string
             format: uint64
+            title: id for legacy support
           creator:
             type: string
           data_hash:
@@ -50372,6 +50378,7 @@ definitions:
             code_id:
               type: string
               format: uint64
+              title: id for legacy support
             creator:
               type: string
             data_hash:

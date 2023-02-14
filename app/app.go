@@ -508,18 +508,20 @@ func New(
 
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.
-	indexerConfig, err := LoadIndexerConfig(homePath)
+	indexerConfig, _ := LoadIndexerConfig(homePath)
 	feegrantModule := customfeegrantmodule.NewAppModule(appCodec, app.AccountKeeper, app.BankKeeper, app.FeeGrantKeeper, app.interfaceRegistry)
-	if err == nil {
-		indexer, err := database.Builder(junodb.NewContext(indexerConfig,
+	if indexerConfig != nil {
+		context := junodb.NewContext(*indexerConfig,
 			&appparams.EncodingConfig{
 				InterfaceRegistry: encodingConfig.InterfaceRegistry,
 				Marshaler:         encodingConfig.Marshaler, TxConfig: encodingConfig.TxConfig,
 				Amino: encodingConfig.Amino},
-			logging.DefaultLogger()))
+			logging.DefaultLogger())
+		indexer, err := database.Builder(context)
 		if err != nil {
-			feegrantModule.WithIndexer(database.Cast(indexer))
+			panic("Database init fail " + err.Error())
 		}
+		feegrantModule.WithIndexer(database.Cast(indexer))
 	}
 	app.mm = module.NewManager(
 		genutil.NewAppModule(

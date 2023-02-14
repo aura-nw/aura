@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"fmt"
 
 	db "github.com/aura-nw/aura/database"
 	"github.com/aura-nw/aura/types"
@@ -29,8 +30,12 @@ var _ feegrant.MsgServer = msgServer{}
 // GrantAllowance grants an allowance from the granter's funds to be used by the grantee.
 func (k msgServer) GrantAllowance(goCtx context.Context, msg *feegrant.MsgGrantAllowance) (*feegrant.MsgGrantAllowanceResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
+	fmt.Println(k.Indexer)
 	k.MsgServer.GrantAllowance(goCtx, msg)
-	k.Indexer.SaveFeeGrantAllowance(types.FeeGrant{Grant: feegrant.Grant{Granter: msg.Granter, Grantee: msg.Grantee, Allowance: msg.Allowance}, Height: ctx.BlockHeight()})
+	err := k.Indexer.SaveFeeGrantAllowance(types.FeeGrant{Grant: feegrant.Grant{Granter: msg.Granter, Grantee: msg.Grantee, Allowance: msg.Allowance}, Height: ctx.BlockHeight()})
+	if err != nil {
+		fmt.Println(err)
+	}
 	return &feegrant.MsgGrantAllowanceResponse{}, nil
 }
 

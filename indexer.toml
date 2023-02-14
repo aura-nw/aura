@@ -1,0 +1,11 @@
+name = "app_indexer"
+host = "localhost"
+port = 5432
+user = "phamphong"
+password = "phamphong9981"
+ssl_mode = "disabled"
+schema = "public"
+max_open_connections = 1
+max_idle_connections = 1
+partition_size = 100000
+partition_batch = 1000

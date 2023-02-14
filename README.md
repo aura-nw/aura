@@ -27,6 +27,9 @@ aurad init <moniker> --chain-id <chain-id>
 This command will initialize the home folder containing necessary components for your chain  
 (default: ~/.aura)
 
+### Config indexer
+If you want to run your aura app with indexer psql, let copy indexer.toml to your home config folder (default: ~/.aura/config)
+Then, start psql docker (make sure all configs psql in indexer.toml are match for docker-compose file)
 ### Customize the genesis file
 A genesis file is a JSON file which defines the initial state of your blockchain. It can be seen as height 0 of your blockchain. The first block, at height 1, will reference the genesis file as its parent.
 

@@ -44,7 +44,7 @@ func LoadIndexerConfig(homePath string) (indexerConfig dbconfig.Config, err erro
 
 	err = v.Unmarshal(&cfgToml)
 	indexerConfig = dbconfig.Config{
-		URL:                fmt.Sprintf("postgresql://%s:%s@%s:%d/%s?sslmode=%s&schema=%s", cfgToml.User, cfgToml.Password, cfgToml.Host, cfgToml.Port, cfgToml.Name, cfgToml.SSLMode, cfgToml.Schema),
+		URL:                fmt.Sprintf("postgresql://%s:%s@%s:%d/%s?sslmode=%s", cfgToml.User, cfgToml.Password, cfgToml.Host, cfgToml.Port, cfgToml.Name, cfgToml.SSLMode),
 		MaxOpenConnections: cfgToml.MaxOpenConnections,
 		MaxIdleConnections: cfgToml.MaxIdleConnections,
 		PartitionSize:      cfgToml.PartitionSize,

@@ -1,0 +1,13 @@
+table:
+  name: genesis
+  schema: public
+select_permissions:
+- permission:
+    allow_aggregations: false
+    columns:
+    - chain_id
+    - initial_height
+    - time
+    filter: {}
+    limit: 1
+  role: anonymous

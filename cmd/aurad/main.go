@@ -36,7 +36,7 @@ func main() {
 	rootCmd.AddCommand(
 		cmd.AddGenesisVestingAccountCmd(app.DefaultNodeHome),
 	)
-
+	rootCmd.AddCommand(cmd.Hasura())
 	rootCmd.AddCommand(
 		cmd.AddGenesisWasmMsgCmd(app.DefaultNodeHome),
 	)

@@ -887,6 +887,10 @@ github.com/fjl/memsize v0.0.0-20180418122429-ca190fb6ffbc/go.mod h1:VvhXpOYNQvB+
 github.com/flynn/go-shlex v0.0.0-20150515145356-3f9db97f8568/go.mod h1:xEzjJPgXI435gkrCt3MPfRiAkVrwSbHsst4LCFVfpJc=
 github.com/fogleman/gg v1.2.1-0.20190220221249-0403632d5b90/go.mod h1:R/bRT+9gY/C5z7JzPU0zXsXHKM4/ayA+zqcVNZzPa1k=
 github.com/fogleman/gg v1.3.0/go.mod h1:R/bRT+9gY/C5z7JzPU0zXsXHKM4/ayA+zqcVNZzPa1k=
+github.com/forbole/bdjuno/v3 v3.2.0 h1:PuVIjgMd6drIAcSIoLk/fwP6a4Y36s5UUgRt7fb+DWA=
+github.com/forbole/bdjuno/v3 v3.2.0/go.mod h1:KklCPjKtDS0lPCQWRz8FQ/XD3k3FP0HQOk45gTvtHKQ=
+github.com/forbole/juno/v3 v3.3.0 h1:h9V3uBgNRA9ZWCoCBYclQfaud/X5utZo8wCO7BnYLLU=
+github.com/forbole/juno/v3 v3.3.0/go.mod h1:BQF5zcjRTmfUsZTRGzZiQrIHndJdo+MnDoe0fDI28VE=
 github.com/forbole/juno/v4 v4.0.0 h1:B7QHNLx0DuwkdmckritXR0mYGHKF9HHZQtefAfYyCBM=
 github.com/forbole/juno/v4 v4.0.0/go.mod h1:BEnhv7VCPZ1n3ttOjipF0dDO+I0z8K/Xut4r1UAud7k=
 github.com/form3tech-oss/jwt-go v3.2.2+incompatible/go.mod h1:pbq4aXjuKjdthFRnoDwaVPLA+WlJuPGy+QneDUgJi2k=

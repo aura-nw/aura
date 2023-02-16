@@ -30,6 +30,9 @@ This command will initialize the home folder containing necessary components for
 ### Config indexer
 If you want to run your aura app with indexer psql, let copy indexer.toml to your home config folder (default: ~/.aura/config)
 Then, start psql docker (make sure all configs psql in indexer.toml are match for docker-compose file)
+```
+docker-compose up
+```
 ### Customize the genesis file
 A genesis file is a JSON file which defines the initial state of your blockchain. It can be seen as height 0 of your blockchain. The first block, at height 1, will reference the genesis file as its parent.
 
@@ -62,7 +65,10 @@ aurad start
 1. You need to create hasura.yaml in your homepath/config (example: [a relative link](./config/hasura.yaml))
 2. Run metadata for hasura:
 docker exec hasura_aura hasura metadata apply (after docker-compose up)
-3. aurad hasura
+3. Start hasura handler
+```
+aurad hasura
+```
 
 ### 
 ## Setup testnet using testnetCmd

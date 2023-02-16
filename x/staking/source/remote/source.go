@@ -7,7 +7,7 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/forbole/juno/v4/node/remote"
 
-	stakingsource "github.com/forbole/bdjuno/v3/modules/staking/source"
+	stakingsource "github.com/aura-nw/aura/x/staking/source"
 )
 
 var (

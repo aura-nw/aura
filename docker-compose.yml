@@ -21,6 +21,32 @@ services:
     container_name: "dev-adminer"
     networks:
       - dev_network
+  graphql-engine:
+    container_name: hasura_aura
+    build: ./docker/hasura/
+    ports:
+      - '8888:8080'
+    depends_on:
+      - 'psql'
+    restart: always
+    environment:
+      ## postgres database to store Hasura metadata
+      HASURA_GRAPHQL_DATABASE_URL: 'postgres://phamphong:phamphong9981@psql_indexer:5432/app_indexer'
+      ## this env var can be used to add the above postgres database to Hasura as a data source. this can be removed/updated based on your needs
+      ## enable the console served by server
+      HASURA_GRAPHQL_ENABLE_CONSOLE: 'true' # set to "false" to disable console
+      ## enable debugging mode. It is recommended to disable this in production
+      HASURA_GRAPHQL_DEV_MODE: 'true'
+      HASURA_GRAPHQL_ENABLED_LOG_TYPES: startup, http-log, webhook-log, websocket-log, query-log
+      ACTION_BASE_URL: "http://host.docker.internal:3000"
+      HASURA_GRAPHQL_UNAUTHORIZED_ROLE: "anonymous"
+      HASURA_GRAPHQL_ADMIN_SECRET: 'myadminsecretkey'
+      ## uncomment next line to run console offline (i.e load console assets from server instead of CDN)
+      # HASURA_GRAPHQL_CONSOLE_ASSETS_DIR: /srv/console-assets
+      ## uncomment next line to set an admin secret
+      # HASURA_GRAPHQL_ADMIN_SECRET: myadminsecretkey
+    networks:
+      - dev_network
 networks:
   dev_network:
 

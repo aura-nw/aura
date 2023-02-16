@@ -1,0 +1,11 @@
+host: 127.0.0.1
+port: 3000
+# node type : remote, BDjuno is set to read from a running node
+node:
+    rpc:
+        client_name: juno
+        address: http://localhost:26657
+        max_connections: 20
+    grpc:
+        address: http://localhost:9090
+        insecure: true

@@ -12,7 +12,7 @@ import (
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 )
 
-func TestMsg(t *testing.T) {
+func TestMsg_Basic(t *testing.T) {
 	app := tests.Setup(false)
 
 	ctx := app.BaseApp.NewContext(false, tmproto.Header{})
@@ -55,4 +55,59 @@ func TestMsg(t *testing.T) {
 
 	require.NoError(t, msgAcc.ValidateBasic())
 
+}
+
+func TestMsg_NotValid(t *testing.T) {
+	app := tests.Setup(false)
+
+	ctx := app.BaseApp.NewContext(false, tmproto.Header{})
+	_ = ctx
+
+	app.InitChain(
+		abci.RequestInitChain{
+			AppStateBytes: []byte("{}"),
+			ChainId:       "test-chain-id",
+		},
+	)
+
+	sdk.GetConfig().SetBech32PrefixForAccount("aura", "aurapubkey")
+
+	fromAddr, err := sdk.AccAddressFromBech32("aura1txe6y425gk7ef8xp6r7ze4da09nvwfr2fhafjl")
+	require.NoError(t, err)
+
+	emptyFromAddr, err := sdk.AccAddressFromBech32("")
+	require.Error(t, err)
+
+	toAddr, err := sdk.AccAddressFromBech32("aura1fqqrll4l62hlx36kw3mhav57n00lsy4kskvat8")
+	require.NoError(t, err)
+
+	emptyToAddr, err := sdk.AccAddressFromBech32("")
+	require.Error(t, err)
+
+	startTime := int64(1676618561)
+
+	periods := []orgtypes.Period{}
+
+	msgAccNotValidFrom := types.NewMsgCreatePeriodicVestingAccount(emptyFromAddr, toAddr, startTime, periods)
+
+	require.Error(t, msgAccNotValidFrom.ValidateBasic())
+
+	msgAccNotValidTo := types.NewMsgCreatePeriodicVestingAccount(fromAddr, emptyToAddr, startTime, periods)
+
+	require.Error(t, msgAccNotValidTo.ValidateBasic())
+
+	zeroTime := 0
+
+	msgAccZeroTime := types.NewMsgCreatePeriodicVestingAccount(fromAddr, toAddr, int64(zeroTime), periods)
+
+	require.Error(t, msgAccZeroTime.ValidateBasic())
+
+	invalidPeriod := orgtypes.Period{
+		Length: 0,
+	}
+
+	periods = []orgtypes.Period{invalidPeriod}
+	msgAccInvalidPeriod := types.NewMsgCreatePeriodicVestingAccount(fromAddr, toAddr, startTime, periods)
+
+	require.Error(t, msgAccInvalidPeriod.ValidateBasic())
 }

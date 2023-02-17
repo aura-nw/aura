@@ -24,12 +24,25 @@ func TestCreatePeriodicVestingAccount(t *testing.T) {
 		},
 	)
 
+	sdk.GetConfig().SetBech32PrefixForAccount("aura", "aurapubkey")
+
 	msgServer := vesting.NewMsgServerImpl(app.AccountKeeper, app.BankKeeper)
 
-	message := &types.MsgCreatePeriodicVestingAccount{}
+	messageEmpty := &types.MsgCreatePeriodicVestingAccount{}
 
-	_, err := msgServer.CreatePeriodicVestingAccount(sdk.WrapSDKContext(ctx), message)
+	_, err := msgServer.CreatePeriodicVestingAccount(sdk.WrapSDKContext(ctx), messageEmpty)
 
 	require.NotNil(t, err)
 
+	messageBasic := &types.MsgCreatePeriodicVestingAccount{
+		FromAddress: "aura1txe6y425gk7ef8xp6r7ze4da09nvwfr2fhafjl",
+		ToAddress:   "aura1fqqrll4l62hlx36kw3mhav57n00lsy4kskvat8",
+		StartTime:   int64(18388373),
+	}
+
+	_, err = msgServer.CreatePeriodicVestingAccount(sdk.WrapSDKContext(ctx), messageBasic)
+
+	t.Logf("%v", err)
+
+	require.NoError(t, err)
 }

@@ -1,8 +1,11 @@
 package utils
 
+// DONTCOVER
+
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"strings"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 const (

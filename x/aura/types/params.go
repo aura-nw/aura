@@ -3,6 +3,7 @@ package types
 import (
 	"errors"
 	"fmt"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"regexp"
 	"strings"
 
@@ -13,6 +14,11 @@ import (
 var (
 	MaxSupply              = []byte("MaxSupply")
 	ExcludeCirculatingAddr = []byte("ExcludeCirculatingAddr")
+)
+
+const (
+	LOW_MAX_SUPPLY                        = 1_000_000
+	LIMIT_LENGTH_EXCLUDE_CIRCULATING_ADDR = 10
 )
 
 // Regex using check string is number
@@ -44,6 +50,10 @@ func (p Params) Validate() error {
 		return err
 	}
 
+	if err := validateExcludeCirculatingAddr(p.ExcludeCirculatingAddr); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -69,6 +79,15 @@ func validateMaxSupply(i interface{}) error {
 		return errors.New("invalid max supply parameter, expected string as number")
 	}
 
+	vi, err := sdk.NewDecFromStr(v)
+	if err != nil {
+		return fmt.Errorf("can not parse max supply to Dec, value=%s", v)
+	}
+
+	if vi.LT(sdk.NewDec(LOW_MAX_SUPPLY)) {
+		return fmt.Errorf("required max supply greater than %d", LOW_MAX_SUPPLY)
+	}
+
 	return nil
 }
 
@@ -78,10 +97,27 @@ func validateExcludeCirculatingAddr(i interface{}) error {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}
 
+	if len(v) > LIMIT_LENGTH_EXCLUDE_CIRCULATING_ADDR {
+		return errors.New("len of exclude exclude circulating address reach limit")
+	}
+
 	for _, addBech32 := range v {
 		if strings.TrimSpace(addBech32) == "" {
 			return errors.New("exclude circulating address can not contain blank")
 		}
 	}
+
+	if checkDuplicate(v) {
+		return errors.New("duplicated address in exclude circulating address")
+	}
+
 	return nil
+}
+
+func checkDuplicate(ss []string) bool {
+	m := make(map[string]bool)
+	for _, s := range ss {
+		m[s] = true
+	}
+	return !(len(ss) == len(m))
 }

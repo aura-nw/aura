@@ -17,8 +17,8 @@ var (
 )
 
 const (
-	LOW_MAX_SUPPLY                        = 1_000_000
-	LIMIT_LENGTH_EXCLUDE_CIRCULATING_ADDR = 10
+	MinMaxSupply                      = 1_000_000
+	LimitLengthExcludeCirculatingAddr = 10
 )
 
 // Regex using check string is number
@@ -84,8 +84,8 @@ func validateMaxSupply(i interface{}) error {
 		return fmt.Errorf("can not parse max supply to Dec, value=%s", v)
 	}
 
-	if vi.LT(sdk.NewDec(LOW_MAX_SUPPLY)) {
-		return fmt.Errorf("required max supply greater than %d", LOW_MAX_SUPPLY)
+	if vi.LT(sdk.NewDec(MinMaxSupply)) {
+		return fmt.Errorf("required max supply greater than %d", MinMaxSupply)
 	}
 
 	return nil
@@ -97,7 +97,7 @@ func validateExcludeCirculatingAddr(i interface{}) error {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}
 
-	if len(v) > LIMIT_LENGTH_EXCLUDE_CIRCULATING_ADDR {
+	if len(v) > LimitLengthExcludeCirculatingAddr {
 		return errors.New("len of exclude exclude circulating address reach limit")
 	}
 

@@ -101,14 +101,18 @@ func validateExcludeCirculatingAddr(i interface{}) error {
 		return errors.New("len of exclude exclude circulating address reach limit")
 	}
 
-	for _, addBech32 := range v {
-		if strings.TrimSpace(addBech32) == "" {
-			return errors.New("exclude circulating address can not contain blank")
-		}
-	}
-
 	if checkDuplicate(v) {
 		return errors.New("duplicated address in exclude circulating address")
+	}
+
+	for _, addBech32 := range v {
+		//if strings.TrimSpace(addBech32) == "" {
+		//	return errors.New("exclude circulating address can not contain blank")
+		//}
+
+		if _, err := sdk.AccAddressFromBech32(addBech32); err != nil {
+			return errors.New("exclude circulating address invalid format")
+		}
 	}
 
 	return nil

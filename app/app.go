@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"github.com/aura-nw/aura/app/internal"
 	"io"
 	"net/http"
 	"os"
@@ -372,7 +373,7 @@ func New(
 	)
 
 	app.BankKeeper = custombankkeeper.NewBaseKeeper(
-		appCodec, keys[banktypes.StoreKey], app.AccountKeeper, app.GetSubspace(banktypes.ModuleName), app.ModuleAccountAddrs(), app.AuraKeeper,
+		appCodec, keys[banktypes.StoreKey], app.AccountKeeper, app.GetSubspace(banktypes.ModuleName), internal.MergeExcludeAddrs(app.ModuleAccountAddrs()), app.AuraKeeper,
 	)
 	stakingKeeper := stakingkeeper.NewKeeper(
 		appCodec, keys[stakingtypes.StoreKey], app.AccountKeeper, app.BankKeeper, app.GetSubspace(stakingtypes.ModuleName),

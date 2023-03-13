@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/aura-nw/aura/app/internal"
+
 	"github.com/aura-nw/aura/app/utils"
 	custombank "github.com/aura-nw/aura/x/bank"
 	custombankkeeper "github.com/aura-nw/aura/x/bank/keeper"
@@ -119,6 +121,7 @@ import (
 	v0_4_0 "github.com/aura-nw/aura/app/upgrades/v0.4.0"
 	v0_4_1 "github.com/aura-nw/aura/app/upgrades/v0.4.1"
 	v0_4_2 "github.com/aura-nw/aura/app/upgrades/v0.4.2"
+	v0_4_4 "github.com/aura-nw/aura/app/upgrades/v0.4.4"
 
 	customvesting "github.com/aura-nw/aura/x/auth/vesting"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
@@ -372,7 +375,7 @@ func New(
 	)
 
 	app.BankKeeper = custombankkeeper.NewBaseKeeper(
-		appCodec, keys[banktypes.StoreKey], app.AccountKeeper, app.GetSubspace(banktypes.ModuleName), app.ModuleAccountAddrs(), app.AuraKeeper,
+		appCodec, keys[banktypes.StoreKey], app.AccountKeeper, app.GetSubspace(banktypes.ModuleName), internal.MergeExcludeAddrs(app.ModuleAccountAddrs()), app.AuraKeeper,
 	)
 	stakingKeeper := stakingkeeper.NewKeeper(
 		appCodec, keys[stakingtypes.StoreKey], app.AccountKeeper, app.BankKeeper, app.GetSubspace(stakingtypes.ModuleName),
@@ -895,6 +898,12 @@ func (app *App) setupUpgradeHandlers() {
 		v0_4_2.CreateUpgradeHandler(app.mm, app.configurator),
 	)
 
+	// v0.4.4 upgrade handler
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v0_4_4.UpgradeName,
+		v0_4_4.CreateUpgradeHandler(app.mm, app.configurator),
+	)
+
 	// When a planned update height is reached, the old binary will panic
 	// writing on disk the height and name of the update that triggered it
 	// This will read that value, and execute the preparations for the upgrade.
@@ -930,6 +939,9 @@ func (app *App) setupUpgradeHandlers() {
 
 	case v0_4_2.UpgradeName:
 		// no store upgrades in v0.4.2
+
+	case v0_4_4.UpgradeName:
+		// no store upgrades in v0.4.4
 	}
 
 	if storeUpgrades != nil {

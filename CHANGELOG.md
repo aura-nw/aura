@@ -37,6 +37,12 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 ## Unreleased
 
+## [v0.4.4] - 2023-03-13
+
+### Improvements
+- Prevent excluded addresses from receiving fund
+- Fix minor bugs
+
 ## [v0.4.3] - 2023-02-02
 
 ### Improvements

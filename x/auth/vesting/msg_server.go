@@ -2,6 +2,7 @@ package vesting
 
 import (
 	"context"
+	"errors"
 	"github.com/armon/go-metrics"
 	"github.com/aura-nw/aura/x/auth/vesting/types"
 	"github.com/cosmos/cosmos-sdk/telemetry"
@@ -28,6 +29,10 @@ var _ types.MsgExtendServer = msgServer{}
 func (s msgServer) CreatePeriodicVestingAccount(goCtx context.Context, msg *types.MsgCreatePeriodicVestingAccount) (*types.MsgCreatePeriodicVestingAccountResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
+	if err := s.validateCreatePeriodVestingMsg(ctx, msg); err != nil {
+		return nil, err
+	}
+
 	ak := s.AccountKeeper
 	bk := s.BankKeeper
 
@@ -40,7 +45,11 @@ func (s msgServer) CreatePeriodicVestingAccount(goCtx context.Context, msg *type
 		return nil, err
 	}
 
-	if acc := ak.GetAccount(ctx, to); acc != nil {
+	//if acc := ak.GetAccount(ctx, to); acc != nil {
+	//	return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "account %s already exists", msg.ToAddress)
+	//}
+
+	if exist := ak.HasAccount(ctx, to); !exist {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "account %s already exists", msg.ToAddress)
 	}
 
@@ -82,4 +91,12 @@ func (s msgServer) CreatePeriodicVestingAccount(goCtx context.Context, msg *type
 		),
 	)
 	return &types.MsgCreatePeriodicVestingAccountResponse{}, nil
+}
+
+func (s msgServer) validateCreatePeriodVestingMsg(ctx sdk.Context, msg *types.MsgCreatePeriodicVestingAccount) error {
+	currentTime := ctx.BlockTime().UnixMilli()
+	if msg.GetStartTime() <= currentTime {
+		return errors.New("start time not valid, required larger than current block time")
+	}
+	return nil
 }

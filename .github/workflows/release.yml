@@ -42,7 +42,7 @@ jobs:
       - name: Publish the Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: Aura_${{ env.VERSION }}
+          tag_name: aura_${{ env.VERSION }}
           prerelease: false
           target_commitish: ${{ github.head_ref || github.ref_name }}
         env:

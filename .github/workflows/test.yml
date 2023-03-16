@@ -2,6 +2,7 @@ name: go-test
 on:
   push:
     branches:
+      - main
       - dev
       - serenity
       - euphoria

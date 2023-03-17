@@ -1,6 +1,6 @@
 module github.com/aura-nw/aura
 
-go 1.18
+go 1.19
 
 require (
 	github.com/CosmWasm/wasmd v0.29.1

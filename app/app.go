@@ -473,7 +473,7 @@ func New(
 	// Middleware
 	middlewareTransferModule := ibcmiddleware.NewIBCMiddleware(
 		transferIBCModule,
-		app.ICS4Wrapper,
+		&app.ICS4Wrapper,
 	)
 	app.TransferStack = &middlewareTransferModule
 

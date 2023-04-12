@@ -15,10 +15,10 @@ var _ porttypes.Middleware = &IBCMiddleware{}
 
 type IBCMiddleware struct {
 	App             porttypes.IBCModule
-	ics4_middleware ICS4Middleware
+	ics4_middleware *ICS4Middleware
 }
 
-func NewIBCMiddleware(app porttypes.IBCModule, ics4_middleware ICS4Middleware) IBCMiddleware {
+func NewIBCMiddleware(app porttypes.IBCModule, ics4_middleware *ICS4Middleware) IBCMiddleware {
 	return IBCMiddleware{
 		App:             app,
 		ics4_middleware: ics4_middleware,

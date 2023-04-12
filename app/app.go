@@ -601,9 +601,9 @@ func New(
 		// additional non simd modules
 		ibchost.ModuleName,
 		ibctransfertypes.ModuleName,
-		ibcmiddlewaretypes.ModuleName,
 		auramoduletypes.ModuleName,
 		wasm.ModuleName,
+		ibcmiddlewaretypes.ModuleName,
 	)
 
 	app.mm.SetOrderEndBlockers(
@@ -626,9 +626,9 @@ func New(
 		// additional non simd modules
 		ibchost.ModuleName,
 		ibctransfertypes.ModuleName,
-		ibcmiddlewaretypes.ModuleName,
 		auramoduletypes.ModuleName,
 		wasm.ModuleName,
+		ibcmiddlewaretypes.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -651,7 +651,6 @@ func New(
 		evidencetypes.ModuleName,
 		ibctransfertypes.ModuleName,
 		auramoduletypes.ModuleName,
-		ibcmiddlewaretypes.ModuleName,
 		feegrant.ModuleName,
 		authz.ModuleName,
 		paramstypes.ModuleName,
@@ -659,6 +658,7 @@ func New(
 		paramstypes.ModuleName,
 		upgradetypes.ModuleName,
 		wasm.ModuleName,
+		ibcmiddlewaretypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/initGenesis
 	)
 
@@ -678,12 +678,12 @@ func New(
 		slashingtypes.ModuleName,
 		stakingtypes.ModuleName,
 		ibctransfertypes.ModuleName,
-		ibcmiddlewaretypes.ModuleName,
 		paramstypes.ModuleName,
 		upgradetypes.ModuleName,
 		vestingtypes.ModuleName,
 		wasm.ModuleName,
 		crisistypes.ModuleName,
+		ibcmiddlewaretypes.ModuleName,
 	)
 
 	app.mm.RegisterInvariants(&app.CrisisKeeper)

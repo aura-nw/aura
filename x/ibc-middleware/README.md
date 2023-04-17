@@ -47,10 +47,11 @@ We override the **IBC Module**'s OnRecvPacket method to parse and validate the I
 Reasons of creating `intermediary account` are
 - we cannot trust the sender of an IBC packet
 - IBC Middleware only validates the memo string, not what it is and what it can do
-i.e the counterparty chain can lie about sender and make the ICS20 Packet to require a contract call in our chain that needs owner privileges
+
+</br>i.e the counterparty chain can lie about sender and make the ICS20 Packet to require a contract call in our chain that needs owner privileges
 
 ## Send Ics20 Packet Flow
-To read and determine whether the ICS20 Packet contains a particular memo field that necessitates the module to store the packet information in order to execute the future contract's callback. we override the SendPacket method of the **ICS4 Wrapper**.
+To read and determine whether the ICS20 Packet contains a particular memo field that necessitates the module to store the packet information in order to execute the future contract's callback. we override the SendPacket method of the **ICS4 Wrapper**. 
 
 * Process Send ICS20 Packet
     - check if income packet is Ics20 Packet

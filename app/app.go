@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	v500 "github.com/aura-nw/aura/app/upgrades/v0.5.0"
 	"io"
 	"net/http"
 	"os"
@@ -950,6 +951,12 @@ func (app *App) setupUpgradeHandlers() {
 		v0_4_4.CreateUpgradeHandler(app.mm, app.configurator),
 	)
 
+	// v0.5.0 upgrade handler add new module
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v500.UpgradeName,
+		v500.CreateUpgradeHandler(app.mm, app.configurator),
+	)
+
 	// When a planned update height is reached, the old binary will panic
 	// writing on disk the height and name of the update that triggered it
 	// This will read that value, and execute the preparations for the upgrade.
@@ -987,7 +994,12 @@ func (app *App) setupUpgradeHandlers() {
 		// no store upgrades in v0.4.2
 
 	case v0_4_4.UpgradeName:
-		// no store upgrades in v0.4.4
+	// no store upgrades in v0.4.4
+
+	case v500.UpgradeName:
+		storeUpgrades = &storetypes.StoreUpgrades{
+			Added: []string{ibcmiddlewaretypes.StoreKey},
+		}
 	}
 
 	if storeUpgrades != nil {

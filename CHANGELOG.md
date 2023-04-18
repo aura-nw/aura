@@ -37,6 +37,12 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 ## Unreleased
 
+## [v0.5.0] - 2023-04-18
+
+### Features
+- Implement ibc-middleware support GMP protocol of Axelar network
+- Upgrade wasmd from 0.29.1 to 0.31.0
+
 ## [v0.4.4] - 2023-03-13
 
 ### Improvements

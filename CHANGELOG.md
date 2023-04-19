@@ -37,6 +37,11 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 ## Unreleased
 
+## [v0.5.1] - 2023-04-19
+
+### Improvements
+- Applying the patch of wasmvm, upgrade from v1.2.1 to v1.2.3
+
 ## [v0.5.0] - 2023-04-18
 
 ### Features

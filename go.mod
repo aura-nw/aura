@@ -158,3 +158,5 @@ replace (
 	github.com/tendermint/tendermint => github.com/informalsystems/tendermint v0.34.24
 	google.golang.org/grpc => google.golang.org/grpc v1.33.2
 )
+
+replace github.com/CosmWasm/wasmvm => github.com/CosmWasm/wasmvm v1.2.3

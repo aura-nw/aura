@@ -41,6 +41,7 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 ### Improvements
 - Applying the patch of wasmvm, upgrade from v1.2.1 to v1.2.3
+- Add makefile support ledger
 
 ## [v0.5.0] - 2023-04-18
 

@@ -14,8 +14,6 @@ import (
 )
 
 func main() {
-	// cmdOptions := cmd.GetWasmCmdOptions()
-	// cmdOptions = append(cmdOptions, cosmoscmd.AddSubCmd(tmcmds.RollbackStateCmd))
 	rootCmd, _ := cosmoscmd.NewRootCmd(
 		app.Name,
 		app.AccountAddressPrefix,
@@ -35,10 +33,6 @@ func main() {
 	// generate genesis vesting accounts cmd
 	rootCmd.AddCommand(
 		cmd.AddGenesisVestingAccountCmd(app.DefaultNodeHome),
-	)
-
-	rootCmd.AddCommand(
-		cmd.AddGenesisWasmMsgCmd(app.DefaultNodeHome),
 	)
 
 	if err := svrcmd.Execute(rootCmd, app.DefaultNodeHome); err != nil {

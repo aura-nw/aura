@@ -2,6 +2,8 @@ package app
 
 import (
 	"fmt"
+	v500 "github.com/aura-nw/aura/app/upgrades/v0.5.0"
+	v501 "github.com/aura-nw/aura/app/upgrades/v0.5.1"
 	"io"
 	"net/http"
 	"os"
@@ -77,15 +79,19 @@ import (
 	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
-	"github.com/cosmos/ibc-go/v3/modules/apps/transfer"
-	ibctransferkeeper "github.com/cosmos/ibc-go/v3/modules/apps/transfer/keeper"
-	ibctransfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
-	ibc "github.com/cosmos/ibc-go/v3/modules/core"
-	ibcclient "github.com/cosmos/ibc-go/v3/modules/core/02-client"
-	ibcclientclient "github.com/cosmos/ibc-go/v3/modules/core/02-client/client"
-	ibcporttypes "github.com/cosmos/ibc-go/v3/modules/core/05-port/types"
-	ibchost "github.com/cosmos/ibc-go/v3/modules/core/24-host"
-	ibckeeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
+	"github.com/cosmos/ibc-go/v4/modules/apps/transfer"
+	ibctransferkeeper "github.com/cosmos/ibc-go/v4/modules/apps/transfer/keeper"
+	ibctransfertypes "github.com/cosmos/ibc-go/v4/modules/apps/transfer/types"
+	ibc "github.com/cosmos/ibc-go/v4/modules/core"
+	ibcclient "github.com/cosmos/ibc-go/v4/modules/core/02-client"
+	ibcclientclient "github.com/cosmos/ibc-go/v4/modules/core/02-client/client"
+	ibcporttypes "github.com/cosmos/ibc-go/v4/modules/core/05-port/types"
+	ibchost "github.com/cosmos/ibc-go/v4/modules/core/24-host"
+	ibckeeper "github.com/cosmos/ibc-go/v4/modules/core/keeper"
+
+	ibcmiddleware "github.com/aura-nw/aura/x/ibc-middleware"
+	ibcmiddlewarekeeper "github.com/aura-nw/aura/x/ibc-middleware/keeper"
+	ibcmiddlewaretypes "github.com/aura-nw/aura/x/ibc-middleware/types"
 
 	"github.com/spf13/cast"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -125,7 +131,7 @@ import (
 
 	customvesting "github.com/aura-nw/aura/x/auth/vesting"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
-	ibcclienttypes "github.com/cosmos/ibc-go/v3/modules/core/02-client/types"
+	ibcclienttypes "github.com/cosmos/ibc-go/v4/modules/core/02-client/types"
 )
 
 const (
@@ -268,23 +274,24 @@ type App struct {
 	memKeys map[string]*sdk.MemoryStoreKey
 
 	// keepers
-	AccountKeeper    authkeeper.AccountKeeper
-	BankKeeper       custombankkeeper.BaseKeeper
-	CapabilityKeeper *capabilitykeeper.Keeper
-	StakingKeeper    stakingkeeper.Keeper
-	SlashingKeeper   slashingkeeper.Keeper
-	MintKeeper       custommintkeeper.Keeper
-	DistrKeeper      distrkeeper.Keeper
-	GovKeeper        govkeeper.Keeper
-	CrisisKeeper     crisiskeeper.Keeper
-	UpgradeKeeper    upgradekeeper.Keeper
-	ParamsKeeper     paramskeeper.Keeper
-	IBCKeeper        *ibckeeper.Keeper // IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
-	EvidenceKeeper   evidencekeeper.Keeper
-	TransferKeeper   ibctransferkeeper.Keeper
-	FeeGrantKeeper   feegrantkeeper.Keeper
-	AuthzKeeper      authzkeeper.Keeper
-	WasmKeeper       wasm.Keeper
+	AccountKeeper       authkeeper.AccountKeeper
+	BankKeeper          custombankkeeper.BaseKeeper
+	CapabilityKeeper    *capabilitykeeper.Keeper
+	StakingKeeper       stakingkeeper.Keeper
+	SlashingKeeper      slashingkeeper.Keeper
+	MintKeeper          custommintkeeper.Keeper
+	DistrKeeper         distrkeeper.Keeper
+	GovKeeper           govkeeper.Keeper
+	CrisisKeeper        crisiskeeper.Keeper
+	UpgradeKeeper       upgradekeeper.Keeper
+	ParamsKeeper        paramskeeper.Keeper
+	IBCKeeper           *ibckeeper.Keeper           // IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
+	IBCMiddlewareKeeper *ibcmiddlewarekeeper.Keeper // IBC Hooks Keeper
+	EvidenceKeeper      evidencekeeper.Keeper
+	TransferKeeper      ibctransferkeeper.Keeper
+	FeeGrantKeeper      feegrantkeeper.Keeper
+	AuthzKeeper         authzkeeper.Keeper
+	WasmKeeper          wasm.Keeper
 
 	// make scoped keepers public for test purposes
 	ScopedIBCKeeper      capabilitykeeper.ScopedKeeper
@@ -300,6 +307,13 @@ type App struct {
 
 	// the configurator
 	configurator module.Configurator
+
+	// IBC modules
+	// transfer module
+	TransferModule transfer.AppModule
+	TransferStack  *ibcmiddleware.IBCMiddleware
+	Ics20WasmHooks *ibcmiddleware.WasmHooks
+	ICS4Wrapper    ibcmiddleware.ICS4Middleware
 }
 
 // New returns a reference to an initialized Gaia.
@@ -332,6 +346,7 @@ func New(
 		auramoduletypes.StoreKey,
 		authzkeeper.StoreKey,
 		wasm.StoreKey,
+		ibcmiddlewaretypes.StoreKey,
 		// this line is used by starport scaffolding # stargate/app/storeKey
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
@@ -424,20 +439,45 @@ func New(
 		AddRoute(upgradetypes.RouterKey, upgrade.NewSoftwareUpgradeProposalHandler(app.UpgradeKeeper)).
 		AddRoute(ibcclienttypes.RouterKey, ibcclient.NewClientProposalHandler(app.IBCKeeper.ClientKeeper))
 
+	// Configure the middleware keeper
+	middlewareKeeper := ibcmiddlewarekeeper.NewKeeper(
+		keys[ibcmiddlewaretypes.StoreKey],
+	)
+	app.IBCMiddlewareKeeper = &middlewareKeeper
+
+	// Wasm Hooks
+	auraPrefix := sdk.GetConfig().GetBech32AccountAddrPrefix()
+	wasmHooks := ibcmiddleware.NewWasmHooks(app.IBCMiddlewareKeeper, nil, auraPrefix) // The contract keeper needs to be set later
+	app.Ics20WasmHooks = &wasmHooks
+
+	app.ICS4Wrapper = ibcmiddleware.NewICS4Middleware(
+		app.IBCKeeper.ChannelKeeper,
+		app.Ics20WasmHooks,
+	)
+
 	// Create Transfer Keepers
 	app.TransferKeeper = ibctransferkeeper.NewKeeper(
 		appCodec,
 		keys[ibctransfertypes.StoreKey],
 		app.GetSubspace(ibctransfertypes.ModuleName),
-		app.IBCKeeper.ChannelKeeper,
+		// The ICS4Wrapper is replaced by the ICS4Wrapper middleware instead of the channel
+		app.ICS4Wrapper,
 		app.IBCKeeper.ChannelKeeper,
 		&app.IBCKeeper.PortKeeper,
 		app.AccountKeeper,
 		app.BankKeeper,
 		scopedTransferKeeper,
 	)
-	transferModule := transfer.NewAppModule(app.TransferKeeper)
+	app.TransferModule = transfer.NewAppModule(app.TransferKeeper)
+
 	transferIBCModule := transfer.NewIBCModule(app.TransferKeeper)
+
+	// Middleware
+	middlewareTransferModule := ibcmiddleware.NewIBCMiddleware(
+		&transferIBCModule,
+		&app.ICS4Wrapper,
+	)
+	app.TransferStack = &middlewareTransferModule
 
 	// Create evidence Keeper for to register the IBC light client misbehaviour evidence route
 	evidenceKeeper := evidencekeeper.NewKeeper(
@@ -451,7 +491,7 @@ func New(
 
 	// Create static IBC router, add transfer route, then set and seal it
 	ibcRouter := ibcporttypes.NewRouter()
-	ibcRouter.AddRoute(ibctransfertypes.ModuleName, transferIBCModule)
+	ibcRouter.AddRoute(ibctransfertypes.ModuleName, app.TransferStack)
 
 	// ------ CosmWasm setup ------
 	wasmDir := filepath.Join(homePath, "wasm")
@@ -484,6 +524,9 @@ func New(
 		wasmOpts...,
 	)
 
+	// Pass the contract keeper to ICS4Wrappers for ibc middlewares
+	app.Ics20WasmHooks.ContractKeeper = wasmkeeper.NewDefaultPermissionKeeper(&app.WasmKeeper)
+
 	// The gov proposal types can be individually enabled
 	enabledProposals := GetEnabledProposals()
 	if len(enabledProposals) != 0 {
@@ -496,7 +539,7 @@ func New(
 	)
 
 	// Add wasm module route to the ibc router, then set and seal it
-	ibcRouter.AddRoute(wasm.ModuleName, wasm.NewIBCHandler(app.WasmKeeper, app.IBCKeeper.ChannelKeeper))
+	ibcRouter.AddRoute(wasm.ModuleName, wasm.NewIBCHandler(app.WasmKeeper, app.IBCKeeper.ChannelKeeper, app.IBCKeeper.ChannelKeeper))
 	app.IBCKeeper.SetRouter(ibcRouter)
 
 	/****  Module Options ****/
@@ -529,7 +572,8 @@ func New(
 		evidence.NewAppModule(app.EvidenceKeeper),
 		ibc.NewAppModule(app.IBCKeeper),
 		params.NewAppModule(app.ParamsKeeper),
-		transferModule,
+		ibcmiddleware.NewAppModule(app.AccountKeeper),
+		app.TransferModule,
 		auraModule,
 		wasm.NewAppModule(appCodec, &app.WasmKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper),
 		// this line is used by starport scaffolding # stargate/app/appModule
@@ -561,6 +605,7 @@ func New(
 		ibctransfertypes.ModuleName,
 		auramoduletypes.ModuleName,
 		wasm.ModuleName,
+		ibcmiddlewaretypes.ModuleName,
 	)
 
 	app.mm.SetOrderEndBlockers(
@@ -585,6 +630,7 @@ func New(
 		ibctransfertypes.ModuleName,
 		auramoduletypes.ModuleName,
 		wasm.ModuleName,
+		ibcmiddlewaretypes.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -614,6 +660,7 @@ func New(
 		paramstypes.ModuleName,
 		upgradetypes.ModuleName,
 		wasm.ModuleName,
+		ibcmiddlewaretypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/initGenesis
 	)
 
@@ -638,6 +685,7 @@ func New(
 		vestingtypes.ModuleName,
 		wasm.ModuleName,
 		crisistypes.ModuleName,
+		ibcmiddlewaretypes.ModuleName,
 	)
 
 	app.mm.RegisterInvariants(&app.CrisisKeeper)
@@ -904,6 +952,17 @@ func (app *App) setupUpgradeHandlers() {
 		v0_4_4.CreateUpgradeHandler(app.mm, app.configurator),
 	)
 
+	// v0.5.0 upgrade handler add new module
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v500.UpgradeName,
+		v500.CreateUpgradeHandler(app.mm, app.configurator),
+	)
+
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v501.UpgradeName,
+		v501.CreateUpgradeHandler(app.mm, app.configurator),
+	)
+
 	// When a planned update height is reached, the old binary will panic
 	// writing on disk the height and name of the update that triggered it
 	// This will read that value, and execute the preparations for the upgrade.
@@ -941,7 +1000,13 @@ func (app *App) setupUpgradeHandlers() {
 		// no store upgrades in v0.4.2
 
 	case v0_4_4.UpgradeName:
-		// no store upgrades in v0.4.4
+	// no store upgrades in v0.4.4
+
+	case v500.UpgradeName:
+		storeUpgrades = &storetypes.StoreUpgrades{
+			Added: []string{ibcmiddlewaretypes.StoreKey},
+		}
+	case v501.UpgradeName:
 	}
 
 	if storeUpgrades != nil {

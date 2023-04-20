@@ -2,7 +2,6 @@ package app
 
 import (
 	"fmt"
-	v500 "github.com/aura-nw/aura/app/upgrades/v0.5.0"
 	v501 "github.com/aura-nw/aura/app/upgrades/v0.5.1"
 	"io"
 	"net/http"
@@ -954,11 +953,6 @@ func (app *App) setupUpgradeHandlers() {
 
 	// v0.5.0 upgrade handler add new module
 	app.UpgradeKeeper.SetUpgradeHandler(
-		v500.UpgradeName,
-		v500.CreateUpgradeHandler(app.mm, app.configurator),
-	)
-
-	app.UpgradeKeeper.SetUpgradeHandler(
 		v501.UpgradeName,
 		v501.CreateUpgradeHandler(app.mm, app.configurator),
 	)
@@ -1002,11 +996,10 @@ func (app *App) setupUpgradeHandlers() {
 	case v0_4_4.UpgradeName:
 	// no store upgrades in v0.4.4
 
-	case v500.UpgradeName:
+	case v501.UpgradeName:
 		storeUpgrades = &storetypes.StoreUpgrades{
 			Added: []string{ibcmiddlewaretypes.StoreKey},
 		}
-	case v501.UpgradeName:
 	}
 
 	if storeUpgrades != nil {

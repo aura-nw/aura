@@ -146,8 +146,10 @@ require (
 require (
 	github.com/armon/go-metrics v0.4.0
 	github.com/golang/mock v1.6.0
+	github.com/golang/protobuf v1.5.3
 	github.com/regen-network/cosmos-proto v0.3.1
 	google.golang.org/genproto/googleapis/api v0.0.0-20230530153820-e85fd2cbaebc
+	gopkg.in/yaml.v2 v2.4.0
 )
 
 replace (

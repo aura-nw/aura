@@ -1,0 +1,25 @@
+syntax = "proto3";
+package auranw.aura.smartaccount;
+
+// this line is used by starport scaffolding # proto/tx/import
+
+option go_package = "github.com/aura-nw/aura/x/smartaccount/types";
+
+// Msg defines the Msg service.
+service Msg {
+  rpc CreateAccount(MsgCreateAccount) returns (MsgCreateAccountResponse);
+  // this line is used by starport scaffolding # proto/tx/rpc
+}
+
+message MsgCreateAccount {
+  string creator = 1;
+  int32 codeId = 2;
+  string initMessage = 3;
+  string publicKey = 4;
+}
+
+message MsgCreateAccountResponse {
+  string address = 1;
+}
+
+// this line is used by starport scaffolding # proto/tx/message

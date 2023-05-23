@@ -109,6 +109,10 @@ import (
 	auramodulekeeper "github.com/aura-nw/aura/x/aura/keeper"
 	auramoduletypes "github.com/aura-nw/aura/x/aura/types"
 
+	samodule "github.com/aura-nw/aura/x/smartaccount"
+	samodulekeeper "github.com/aura-nw/aura/x/smartaccount/keeper"
+	samoduletypes "github.com/aura-nw/aura/x/smartaccount/types"
+
 	"github.com/cosmos/cosmos-sdk/x/authz"
 	authzkeeper "github.com/cosmos/cosmos-sdk/x/authz/keeper"
 	authzmodule "github.com/cosmos/cosmos-sdk/x/authz/module"
@@ -222,6 +226,7 @@ var (
 		transfer.AppModuleBasic{},
 		customvesting.AppModuleBasic{},
 		auramodule.AppModuleBasic{},
+		samodule.AppModuleBasic{},
 		wasm.AppModuleBasic{},
 		// this line is used by starport scaffolding # stargate/app/moduleBasic
 	)
@@ -292,6 +297,7 @@ type App struct {
 	FeeGrantKeeper      feegrantkeeper.Keeper
 	AuthzKeeper         authzkeeper.Keeper
 	WasmKeeper          wasm.Keeper
+	ContractKeeper      *wasmkeeper.PermissionedKeeper
 
 	// make scoped keepers public for test purposes
 	ScopedIBCKeeper      capabilitykeeper.ScopedKeeper
@@ -300,6 +306,7 @@ type App struct {
 
 	AuraKeeper auramodulekeeper.Keeper
 
+	SaKeeper samodulekeeper.Keeper
 	// this line is used by starport scaffolding # stargate/app/keeperDeclaration
 
 	// the module manager
@@ -344,6 +351,7 @@ func New(
 		govtypes.StoreKey, paramstypes.StoreKey, ibchost.StoreKey, upgradetypes.StoreKey, feegrant.StoreKey,
 		evidencetypes.StoreKey, ibctransfertypes.StoreKey, capabilitytypes.StoreKey,
 		auramoduletypes.StoreKey,
+		samoduletypes.StoreKey,
 		authzkeeper.StoreKey,
 		wasm.StoreKey,
 		ibcmiddlewaretypes.StoreKey,
@@ -387,6 +395,13 @@ func New(
 		keys[auramoduletypes.StoreKey],
 		keys[auramoduletypes.MemStoreKey],
 		app.GetSubspace(auramoduletypes.ModuleName),
+	)
+
+	app.SaKeeper = samodulekeeper.NewKeeper(
+		appCodec,
+		keys[samoduletypes.StoreKey],
+		keys[samoduletypes.MemStoreKey],
+		app.GetSubspace(samoduletypes.ModuleName),
 	)
 
 	app.BankKeeper = custombankkeeper.NewBaseKeeper(
@@ -524,8 +539,13 @@ func New(
 		wasmOpts...,
 	)
 
+	app.ContractKeeper = wasmkeeper.NewDefaultPermissionKeeper(&app.WasmKeeper)
+
+	// aa module
+	aaModule := samodule.NewAppModule(appCodec, app.SaKeeper, app.ContractKeeper, app.AccountKeeper)
+
 	// Pass the contract keeper to ICS4Wrappers for ibc middlewares
-	app.Ics20WasmHooks.ContractKeeper = wasmkeeper.NewDefaultPermissionKeeper(&app.WasmKeeper)
+	app.Ics20WasmHooks.ContractKeeper = app.ContractKeeper
 
 	// The gov proposal types can be individually enabled
 	enabledProposals := GetEnabledProposals()
@@ -575,6 +595,7 @@ func New(
 		ibcmiddleware.NewAppModule(app.AccountKeeper),
 		app.TransferModule,
 		auraModule,
+		aaModule,
 		wasm.NewAppModule(appCodec, &app.WasmKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper),
 		// this line is used by starport scaffolding # stargate/app/appModule
 	)
@@ -605,6 +626,7 @@ func New(
 		ibctransfertypes.ModuleName,
 		auramoduletypes.ModuleName,
 		wasm.ModuleName,
+		samoduletypes.ModuleName,
 		ibcmiddlewaretypes.ModuleName,
 	)
 
@@ -630,6 +652,7 @@ func New(
 		ibctransfertypes.ModuleName,
 		auramoduletypes.ModuleName,
 		wasm.ModuleName,
+		samoduletypes.ModuleName,
 		ibcmiddlewaretypes.ModuleName,
 	)
 
@@ -660,6 +683,7 @@ func New(
 		paramstypes.ModuleName,
 		upgradetypes.ModuleName,
 		wasm.ModuleName,
+		samoduletypes.ModuleName,
 		ibcmiddlewaretypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/initGenesis
 	)
@@ -684,6 +708,7 @@ func New(
 		upgradetypes.ModuleName,
 		vestingtypes.ModuleName,
 		wasm.ModuleName,
+		samoduletypes.ModuleName,
 		crisistypes.ModuleName,
 		ibcmiddlewaretypes.ModuleName,
 	)
@@ -706,10 +731,12 @@ func New(
 				SignModeHandler: encodingConfig.TxConfig.SignModeHandler(),
 				FeegrantKeeper:  app.FeeGrantKeeper,
 				SigGasConsumer:  ante.DefaultSigVerificationGasConsumer},
-			IBCKeeper:         app.IBCKeeper,
-			WasmConfig:        &wasmConfig,
-			TXCounterStoreKey: keys[wasm.StoreKey],
-			Codec:             app.appCodec,
+			WasmKeeper:         app.WasmKeeper,
+			SmartAccountKeeper: app.SaKeeper,
+			IBCKeeper:          app.IBCKeeper,
+			WasmConfig:         &wasmConfig,
+			TXCounterStoreKey:  keys[wasm.StoreKey],
+			Codec:              app.appCodec,
 		},
 	)
 	if err != nil {
@@ -897,6 +924,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
 	paramsKeeper.Subspace(ibchost.ModuleName)
 	paramsKeeper.Subspace(auramoduletypes.ModuleName)
+	paramsKeeper.Subspace(samoduletypes.ModuleName)
 	paramsKeeper.Subspace(wasm.ModuleName)
 	// this line is used by starport scaffolding # stargate/app/paramSubspace
 

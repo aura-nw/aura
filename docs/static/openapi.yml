@@ -4,6 +4,42 @@ info:
   name: ''
   description: ''
 paths:
+  /aura-nw/aura/smartaccount/params:
+    get:
+      summary: Parameters queries the parameters of the module.
+      operationId: AuranwAuraSmartaccountParams
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              params:
+                description: params holds all the parameters of this module.
+                type: object
+            description: >-
+              QueryParamsResponse is response type for the Query/Params RPC
+              method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                  additionalProperties: {}
+      tags:
+        - Query
   /cosmos/auth/v1beta1/accounts:
     get:
       summary: Accounts returns all the existing accounts
@@ -32414,6 +32450,21 @@ definitions:
                   "@type": "type.googleapis.com/google.protobuf.Duration",
                   "value": "1.212s"
                 }
+  auranw.aura.smartaccount.MsgCreateAccountResponse:
+    type: object
+    properties:
+      address:
+        type: string
+  auranw.aura.smartaccount.Params:
+    type: object
+    description: Params defines the parameters for the module.
+  auranw.aura.smartaccount.QueryParamsResponse:
+    type: object
+    properties:
+      params:
+        description: params holds all the parameters of this module.
+        type: object
+    description: QueryParamsResponse is response type for the Query/Params RPC method.
   cosmos.auth.v1beta1.Params:
     type: object
     properties:
@@ -47549,6 +47600,9 @@ definitions:
   cosmwasm.wasm.v1.MsgUpdateAdminResponse:
     type: object
     title: MsgUpdateAdminResponse returns empty data
+  cosmwasm.wasm.v1.MsgUpdateInstantiateConfigResponse:
+    type: object
+    title: MsgUpdateInstantiateConfigResponse returns empty data
   cosmwasm.wasm.v1.Params:
     type: object
     properties:

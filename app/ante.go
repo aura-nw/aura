@@ -3,23 +3,28 @@ package app
 import (
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmTypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	smartaccountkeeper "github.com/aura-nw/aura/x/smartaccount/keeper"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
 	ibcante "github.com/cosmos/ibc-go/v4/modules/core/ante"
 	keeper "github.com/cosmos/ibc-go/v4/modules/core/keeper"
+
 	// stargazeante "github.com/public-awesome/stargaze/v4/internal/ante"
+	auraante "github.com/aura-nw/aura/ante"
 )
 
 // HandlerOptions extend the SDK's AnteHandler options by requiring the IBC
 // channel keeper.
 type HandlerOptions struct {
 	ante.HandlerOptions
-	IBCKeeper         *keeper.Keeper
-	WasmConfig        *wasmTypes.WasmConfig
-	TXCounterStoreKey sdk.StoreKey
-	Codec             codec.BinaryCodec
+	WasmKeeper         wasmkeeper.Keeper
+	SmartAccountKeeper smartaccountkeeper.Keeper
+	IBCKeeper          *keeper.Keeper
+	WasmConfig         *wasmTypes.WasmConfig
+	TXCounterStoreKey  sdk.StoreKey
+	Codec              codec.BinaryCodec
 }
 
 // NewAnteHandler returns an AnteHandler that checks and increments sequence
@@ -65,10 +70,14 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 		ante.NewConsumeGasForTxSizeDecorator(options.AccountKeeper),
 		ante.NewDeductFeeDecorator(options.AccountKeeper, options.BankKeeper, options.FeegrantKeeper),
 		// SetPubKeyDecorator must be called before all signature verification decorators
+
 		ante.NewSetPubKeyDecorator(options.AccountKeeper),
 		ante.NewValidateSigCountDecorator(options.AccountKeeper),
 		ante.NewSigGasConsumeDecorator(options.AccountKeeper, sigGasConsumer),
 		ante.NewSigVerificationDecorator(options.AccountKeeper, options.SignModeHandler),
+
+		// new ante for account abstraction
+		auraante.NewSmartAccountDecorator(options.SmartAccountKeeper, options.WasmKeeper),
 		ante.NewIncrementSequenceDecorator(options.AccountKeeper),
 		ibcante.NewAnteDecorator(options.IBCKeeper),
 	}

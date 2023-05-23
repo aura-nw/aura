@@ -1,0 +1,12 @@
+syntax = "proto3";
+package auranw.aura.smartaccount;
+
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/aura-nw/aura/x/smartaccount/types";
+
+// Params defines the parameters for the module.
+message Params {
+  option (gogoproto.goproto_stringer) = false;
+  
+}

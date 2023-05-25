@@ -13,6 +13,5 @@ func MergeExcludeAddrs(m map[string]bool) map[string]bool {
 	for k, v := range mapExcludeAddrs {
 		m[k] = v
 	}
-	fmt.Printf("merged exclude addrs: %v", m)
 	return m
 }

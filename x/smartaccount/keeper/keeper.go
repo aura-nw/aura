@@ -26,7 +26,6 @@ func NewKeeper(
 	storeKey,
 	memKey sdk.StoreKey,
 	ps paramtypes.Subspace,
-
 ) Keeper {
 	// set KeyTable if it has not already been set
 	if !ps.HasKeyTable() {
@@ -34,7 +33,6 @@ func NewKeeper(
 	}
 
 	return Keeper{
-
 		cdc:        cdc,
 		storeKey:   storeKey,
 		memKey:     memKey,
@@ -54,7 +52,7 @@ func (k Keeper) StoreSmartAccount(ctx sdk.Context, accountAddress string) error 
 		Active: true,
 	}
 
-	// json marshal should always work
+	// json marshal should be success
 	bytes, err := json.Marshal(value)
 
 	if err != nil {
@@ -77,26 +75,8 @@ func (k Keeper) GetSmartAccount(ctx sdk.Context, accountAddress string) types.Sm
 		return value
 	}
 
+	// json unmarshal should be success
 	_ = json.Unmarshal(accountValue, &value)
 
 	return value
-}
-
-func (k Keeper) SetSmartAccountStatus(ctx sdk.Context, accountAddress string, status bool) error {
-	store := ctx.KVStore(k.storeKey)
-
-	accountValue := store.Get([]byte(accountAddress))
-
-	var value types.SmartAccountValue
-
-	if accountValue == nil {
-		return fmt.Errorf(types.ErrSetSmartAccountStatus, "account address not found")
-	}
-
-	err := json.Unmarshal(accountValue, &value)
-	if err != nil {
-		return fmt.Errorf(types.ErrSetSmartAccountStatus, err.Error())
-	}
-
-	return nil
 }

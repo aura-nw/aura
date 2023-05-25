@@ -37,7 +37,7 @@ func NewSmartAccountDecorator(smartAccountKeeper smartaccountkeeper.Keeper, wasm
 	}
 }
 
-func createValidateQueryMessage(msg *wasmtypes.MsgExecuteContract, msgs []MsgData) ([]byte, error) {
+func generateValidateQueryMessage(msg *wasmtypes.MsgExecuteContract, msgs []MsgData) ([]byte, error) {
 
 	var preExecuteUserOps PreExecuteUserOps
 	umErr := json.Unmarshal(msg.GetMsg(), &preExecuteUserOps)
@@ -47,7 +47,7 @@ func createValidateQueryMessage(msg *wasmtypes.MsgExecuteContract, msgs []MsgDat
 
 	valMsgData, err := json.Marshal(&msgs)
 	if err != nil {
-		return nil, fmt.Errorf("cannot json marshal pre=execute message: %s", err.Error())
+		return nil, fmt.Errorf("cannot json marshal pre-execute message: %s", err.Error())
 	}
 
 	// data in validate message must compatiable to tx.messages
@@ -90,6 +90,7 @@ func (decorator *SmartAccountDecorator) AnteHandle(
 	simulate bool,
 	next sdk.AnteHandler,
 ) (newCtx sdk.Context, err error) {
+
 	sigTx, ok := tx.(authsigning.SigVerifiableTx)
 	if !ok {
 		return ctx, fmt.Errorf("invalid transaction type")
@@ -129,10 +130,13 @@ func (decorator *SmartAccountDecorator) AnteHandle(
 	}
 
 	// parse messages in tx to list of string
-	valMsgData := parseMessagesString(msgs[1:])
+	valMsgData, err := parseMessagesString(msgs[1:])
+	if err != nil {
+		return ctx, err
+	}
 
 	// create message for SA contract query
-	validateMessage, err := createValidateQueryMessage(valMsg, valMsgData)
+	validateMessage, err := generateValidateQueryMessage(valMsg, valMsgData)
 	if err != nil {
 		return ctx, err
 	}
@@ -146,7 +150,7 @@ func (decorator *SmartAccountDecorator) AnteHandle(
 	// query SA contract for validating transaction
 	rawQueryResponse, err := decorator.WasmKeeper.QuerySmart(ctx, contractAddr, validateMessage)
 	if err != nil {
-		return ctx, fmt.Errorf("cannot query smart contract: %s", err.Error())
+		return ctx, fmt.Errorf("transaction validate fail: %s", err.Error())
 	}
 
 	var queryResponse ValidateUserOpsResponse

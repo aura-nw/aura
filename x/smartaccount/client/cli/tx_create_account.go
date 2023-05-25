@@ -9,15 +9,16 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/aura-nw/aura/x/smartaccount/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 var _ = strconv.Itoa(0)
 
 func CmdCreateAccount() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "create-account [code-id] [init-message] [public-key]",
+		Use:   "create-account [code-id] [init-message] [public-key] [funds]",
 		Short: "Broadcast message CreateAccount",
-		Args:  cobra.ExactArgs(3),
+		Args:  cobra.ExactArgs(4),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
       		 argCodeId, err := cast.ToInt32E(args[0])
             		if err != nil {
@@ -31,12 +32,17 @@ func CmdCreateAccount() *cobra.Command {
 				return err
 			}
 
+			funds, err := sdk.ParseCoinsNormalized(args[3])
+			if err != nil {
+				return err
+			}
+
 			msg := types.NewMsgCreateAccount(
 				clientCtx.GetFromAddress().String(),
 				argCodeId,
 				argInitMessage,
 				argPublicKey,
-				
+				funds,
 			)
 			if err := msg.ValidateBasic(); err != nil {
 				return err

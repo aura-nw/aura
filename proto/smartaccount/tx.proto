@@ -1,7 +1,9 @@
 syntax = "proto3";
 package auranw.aura.smartaccount;
 
-// this line is used by starport scaffolding # proto/tx/import
+import "gogoproto/gogo.proto";
+import "cosmos_proto/cosmos.proto";
+import "cosmos/base/v1beta1/coin.proto";
 
 option go_package = "github.com/aura-nw/aura/x/smartaccount/types";
 
@@ -16,10 +18,13 @@ message MsgCreateAccount {
   int32 codeId = 2;
   string initMessage = 3;
   string publicKey = 4;
+  repeated cosmos.base.v1beta1.Coin funds = 5 [
+    (gogoproto.nullable)     = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
 }
 
 message MsgCreateAccountResponse {
-  string address = 1;
 }
 
 // this line is used by starport scaffolding # proto/tx/message

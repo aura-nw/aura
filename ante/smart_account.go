@@ -16,20 +16,6 @@ type SmartAccountDecorator struct {
 	WasmKeeper         wasmkeeper.Keeper
 }
 
-type UserOps struct {
-	Messages string `json:"messages"`
-}
-
-type ValidateUserOps struct {
-	Validate UserOps `json:"validate"`
-}
-
-type PreExecuteUserOps struct {
-	PreExecute UserOps `json:"pre_execute"`
-}
-
-type ValidateUserOpsResponse = bool
-
 func NewSmartAccountDecorator(smartAccountKeeper smartaccountkeeper.Keeper, wasmKeeper wasmkeeper.Keeper) *SmartAccountDecorator {
 	return &SmartAccountDecorator{
 		SmartAccountKeeper: smartAccountKeeper,
@@ -37,7 +23,7 @@ func NewSmartAccountDecorator(smartAccountKeeper smartaccountkeeper.Keeper, wasm
 	}
 }
 
-func generateValidateQueryMessage(msg *wasmtypes.MsgExecuteContract, msgs []MsgData) ([]byte, error) {
+func GenerateValidateQueryMessage(msg *wasmtypes.MsgExecuteContract, msgs []MsgData) ([]byte, error) {
 
 	var preExecuteUserOps PreExecuteUserOps
 	umErr := json.Unmarshal(msg.GetMsg(), &preExecuteUserOps)
@@ -66,7 +52,7 @@ func generateValidateQueryMessage(msg *wasmtypes.MsgExecuteContract, msgs []MsgD
 	return validateMessage, nil
 }
 
-func (decorator SmartAccountDecorator) isSmartAccountTx(ctx sdk.Context, sigTx authsigning.SigVerifiableTx) bool {
+func (decorator SmartAccountDecorator) IsSmartAccountTx(ctx sdk.Context, sigTx authsigning.SigVerifiableTx) bool {
 	signerAddrs := sigTx.GetSigners()
 
 	// not support multi signer yet
@@ -97,7 +83,7 @@ func (decorator *SmartAccountDecorator) AnteHandle(
 	}
 
 	// if is not smartaccount tx type
-	if !decorator.isSmartAccountTx(ctx, sigTx) {
+	if !decorator.IsSmartAccountTx(ctx, sigTx) {
 		// do some thing
 		return next(ctx, tx, simulate)
 	}
@@ -130,13 +116,13 @@ func (decorator *SmartAccountDecorator) AnteHandle(
 	}
 
 	// parse messages in tx to list of string
-	valMsgData, err := parseMessagesString(msgs[1:])
+	valMsgData, err := ParseMessagesString(msgs[1:])
 	if err != nil {
 		return ctx, err
 	}
 
 	// create message for SA contract query
-	validateMessage, err := generateValidateQueryMessage(valMsg, valMsgData)
+	validateMessage, err := GenerateValidateQueryMessage(valMsg, valMsgData)
 	if err != nil {
 		return ctx, err
 	}

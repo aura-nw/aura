@@ -36,7 +36,7 @@ func (k msgServer) CreateAccount(goCtx context.Context, msg *types.MsgCreateAcco
 		return nil, fmt.Errorf(types.ErrWasmKeeper)
 	}
 
-	saAddress, err := instantiateSmartAccount(ctx, k.WasmKeeper, msg)
+	saAddress, err := InstantiateSmartAccount(ctx, k.WasmKeeper, msg)
 	if err != nil {
 		return nil, err
 	}

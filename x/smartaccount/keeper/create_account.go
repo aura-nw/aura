@@ -9,10 +9,10 @@ import (
 )
 
 var (
-	SmartAccountLabel = "smart account"
+	SmartAccountLabel = "Smart Account"
 )
 
-func instantiateSmartAccount(ctx sdk.Context, wasmKeepper *wasmkeeper.PermissionedKeeper, msg *types.MsgCreateAccount) (sdk.AccAddress, error) {
+func InstantiateSmartAccount(ctx sdk.Context, wasmKeepper *wasmkeeper.PermissionedKeeper, msg *types.MsgCreateAccount) (sdk.AccAddress, error) {
 
 	creator, aMsg := sdk.AccAddressFromBech32(msg.Creator)
 	if aMsg != nil {

@@ -9,13 +9,26 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+type UserOps struct {
+	Messages string `json:"messages"`
+}
+
+type ValidateUserOps struct {
+	Validate UserOps `json:"validate"`
+}
+
+type PreExecuteUserOps struct {
+	PreExecute UserOps `json:"pre_execute"`
+}
+
+type ValidateUserOpsResponse = bool
+
 type MsgData struct {
 	Type string `json:"type"`
 	Data string `json:"data"`
 }
 
-// just test with 2 type of message
-func parseMessagesString(msgs []sdk.Msg) ([]MsgData, error) {
+func ParseMessagesString(msgs []sdk.Msg) ([]MsgData, error) {
 	var msgsArray []MsgData
 
 	for index, msg := range msgs {

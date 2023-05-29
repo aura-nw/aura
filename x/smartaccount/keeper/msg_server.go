@@ -55,7 +55,12 @@ func (k msgServer) CreateAccount(goCtx context.Context, msg *types.MsgCreateAcco
 		return nil, fmt.Errorf(types.ErrBadPublicKey, err.Error())
 	}
 
-	newPubkey := &secp256k1.PubKey{Key: bz} // new secp25k61 public key
+	// new secp25k61 public key
+	newPubkey := &secp256k1.PubKey{Key: nil}
+	keyErr := newPubkey.UnmarshalAmino(bz)
+	if keyErr != nil {
+		return nil, fmt.Errorf(types.ErrBadPublicKey, keyErr.Error())
+	}
 
 	// set new public key
 	err = smartAccount.SetPubKey(newPubkey)

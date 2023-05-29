@@ -1,6 +1,5 @@
 package internal
 
-import "fmt"
 
 var mapExcludeAddrs = map[string]bool{
 	// TODO: Hardcode exclude address for disable receive funds

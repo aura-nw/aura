@@ -122,6 +122,7 @@ import (
 	v0_4_1 "github.com/aura-nw/aura/app/upgrades/v0.4.1"
 	v0_4_2 "github.com/aura-nw/aura/app/upgrades/v0.4.2"
 	v0_4_4 "github.com/aura-nw/aura/app/upgrades/v0.4.4"
+	v0_4_5 "github.com/aura-nw/aura/app/upgrades/v0.4.5"
 
 	customvesting "github.com/aura-nw/aura/x/auth/vesting"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
@@ -903,6 +904,10 @@ func (app *App) setupUpgradeHandlers() {
 		v0_4_4.UpgradeName,
 		v0_4_4.CreateUpgradeHandler(app.mm, app.configurator),
 	)
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v0_4_5.UpgradeName,
+		v0_4_5.CreateUpgradeHandler(app.mm, app.configurator),
+	)
 
 	// When a planned update height is reached, the old binary will panic
 	// writing on disk the height and name of the update that triggered it
@@ -942,6 +947,9 @@ func (app *App) setupUpgradeHandlers() {
 
 	case v0_4_4.UpgradeName:
 		// no store upgrades in v0.4.4
+
+	case v0_4_5.UpgradeName:
+		// no store upgrades in v0.4.5
 	}
 
 	if storeUpgrades != nil {

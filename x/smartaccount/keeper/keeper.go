@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/tendermint/tendermint/libs/log"
@@ -44,39 +43,23 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
-// StorePacketCallback stores which contract will be listening for the ack or timeout of a packet
-func (k Keeper) StoreSmartAccount(ctx sdk.Context, accountAddress string) error {
-	store := ctx.KVStore(k.storeKey)
-	value := types.SmartAccountValue{
-		Type:   types.SmartAccountI,
-		Active: true,
-	}
+// ------------------------------- NextAccountId -------------------------------
 
-	// json marshal should be success
-	bytes, err := json.Marshal(value)
+func (k Keeper) GetAndIncrementNextAccountID(ctx sdk.Context) uint64 {
+	id := k.GetNextAccountID(ctx)
 
-	if err != nil {
-		return fmt.Errorf(types.ErrStoreSmartAccount, err.Error())
-	}
+	k.SetNextAccountID(ctx, id+1)
 
-	store.Set([]byte(accountAddress), bytes)
-
-	return nil
+	return id
 }
 
-// GetPacketCallback returns the bech32 addr of the contract that is expecting a callback from a packet
-func (k Keeper) GetSmartAccount(ctx sdk.Context, accountAddress string) types.SmartAccountValue {
+func (k Keeper) GetNextAccountID(ctx sdk.Context) uint64 {
 	store := ctx.KVStore(k.storeKey)
-	accountValue := store.Get([]byte(accountAddress))
 
-	var value types.SmartAccountValue
+	return sdk.BigEndianToUint64(store.Get(types.KeyPrefix(types.AccountIDKey)))
+}
 
-	if accountValue == nil {
-		return value
-	}
-
-	// json unmarshal should be success
-	_ = json.Unmarshal(accountValue, &value)
-
-	return value
+func (k Keeper) SetNextAccountID(ctx sdk.Context, id uint64) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set(types.KeyPrefix(types.AccountIDKey), sdk.Uint64ToBigEndian(id))
 }

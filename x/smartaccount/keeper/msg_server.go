@@ -32,25 +32,21 @@ func NewMsgServerImpl(keeper Keeper, wasmKeeper *wasmkeeper.PermissionedKeeper, 
 func (k msgServer) CreateAccount(goCtx context.Context, msg *types.MsgCreateAccount) (*types.MsgCreateAccountResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	if k.WasmKeeper == nil {
-		return nil, fmt.Errorf(types.ErrWasmKeeper)
-	}
-
-	saAddress, err := InstantiateSmartAccount(ctx, k.WasmKeeper, msg)
+	saAddress, err := InstantiateSmartAccount(ctx, k.Keeper, k.WasmKeeper, msg)
 	if err != nil {
 		return nil, err
 	}
 
 	saAddressStr := saAddress.String()
 
-	// get smart account by address
-	smartAccount := k.AccountKeeper.GetAccount(ctx, saAddress)
-	if smartAccount == nil {
+	// get smart contract account by address
+	scAccount := k.AccountKeeper.GetAccount(ctx, saAddress)
+	if scAccount == nil {
 		return &types.MsgCreateAccountResponse{},
 			fmt.Errorf(types.ErrAccountNotFoundForAddress, saAddressStr)
 	}
 
-	bz, err := hex.DecodeString(msg.PublicKey)
+	bz, err := hex.DecodeString(msg.PubKey)
 	if err != nil {
 		return nil, fmt.Errorf(types.ErrBadPublicKey, err.Error())
 	}
@@ -62,17 +58,13 @@ func (k msgServer) CreateAccount(goCtx context.Context, msg *types.MsgCreateAcco
 		return nil, fmt.Errorf(types.ErrBadPublicKey, keyErr.Error())
 	}
 
-	// set new public key
+	smartAccount := types.NewSmartAccountFromAccount(scAccount)
 	err = smartAccount.SetPubKey(newPubkey)
 	if err != nil {
-		return nil, fmt.Errorf(types.ErrSetPublickey, err.Error())
+		return nil, err
 	}
 
-	// save account to db after updated public key
 	k.AccountKeeper.SetAccount(ctx, smartAccount)
-
-	// save smart account address to db, so we can check later
-	k.Keeper.StoreSmartAccount(ctx, saAddressStr)
 
 	return &types.MsgCreateAccountResponse{}, nil
 }

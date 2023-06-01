@@ -102,20 +102,29 @@ type AppModule struct {
 	AppModuleBasic
 
 	keeper        keeper.Keeper
-	wasmKeeper    *wasmkeeper.PermissionedKeeper
+	contractKeeper    *wasmkeeper.PermissionedKeeper
 	accountKeeper types.AccountKeeper
 }
 
 func NewAppModule(
 	cdc codec.Codec,
 	keeper keeper.Keeper,
-	wasmKeeper *wasmkeeper.PermissionedKeeper,
+	contractKeeper *wasmkeeper.PermissionedKeeper,
 	accountKeeper types.AccountKeeper,
 ) AppModule {
+
+	if contractKeeper == nil {
+		panic("AccountKeeper cannot be nil")
+	}
+
+	if accountKeeper == nil {
+		panic("ContractKeeper cannot be nil")
+	}
+
 	return AppModule{
 		AppModuleBasic: NewAppModuleBasic(cdc),
 		keeper:         keeper,
-		wasmKeeper:     wasmKeeper,
+		contractKeeper:     contractKeeper,
 		accountKeeper:  accountKeeper,
 	}
 }
@@ -127,7 +136,7 @@ func (am AppModule) Name() string {
 
 // Route returns the capability module's message routing key.
 func (am AppModule) Route() sdk.Route {
-	return sdk.NewRoute(types.RouterKey, NewHandler(am.keeper, am.wasmKeeper, am.accountKeeper))
+	return sdk.NewRoute(types.RouterKey, NewHandler(am.keeper, am.contractKeeper, am.accountKeeper))
 }
 
 // QuerierRoute returns the capability module's query routing key.

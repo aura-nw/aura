@@ -17,4 +17,5 @@ var (
 	ErrAddressFromBech32         = "cannot convert string to address: %s"
 	ErrSetSmartAccountStatus     = "cannot set smartaccount status: %s"
 	ErrStoreSmartAccount         = "cannot store smartaccount value: %s"
+	ErrInvalidTx                 = "invalid tx: %s"
 )

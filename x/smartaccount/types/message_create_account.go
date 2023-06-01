@@ -3,21 +3,13 @@ package types
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 const TypeMsgCreateAccount = "create_account"
 
 var _ sdk.Msg = &MsgCreateAccount{}
-
-func NewMsgCreateAccount(creator string, codeId int32, initMessage string, publicKey string, funds sdk.Coins) *MsgCreateAccount {
-	return &MsgCreateAccount{
-		Creator:     creator,
-		CodeId:      codeId,
-		InitMessage: initMessage,
-		PublicKey:   publicKey,
-		Funds:       funds,
-	}
-}
 
 func (msg *MsgCreateAccount) Route() string {
 	return RouterKey
@@ -45,5 +37,22 @@ func (msg *MsgCreateAccount) ValidateBasic() error {
 	if err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
 	}
+
+	if msg.CodeID == 0 {
+		return sdkerrors.ErrInvalidRequest.Wrap("code id cannot be zero")
+	}
+
+	if err := msg.InitMsg.ValidateBasic(); err != nil {
+		return sdkerrors.ErrInvalidRequest.Wrapf("invalid init msg: %s", err.Error())
+	}
+
+	if !msg.Funds.IsValid() {
+		return sdkerrors.ErrInvalidCoins
+	}
+
+	if err := wasmtypes.ValidateSalt(msg.Salt); err != nil {
+		return err
+	}
+
 	return nil
 }

@@ -2,7 +2,6 @@ syntax = "proto3";
 package auranw.aura.smartaccount;
 
 import "gogoproto/gogo.proto";
-import "cosmos_proto/cosmos.proto";
 import "cosmos/base/v1beta1/coin.proto";
 
 option go_package = "github.com/aura-nw/aura/x/smartaccount/types";
@@ -14,17 +13,36 @@ service Msg {
 }
 
 message MsgCreateAccount {
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+
+  // Sender is the actor who signs the message
   string creator = 1;
-  int32 codeId = 2;
-  string initMessage = 3;
-  string publicKey = 4;
+
+  // CodeID indicates which wasm binary code is to be used for this contract
+  uint64 code_id = 2 [(gogoproto.customname) = "CodeID"];
+
+  // InitMsg is the JSON-encoded instantiate message for the contract
+  bytes init_msg = 3 [
+    (gogoproto.customname) = "InitMsg",
+    (gogoproto.casttype) = "github.com/CosmWasm/wasmd/x/wasm/types.RawContractMessage"
+  ];
+
+  // PubKey using for signature verification of this account
+  string public_key = 4 [(gogoproto.customname) = "PubKey"];
+
+  // Funds are coins to be deposited to the contract on instantiattion
   repeated cosmos.base.v1beta1.Coin funds = 5 [
     (gogoproto.nullable)     = false,
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
   ];
+
+  // Salt is an arbinary value to be used in deriving the account address.
+  // Max 64 bytes.
+  bytes salt = 6;
 }
 
 message MsgCreateAccountResponse {
+  string address = 1;
 }
 
-// this line is used by starport scaffolding # proto/tx/message

@@ -52,6 +52,8 @@ genesis:
       params:
         signed_blocks_window: "1000"
         downtime_jail_duration: "600s"
+    smartaccount:
+      smart_account_id: 0
 
 
 "# Upgrade Aurad version to v0.4.2

@@ -11,4 +11,5 @@ option go_package = "github.com/aura-nw/aura/x/smartaccount/types";
 message GenesisState {
   Params params = 1 [(gogoproto.nullable) = false];
   // this line is used by starport scaffolding # genesis/proto/state
+  uint64 smart_account_id = 2;
 }

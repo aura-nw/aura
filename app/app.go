@@ -541,8 +541,8 @@ func New(
 
 	app.ContractKeeper = wasmkeeper.NewDefaultPermissionKeeper(&app.WasmKeeper)
 
-	// aa module
-	aaModule := samodule.NewAppModule(appCodec, app.SaKeeper, app.ContractKeeper, app.AccountKeeper)
+	// sa module
+	saModule := samodule.NewAppModule(appCodec, app.SaKeeper, app.ContractKeeper, app.AccountKeeper)
 
 	// Pass the contract keeper to ICS4Wrappers for ibc middlewares
 	app.Ics20WasmHooks.ContractKeeper = app.ContractKeeper
@@ -595,7 +595,7 @@ func New(
 		ibcmiddleware.NewAppModule(app.AccountKeeper),
 		app.TransferModule,
 		auraModule,
-		aaModule,
+		saModule,
 		wasm.NewAppModule(appCodec, &app.WasmKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper),
 		// this line is used by starport scaffolding # stargate/app/appModule
 	)

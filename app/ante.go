@@ -12,7 +12,7 @@ import (
 	keeper "github.com/cosmos/ibc-go/v4/modules/core/keeper"
 
 	// stargazeante "github.com/public-awesome/stargaze/v4/internal/ante"
-	auraante "github.com/aura-nw/aura/ante"
+	smartaccount "github.com/aura-nw/aura/x/smartaccount"
 )
 
 // HandlerOptions extend the SDK's AnteHandler options by requiring the IBC
@@ -70,14 +70,13 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 		ante.NewConsumeGasForTxSizeDecorator(options.AccountKeeper),
 		ante.NewDeductFeeDecorator(options.AccountKeeper, options.BankKeeper, options.FeegrantKeeper),
 		// SetPubKeyDecorator must be called before all signature verification decorators
-
-		ante.NewSetPubKeyDecorator(options.AccountKeeper),
+		smartaccount.NewSetPubKeyDecorator(options.SmartAccountKeeper, options.AccountKeeper),
 		ante.NewValidateSigCountDecorator(options.AccountKeeper),
 		ante.NewSigGasConsumeDecorator(options.AccountKeeper, sigGasConsumer),
 		ante.NewSigVerificationDecorator(options.AccountKeeper, options.SignModeHandler),
 
 		// new ante for account abstraction
-		auraante.NewSmartAccountDecorator(options.SmartAccountKeeper, options.WasmKeeper),
+		smartaccount.NewSmartAccountDecorator(options.SmartAccountKeeper, options.WasmKeeper, options.AccountKeeper),
 		ante.NewIncrementSequenceDecorator(options.AccountKeeper),
 		ibcante.NewAnteDecorator(options.IBCKeeper),
 	}

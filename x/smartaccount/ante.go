@@ -34,8 +34,10 @@ func NewSmartAccountDecorator(smartAccountKeeper smartaccountkeeper.Keeper, wasm
 func GenerateValidateQueryMessage(msg *wasmtypes.MsgExecuteContract, msgs []types.MsgData) ([]byte, error) {
 	var accMsg types.AccountMsg
 	umErr := json.Unmarshal(msg.GetMsg(), &accMsg)
-	if umErr != nil || accMsg.AfterExecuteTx == nil {
+	if umErr != nil {
 		return nil, fmt.Errorf("invalid smart account message: %s", umErr.Error())
+	}else if accMsg.AfterExecuteTx == nil{
+		return nil, fmt.Errorf("must be AfterExecute message")
 	}
 
 	callMsgData, err := json.Marshal(accMsg.AfterExecuteTx.Msgs)

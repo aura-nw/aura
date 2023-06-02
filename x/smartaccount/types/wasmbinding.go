@@ -26,7 +26,7 @@ type MsgData struct {
 }
 
 func ParseMessagesString(msgs []sdk.Msg) ([]MsgData, error) {
-	var msgsStr []MsgData
+	msgsStr := make([]MsgData, 0)
 
 	for index, msg := range msgs {
 		msgData, err := json.Marshal(msg)

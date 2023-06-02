@@ -22,7 +22,7 @@ type AfterExecuteTx struct {
 
 type MsgData struct {
 	TypeURL string `json:"type_url"`
-	Value   []byte `json:"value"`
+	Value   string `json:"value"`
 }
 
 func ParseMessagesString(msgs []sdk.Msg) ([]MsgData, error) {
@@ -36,7 +36,7 @@ func ParseMessagesString(msgs []sdk.Msg) ([]MsgData, error) {
 
 		data := MsgData{
 			TypeURL: sdk.MsgTypeURL(msg),
-			Value:   msgData,
+			Value:   string(msgData),
 		}
 
 		msgsStr = append(msgsStr, data)

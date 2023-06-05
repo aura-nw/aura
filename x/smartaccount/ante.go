@@ -36,7 +36,7 @@ func GenerateValidateQueryMessage(msg *wasmtypes.MsgExecuteContract, msgs []type
 	umErr := json.Unmarshal(msg.GetMsg(), &accMsg)
 	if umErr != nil {
 		return nil, fmt.Errorf("invalid smart account message: %s", umErr.Error())
-	}else if accMsg.AfterExecuteTx == nil{
+	} else if accMsg.AfterExecuteTx == nil {
 		return nil, fmt.Errorf("must be AfterExecute message")
 	}
 

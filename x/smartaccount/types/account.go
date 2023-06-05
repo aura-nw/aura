@@ -14,7 +14,7 @@ var (
 	_ codectypes.UnpackInterfacesMessage = (*SmartAccount)(nil)
 )
 
-// ------------------------------ AbstractAccount ------------------------------
+// ------------------------------ SmartAccount ------------------------------
 
 func NewSmartAccount(address string, accountNum, seq uint64) *SmartAccount {
 	return &SmartAccount{

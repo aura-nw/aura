@@ -44,5 +44,6 @@ message MsgCreateAccount {
 
 message MsgCreateAccountResponse {
   string address = 1;
+  bytes data = 2;
 }
 

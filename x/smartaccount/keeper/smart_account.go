@@ -9,15 +9,15 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func InstantiateSmartAccount(ctx sdk.Context, keeper Keeper, wasmKeepper *wasmkeeper.PermissionedKeeper, msg *types.MsgCreateAccount) (sdk.AccAddress, error) {
+func InstantiateSmartAccount(ctx sdk.Context, keeper Keeper, wasmKeepper *wasmkeeper.PermissionedKeeper, msg *types.MsgCreateAccount) (sdk.AccAddress, []byte, error) {
 
 	creator, aMsg := sdk.AccAddressFromBech32(msg.Creator)
 	if aMsg != nil {
-		return nil, fmt.Errorf(types.ErrAddressFromBech32, aMsg)
+		return nil, nil, fmt.Errorf(types.ErrAddressFromBech32, aMsg)
 	}
 
 	// instantiate smartcontract by code id
-	address, _, iErr := wasmKeepper.Instantiate2(
+	address, data, iErr := wasmKeepper.Instantiate2(
 		ctx,
 		msg.CodeID,
 		creator,     // owner
@@ -29,7 +29,12 @@ func InstantiateSmartAccount(ctx sdk.Context, keeper Keeper, wasmKeepper *wasmke
 		true,
 	)
 	if iErr != nil {
-		return nil, fmt.Errorf(types.ErrBadInstantiateMsg, iErr.Error())
+		return nil, nil, fmt.Errorf(types.ErrBadInstantiateMsg, iErr.Error())
+	}
+
+	// set the contract's admin to itself
+	if err := wasmKeepper.UpdateContractAdmin(ctx, address, creator, address); err != nil {
+		return nil, nil, err
 	}
 
 	contractAddrStr := address.String()
@@ -50,5 +55,5 @@ func InstantiateSmartAccount(ctx sdk.Context, keeper Keeper, wasmKeepper *wasmke
 		),
 	)
 
-	return address, nil
+	return address, data, nil
 }

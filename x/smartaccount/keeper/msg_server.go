@@ -9,6 +9,7 @@ import (
 	"github.com/aura-nw/aura/x/smartaccount/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 )
 
 type msgServer struct {
@@ -32,7 +33,7 @@ func NewMsgServerImpl(keeper Keeper, wasmKeeper *wasmkeeper.PermissionedKeeper, 
 func (k msgServer) CreateAccount(goCtx context.Context, msg *types.MsgCreateAccount) (*types.MsgCreateAccountResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	saAddress, err := InstantiateSmartAccount(ctx, k.Keeper, k.WasmKeeper, msg)
+	saAddress, data, err := InstantiateSmartAccount(ctx, k.Keeper, k.WasmKeeper, msg)
 	if err != nil {
 		return nil, err
 	}
@@ -41,7 +42,7 @@ func (k msgServer) CreateAccount(goCtx context.Context, msg *types.MsgCreateAcco
 
 	// get smart contract account by address
 	scAccount := k.AccountKeeper.GetAccount(ctx, saAddress)
-	if scAccount == nil {
+	if _, ok := scAccount.(*authtypes.BaseAccount); !ok {
 		return &types.MsgCreateAccountResponse{},
 			fmt.Errorf(types.ErrAccountNotFoundForAddress, saAddressStr)
 	}
@@ -66,5 +67,8 @@ func (k msgServer) CreateAccount(goCtx context.Context, msg *types.MsgCreateAcco
 
 	k.AccountKeeper.SetAccount(ctx, smartAccount)
 
-	return &types.MsgCreateAccountResponse{}, nil
+	return &types.MsgCreateAccountResponse{
+		Address: saAddressStr,
+		Data:    data,
+	}, nil
 }

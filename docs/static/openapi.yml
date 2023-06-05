@@ -32622,6 +32622,9 @@ definitions:
     properties:
       address:
         type: string
+      data:
+        type: string
+        format: byte
   auranw.aura.smartaccount.Params:
     type: object
     description: Params defines the parameters for the module.

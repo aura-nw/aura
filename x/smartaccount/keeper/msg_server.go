@@ -58,3 +58,12 @@ func (k msgServer) CreateAccount(goCtx context.Context, msg *types.MsgCreateAcco
 		Data:    data,
 	}, nil
 }
+
+func (k msgServer) UpdateKey(goCtx context.Context, msg *types.MsgUpdateKey) (*types.MsgUpdateKeyResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// TODO: Handling the message
+	_ = ctx
+
+	return &types.MsgUpdateKeyResponse{}, nil
+}

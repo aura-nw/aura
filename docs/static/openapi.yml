@@ -32625,6 +32625,13 @@ definitions:
       data:
         type: string
         format: byte
+  auranw.aura.smartaccount.MsgUpdateKeyResponse:
+    type: object
+    properties:
+      address:
+        type: string
+      new_public_key:
+        type: string
   auranw.aura.smartaccount.Params:
     type: object
     description: Params defines the parameters for the module.

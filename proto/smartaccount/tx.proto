@@ -10,7 +10,8 @@ option go_package = "github.com/aura-nw/aura/x/smartaccount/types";
 // Msg defines the Msg service.
 service Msg {
   rpc CreateAccount(MsgCreateAccount) returns (MsgCreateAccountResponse);
-  // this line is used by starport scaffolding # proto/tx/rpc
+    rpc UpdateKey(MsgUpdateKey) returns (MsgUpdateKeyResponse);
+// this line is used by starport scaffolding # proto/tx/rpc
 }
 
 message MsgCreateAccount {
@@ -51,7 +52,7 @@ message MsgCreateAccountResponse {
   bytes data = 2;
 }
 
-/* message MsgUpdateKey {
+message MsgUpdateKey {
   option (gogoproto.equal)           = false;
   option (gogoproto.goproto_getters) = false;
 
@@ -62,14 +63,15 @@ message MsgCreateAccountResponse {
   string address = 2;
 
   // PubKey using for signature verification of this account
-  cosmos.crypto.secp256k1.PubKey public_key = 4 [
+  cosmos.crypto.secp256k1.PubKey public_key = 3 [
     (gogoproto.nullable)     = false,
     (gogoproto.customname) = "PubKey"
   ];
 }
 
-message MsgCreateAccountResponse {
+message MsgUpdateKeyResponse {
   string address = 1;
-
   string new_public_key = 2 [(gogoproto.customname) = "NewPubKey"];
-} */
+}
+
+// this line is used by starport scaffolding # proto/tx/message

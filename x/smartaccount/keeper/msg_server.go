@@ -2,12 +2,10 @@ package keeper
 
 import (
 	"context"
-	"encoding/hex"
 	"fmt"
 
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/aura-nw/aura/x/smartaccount/types"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 )
@@ -47,20 +45,8 @@ func (k msgServer) CreateAccount(goCtx context.Context, msg *types.MsgCreateAcco
 			fmt.Errorf(types.ErrAccountNotFoundForAddress, saAddressStr)
 	}
 
-	bz, err := hex.DecodeString(msg.PubKey)
-	if err != nil {
-		return nil, fmt.Errorf(types.ErrBadPublicKey, err.Error())
-	}
-
-	// new secp25k61 public key
-	newPubkey := &secp256k1.PubKey{Key: nil}
-	keyErr := newPubkey.UnmarshalAmino(bz)
-	if keyErr != nil {
-		return nil, fmt.Errorf(types.ErrBadPublicKey, keyErr.Error())
-	}
-
 	smartAccount := types.NewSmartAccountFromAccount(scAccount)
-	err = smartAccount.SetPubKey(newPubkey)
+	err = smartAccount.SetPubKey(&msg.PubKey)
 	if err != nil {
 		return nil, err
 	}

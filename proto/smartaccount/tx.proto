@@ -3,6 +3,7 @@ package auranw.aura.smartaccount;
 
 import "gogoproto/gogo.proto";
 import "cosmos/base/v1beta1/coin.proto";
+import "cosmos/crypto/secp256k1/keys.proto";
 
 option go_package = "github.com/aura-nw/aura/x/smartaccount/types";
 
@@ -29,7 +30,10 @@ message MsgCreateAccount {
   ];
 
   // PubKey using for signature verification of this account
-  string public_key = 4 [(gogoproto.customname) = "PubKey"];
+  cosmos.crypto.secp256k1.PubKey public_key = 4 [
+    (gogoproto.nullable)     = false,
+    (gogoproto.customname) = "PubKey"
+  ];
 
   // Funds are coins to be deposited to the contract on instantiattion
   repeated cosmos.base.v1beta1.Coin funds = 5 [
@@ -47,3 +51,25 @@ message MsgCreateAccountResponse {
   bytes data = 2;
 }
 
+/* message MsgUpdateKey {
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+
+  // Sender is the actor who signs the message
+  string creator = 1;
+
+  // smart-account address that need update
+  string address = 2;
+
+  // PubKey using for signature verification of this account
+  cosmos.crypto.secp256k1.PubKey public_key = 4 [
+    (gogoproto.nullable)     = false,
+    (gogoproto.customname) = "PubKey"
+  ];
+}
+
+message MsgCreateAccountResponse {
+  string address = 1;
+
+  string new_public_key = 2 [(gogoproto.customname) = "NewPubKey"];
+} */

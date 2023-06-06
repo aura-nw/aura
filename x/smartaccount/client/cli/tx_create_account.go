@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"encoding/hex"
 	"fmt"
 	"strconv"
 
@@ -8,6 +9,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cobra"
 )
@@ -42,11 +44,23 @@ func CmdCreateAccount() *cobra.Command {
 				return fmt.Errorf("funds: %s", err)
 			}
 
+			bz, err := hex.DecodeString(args[2])
+			if err != nil {
+				return fmt.Errorf(types.ErrBadPublicKey, err.Error())
+			}
+
+			// secp25k61 public key
+			pubKey := secp256k1.PubKey{Key: nil}
+			keyErr := pubKey.UnmarshalAmino(bz)
+			if keyErr != nil {
+				return fmt.Errorf(types.ErrBadPublicKey, keyErr.Error())
+			}
+
 			msg := &types.MsgCreateAccount{
 				Creator: clientCtx.GetFromAddress().String(),
 				CodeID:  codeID,
 				InitMsg: []byte(args[1]),
-				PubKey:  args[2],
+				PubKey:  pubKey,
 				Funds:   funds,
 				Salt:    []byte(args[3]),
 			}

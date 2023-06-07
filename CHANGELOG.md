@@ -42,6 +42,7 @@ Ref: https://keepachangelog.com/en/1.0.0/
 ### Improvements
 - Fix ibc security, bump ibc-go from 3.3.0 to 4.3.1
 - Fix wasmd security, bump wasmvm from 1.2.1 to 1.2.3
+- Bump go version to 1.19, force to use go1.19 via makefile
 
 ## [v0.4.4] - 2023-03-13
 

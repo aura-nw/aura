@@ -1,6 +1,5 @@
 package internal
 
-
 var mapExcludeAddrs = map[string]bool{
 	// TODO: Hardcode exclude address for disable receive funds
 	//"aura19ad4tprcf9ew4577qph3jfzpf9slcrkpmxwvah": true,

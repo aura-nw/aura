@@ -77,15 +77,15 @@ import (
 	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
-	"github.com/cosmos/ibc-go/v3/modules/apps/transfer"
-	ibctransferkeeper "github.com/cosmos/ibc-go/v3/modules/apps/transfer/keeper"
-	ibctransfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
-	ibc "github.com/cosmos/ibc-go/v3/modules/core"
-	ibcclient "github.com/cosmos/ibc-go/v3/modules/core/02-client"
-	ibcclientclient "github.com/cosmos/ibc-go/v3/modules/core/02-client/client"
-	ibcporttypes "github.com/cosmos/ibc-go/v3/modules/core/05-port/types"
-	ibchost "github.com/cosmos/ibc-go/v3/modules/core/24-host"
-	ibckeeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
+	"github.com/cosmos/ibc-go/v4/modules/apps/transfer"
+	ibctransferkeeper "github.com/cosmos/ibc-go/v4/modules/apps/transfer/keeper"
+	ibctransfertypes "github.com/cosmos/ibc-go/v4/modules/apps/transfer/types"
+	ibc "github.com/cosmos/ibc-go/v4/modules/core"
+	ibcclient "github.com/cosmos/ibc-go/v4/modules/core/02-client"
+	ibcclientclient "github.com/cosmos/ibc-go/v4/modules/core/02-client/client"
+	ibcporttypes "github.com/cosmos/ibc-go/v4/modules/core/05-port/types"
+	ibchost "github.com/cosmos/ibc-go/v4/modules/core/24-host"
+	ibckeeper "github.com/cosmos/ibc-go/v4/modules/core/keeper"
 
 	"github.com/spf13/cast"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -122,10 +122,11 @@ import (
 	v0_4_1 "github.com/aura-nw/aura/app/upgrades/v0.4.1"
 	v0_4_2 "github.com/aura-nw/aura/app/upgrades/v0.4.2"
 	v0_4_4 "github.com/aura-nw/aura/app/upgrades/v0.4.4"
+	v0_4_5 "github.com/aura-nw/aura/app/upgrades/v0.4.5"
 
 	customvesting "github.com/aura-nw/aura/x/auth/vesting"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
-	ibcclienttypes "github.com/cosmos/ibc-go/v3/modules/core/02-client/types"
+	ibcclienttypes "github.com/cosmos/ibc-go/v4/modules/core/02-client/types"
 )
 
 const (
@@ -496,7 +497,7 @@ func New(
 	)
 
 	// Add wasm module route to the ibc router, then set and seal it
-	ibcRouter.AddRoute(wasm.ModuleName, wasm.NewIBCHandler(app.WasmKeeper, app.IBCKeeper.ChannelKeeper))
+	ibcRouter.AddRoute(wasm.ModuleName, wasm.NewIBCHandler(app.WasmKeeper, app.IBCKeeper.ChannelKeeper, app.IBCKeeper.ChannelKeeper))
 	app.IBCKeeper.SetRouter(ibcRouter)
 
 	/****  Module Options ****/
@@ -903,6 +904,10 @@ func (app *App) setupUpgradeHandlers() {
 		v0_4_4.UpgradeName,
 		v0_4_4.CreateUpgradeHandler(app.mm, app.configurator),
 	)
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v0_4_5.UpgradeName,
+		v0_4_5.CreateUpgradeHandler(app.mm, app.configurator),
+	)
 
 	// When a planned update height is reached, the old binary will panic
 	// writing on disk the height and name of the update that triggered it
@@ -942,6 +947,9 @@ func (app *App) setupUpgradeHandlers() {
 
 	case v0_4_4.UpgradeName:
 		// no store upgrades in v0.4.4
+
+	case v0_4_5.UpgradeName:
+		// no store upgrades in v0.4.5
 	}
 
 	if storeUpgrades != nil {

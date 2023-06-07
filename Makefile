@@ -27,11 +27,11 @@ BUILD_FLAGS := -ldflags '$(ldflags)'
 
 all: build install
 
-install: go.sum
+install: check-go-version go.sum
 	@echo "--> Installing aurad"
 	@go install -mod=readonly $(BUILD_FLAGS) ./cmd/aurad
 
-build: go.sum
+build: check-go-version go.sum
 	@echo "--> Build aurad"
 	@go build -mod=readonly $(BUILD_FLAGS) -o ./build/aurad ./cmd/aurad
 
@@ -39,8 +39,15 @@ go.sum: go.mod
 	@echo "--> Ensure dependencies have not been modified"
 	GO111MODULE=on go mod verify
 
-test:
+test: check-go-version
 	@go test -mod=readonly $(PACKAGES)
 
 clean:
 	@rm -rf build
+
+# Add check to make sure we are using the proper Go version before proceeding with anything
+check-go-version:
+	@if ! go version | grep -q "go1.19"; then \
+		echo "\033[0;31mERROR:\033[0m Go version 1.19 is required for compiling aurad. It looks like you are using" "$(shell go version) \nThere are potential consensus-breaking changes that can occur when running binaries compiled with different versions of Go. Please download Go version 1.19 and retry. Thank you!"; \
+		exit 1; \
+	fi

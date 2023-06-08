@@ -10,7 +10,7 @@ option go_package = "github.com/aura-nw/aura/x/smartaccount/types";
 // Msg defines the Msg service.
 service Msg {
   rpc CreateAccount(MsgCreateAccount) returns (MsgCreateAccountResponse);
-    rpc UpdateKey(MsgUpdateKey) returns (MsgUpdateKeyResponse);
+  rpc   Recover(MsgRecover) returns (MsgRecoverResponse);
 // this line is used by starport scaffolding # proto/tx/rpc
 }
 
@@ -31,10 +31,7 @@ message MsgCreateAccount {
   ];
 
   // PubKey using for signature verification of this account
-  cosmos.crypto.secp256k1.PubKey public_key = 4 [
-    (gogoproto.nullable)     = false,
-    (gogoproto.customname) = "PubKey"
-  ];
+  string public_key = 4 [(gogoproto.customname) = "PubKey"];
 
   // Funds are coins to be deposited to the contract on instantiattion
   repeated cosmos.base.v1beta1.Coin funds = 5 [
@@ -52,7 +49,7 @@ message MsgCreateAccountResponse {
   bytes data = 2;
 }
 
-message MsgUpdateKey {
+message MsgRecover {
   option (gogoproto.equal)           = false;
   option (gogoproto.goproto_getters) = false;
 
@@ -62,14 +59,14 @@ message MsgUpdateKey {
   // smart-account address that need update
   string address = 2;
 
-  // PubKey using for signature verification of this account
-  cosmos.crypto.secp256k1.PubKey public_key = 3 [
-    (gogoproto.nullable)     = false,
-    (gogoproto.customname) = "PubKey"
-  ];
+  // New PubKey using for signature verification of this account
+  string public_key = 3 [(gogoproto.customname) = "PubKey"];
+
+  // Credentials
+  string credentials = 4;
 }
 
-message MsgUpdateKeyResponse {
+message MsgRecoverResponse {
   string address = 1;
   string new_public_key = 2 [(gogoproto.customname) = "NewPubKey"];
 }

@@ -21,8 +21,8 @@ func NewHandler(k keeper.Keeper, w *wasmkeeper.PermissionedKeeper, a types.Accou
 		case *types.MsgCreateAccount:
 			res, err := msgServer.CreateAccount(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
-		case *types.MsgUpdateKey:
-			res, err := msgServer.UpdateKey(sdk.WrapSDKContext(ctx), msg)
+		case *types.MsgRecover:
+			res, err := msgServer.Recover(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 			// this line is used by starport scaffolding # 1
 		default:

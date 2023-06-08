@@ -10,6 +10,12 @@ import (
 type AccountMsg struct {
 	ValidateTx     *ValidateTx     `json:"validate,omitempty"`
 	AfterExecuteTx *AfterExecuteTx `json:"after_execute,omitempty"`
+	RecoverTx      *RecoverTx      `json:"recover,omitempty"`
+}
+
+type RecoverTx struct {
+	PubKey      []byte `json:"pub_key"`
+	Credentials []byte `json:"credentials"`
 }
 
 type ValidateTx struct {

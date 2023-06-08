@@ -7,7 +7,7 @@ import (
 	context "context"
 	fmt "fmt"
 	github_com_CosmWasm_wasmd_x_wasm_types "github.com/CosmWasm/wasmd/x/wasm/types"
-	secp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	_ "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	github_com_cosmos_cosmos_sdk_types "github.com/cosmos/cosmos-sdk/types"
 	types "github.com/cosmos/cosmos-sdk/types"
 	_ "github.com/gogo/protobuf/gogoproto"
@@ -40,7 +40,7 @@ type MsgCreateAccount struct {
 	// InitMsg is the JSON-encoded instantiate message for the contract
 	InitMsg github_com_CosmWasm_wasmd_x_wasm_types.RawContractMessage `protobuf:"bytes,3,opt,name=init_msg,json=initMsg,proto3,casttype=github.com/CosmWasm/wasmd/x/wasm/types.RawContractMessage" json:"init_msg,omitempty"`
 	// PubKey using for signature verification of this account
-	PubKey secp256k1.PubKey `protobuf:"bytes,4,opt,name=public_key,json=publicKey,proto3" json:"public_key"`
+	PubKey string `protobuf:"bytes,4,opt,name=public_key,json=publicKey,proto3" json:"public_key,omitempty"`
 	// Funds are coins to be deposited to the contract on instantiattion
 	Funds github_com_cosmos_cosmos_sdk_types.Coins `protobuf:"bytes,5,rep,name=funds,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.Coins" json:"funds"`
 	// Salt is an arbinary value to be used in deriving the account address.
@@ -133,27 +133,29 @@ func (m *MsgCreateAccountResponse) GetData() []byte {
 	return nil
 }
 
-type MsgUpdateKey struct {
+type MsgRecover struct {
 	// Sender is the actor who signs the message
 	Creator string `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
 	// smart-account address that need update
 	Address string `protobuf:"bytes,2,opt,name=address,proto3" json:"address,omitempty"`
-	// PubKey using for signature verification of this account
-	PubKey secp256k1.PubKey `protobuf:"bytes,3,opt,name=public_key,json=publicKey,proto3" json:"public_key"`
+	// New PubKey using for signature verification of this account
+	PubKey string `protobuf:"bytes,3,opt,name=public_key,json=publicKey,proto3" json:"public_key,omitempty"`
+	// Credentials
+	Credentials string `protobuf:"bytes,4,opt,name=credentials,proto3" json:"credentials,omitempty"`
 }
 
-func (m *MsgUpdateKey) Reset()         { *m = MsgUpdateKey{} }
-func (m *MsgUpdateKey) String() string { return proto.CompactTextString(m) }
-func (*MsgUpdateKey) ProtoMessage()    {}
-func (*MsgUpdateKey) Descriptor() ([]byte, []int) {
+func (m *MsgRecover) Reset()         { *m = MsgRecover{} }
+func (m *MsgRecover) String() string { return proto.CompactTextString(m) }
+func (*MsgRecover) ProtoMessage()    {}
+func (*MsgRecover) Descriptor() ([]byte, []int) {
 	return fileDescriptor_3b92db8b72563f1f, []int{2}
 }
-func (m *MsgUpdateKey) XXX_Unmarshal(b []byte) error {
+func (m *MsgRecover) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *MsgUpdateKey) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *MsgRecover) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_MsgUpdateKey.Marshal(b, m, deterministic)
+		return xxx_messageInfo_MsgRecover.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -163,35 +165,35 @@ func (m *MsgUpdateKey) XXX_Marshal(b []byte, deterministic bool) ([]byte, error)
 		return b[:n], nil
 	}
 }
-func (m *MsgUpdateKey) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgUpdateKey.Merge(m, src)
+func (m *MsgRecover) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgRecover.Merge(m, src)
 }
-func (m *MsgUpdateKey) XXX_Size() int {
+func (m *MsgRecover) XXX_Size() int {
 	return m.Size()
 }
-func (m *MsgUpdateKey) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgUpdateKey.DiscardUnknown(m)
+func (m *MsgRecover) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgRecover.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_MsgUpdateKey proto.InternalMessageInfo
+var xxx_messageInfo_MsgRecover proto.InternalMessageInfo
 
-type MsgUpdateKeyResponse struct {
+type MsgRecoverResponse struct {
 	Address   string `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty"`
 	NewPubKey string `protobuf:"bytes,2,opt,name=new_public_key,json=newPublicKey,proto3" json:"new_public_key,omitempty"`
 }
 
-func (m *MsgUpdateKeyResponse) Reset()         { *m = MsgUpdateKeyResponse{} }
-func (m *MsgUpdateKeyResponse) String() string { return proto.CompactTextString(m) }
-func (*MsgUpdateKeyResponse) ProtoMessage()    {}
-func (*MsgUpdateKeyResponse) Descriptor() ([]byte, []int) {
+func (m *MsgRecoverResponse) Reset()         { *m = MsgRecoverResponse{} }
+func (m *MsgRecoverResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgRecoverResponse) ProtoMessage()    {}
+func (*MsgRecoverResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_3b92db8b72563f1f, []int{3}
 }
-func (m *MsgUpdateKeyResponse) XXX_Unmarshal(b []byte) error {
+func (m *MsgRecoverResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *MsgUpdateKeyResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *MsgRecoverResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_MsgUpdateKeyResponse.Marshal(b, m, deterministic)
+		return xxx_messageInfo_MsgRecoverResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -201,26 +203,26 @@ func (m *MsgUpdateKeyResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte
 		return b[:n], nil
 	}
 }
-func (m *MsgUpdateKeyResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgUpdateKeyResponse.Merge(m, src)
+func (m *MsgRecoverResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgRecoverResponse.Merge(m, src)
 }
-func (m *MsgUpdateKeyResponse) XXX_Size() int {
+func (m *MsgRecoverResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *MsgUpdateKeyResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgUpdateKeyResponse.DiscardUnknown(m)
+func (m *MsgRecoverResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgRecoverResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_MsgUpdateKeyResponse proto.InternalMessageInfo
+var xxx_messageInfo_MsgRecoverResponse proto.InternalMessageInfo
 
-func (m *MsgUpdateKeyResponse) GetAddress() string {
+func (m *MsgRecoverResponse) GetAddress() string {
 	if m != nil {
 		return m.Address
 	}
 	return ""
 }
 
-func (m *MsgUpdateKeyResponse) GetNewPubKey() string {
+func (m *MsgRecoverResponse) GetNewPubKey() string {
 	if m != nil {
 		return m.NewPubKey
 	}
@@ -230,52 +232,52 @@ func (m *MsgUpdateKeyResponse) GetNewPubKey() string {
 func init() {
 	proto.RegisterType((*MsgCreateAccount)(nil), "auranw.aura.smartaccount.MsgCreateAccount")
 	proto.RegisterType((*MsgCreateAccountResponse)(nil), "auranw.aura.smartaccount.MsgCreateAccountResponse")
-	proto.RegisterType((*MsgUpdateKey)(nil), "auranw.aura.smartaccount.MsgUpdateKey")
-	proto.RegisterType((*MsgUpdateKeyResponse)(nil), "auranw.aura.smartaccount.MsgUpdateKeyResponse")
+	proto.RegisterType((*MsgRecover)(nil), "auranw.aura.smartaccount.MsgRecover")
+	proto.RegisterType((*MsgRecoverResponse)(nil), "auranw.aura.smartaccount.MsgRecoverResponse")
 }
 
 func init() { proto.RegisterFile("smartaccount/tx.proto", fileDescriptor_3b92db8b72563f1f) }
 
 var fileDescriptor_3b92db8b72563f1f = []byte{
-	// 602 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xa4, 0x54, 0xc1, 0x6a, 0xdb, 0x4c,
-	0x10, 0xb6, 0xe2, 0xc4, 0x8e, 0x37, 0x4e, 0xf8, 0x11, 0xf9, 0x41, 0xf5, 0x41, 0x32, 0x2e, 0x14,
-	0x53, 0x9a, 0xdd, 0xc6, 0xa1, 0x85, 0xf6, 0x56, 0xbb, 0x94, 0x84, 0xe0, 0x50, 0x04, 0xa5, 0xd0,
-	0x8b, 0x59, 0xaf, 0xb6, 0xaa, 0x70, 0xb4, 0x2b, 0x34, 0xeb, 0x3a, 0x7a, 0x82, 0xf6, 0xd8, 0x07,
-	0xe8, 0x21, 0xe7, 0x3e, 0x49, 0x8e, 0x39, 0x16, 0x0a, 0x6e, 0x51, 0x2e, 0x7d, 0x86, 0x9e, 0xca,
-	0x4a, 0x72, 0x2a, 0x07, 0x52, 0x0c, 0x3d, 0xcd, 0xac, 0xf7, 0xf3, 0x37, 0xf3, 0x7d, 0x33, 0x5a,
-	0xf4, 0x3f, 0x84, 0x34, 0x56, 0x94, 0x31, 0x39, 0x15, 0x8a, 0xa8, 0x33, 0x1c, 0xc5, 0x52, 0x49,
-	0xd3, 0xa2, 0xd3, 0x98, 0x8a, 0x19, 0xd6, 0x01, 0x97, 0x21, 0xad, 0x5d, 0x5f, 0xfa, 0x32, 0x03,
-	0x11, 0x9d, 0xe5, 0xf8, 0x96, 0xcd, 0x24, 0x84, 0x12, 0xc8, 0x98, 0x02, 0x27, 0xef, 0xf7, 0xc7,
-	0x5c, 0xd1, 0x7d, 0xc2, 0x64, 0x20, 0x8a, 0xfb, 0x4e, 0x71, 0xcf, 0xe2, 0x24, 0x52, 0x92, 0x00,
-	0x67, 0x51, 0xef, 0xd1, 0xe3, 0xc9, 0x3e, 0x99, 0xf0, 0x04, 0x72, 0x4c, 0xe7, 0x43, 0x15, 0xfd,
-	0x37, 0x04, 0x7f, 0x10, 0x73, 0xaa, 0xf8, 0xb3, 0xbc, 0x9c, 0x69, 0xa1, 0x3a, 0xd3, 0x3f, 0xc8,
-	0xd8, 0x32, 0xda, 0x46, 0xb7, 0xe1, 0x2e, 0x8e, 0xe6, 0x5d, 0x54, 0x67, 0xd2, 0xe3, 0xa3, 0xc0,
-	0xb3, 0xd6, 0xda, 0x46, 0x77, 0xbd, 0x8f, 0xd2, 0xb9, 0x53, 0x1b, 0x48, 0x8f, 0x1f, 0x3d, 0x77,
-	0x6b, 0xfa, 0xea, 0xc8, 0x33, 0x19, 0xda, 0x0c, 0x44, 0xa0, 0x46, 0x21, 0xf8, 0x56, 0xb5, 0x6d,
-	0x74, 0x9b, 0xfd, 0xc3, 0x74, 0xee, 0xd4, 0x8f, 0x44, 0xa0, 0x86, 0xe0, 0xff, 0x9a, 0x3b, 0x4f,
-	0xfc, 0x40, 0xbd, 0x9b, 0x8e, 0x31, 0x93, 0x21, 0x19, 0x48, 0x08, 0x5f, 0x53, 0x08, 0xc9, 0x8c,
-	0x42, 0xe8, 0x91, 0xb3, 0x2c, 0x12, 0x95, 0x44, 0x1c, 0xb0, 0x4b, 0x67, 0x03, 0x29, 0x54, 0x4c,
-	0x99, 0x1a, 0x72, 0x00, 0xea, 0x73, 0xb7, 0x1e, 0xe4, 0x2c, 0xe6, 0x09, 0x42, 0xd1, 0x74, 0x7c,
-	0x1a, 0xb0, 0xd1, 0x84, 0x27, 0xd6, 0x7a, 0xdb, 0xe8, 0x6e, 0xf5, 0x1c, 0x9c, 0x2b, 0xc6, 0xb9,
-	0x62, 0x7c, 0xad, 0x18, 0xbf, 0x9c, 0x8e, 0x8f, 0x79, 0xd2, 0xdf, 0xb9, 0x98, 0x3b, 0x15, 0xdd,
-	0x71, 0x7e, 0x76, 0x1b, 0x39, 0xc5, 0x31, 0x4f, 0x4c, 0x8a, 0x36, 0xde, 0x4e, 0x85, 0x07, 0xd6,
-	0x46, 0xbb, 0xda, 0xdd, 0xea, 0xdd, 0x59, 0x50, 0x69, 0x73, 0x71, 0x61, 0x2e, 0x1e, 0xc8, 0x40,
-	0xf4, 0x1f, 0x6a, 0x92, 0x2f, 0xdf, 0x9d, 0x6e, 0x49, 0xc5, 0xc2, 0xe9, 0x2c, 0xec, 0x81, 0x37,
-	0x29, 0x14, 0xe8, 0x3f, 0x80, 0x9b, 0x33, 0x9b, 0x26, 0x5a, 0x07, 0x7a, 0xaa, 0xac, 0x9a, 0xf6,
-	0xc4, 0xcd, 0xf2, 0xa7, 0x9b, 0x1f, 0xcf, 0x9d, 0xca, 0xcf, 0x73, 0xa7, 0xd2, 0x39, 0x44, 0xd6,
-	0xcd, 0x41, 0xb8, 0x1c, 0x22, 0x29, 0x80, 0xeb, 0x81, 0x50, 0xcf, 0x8b, 0x39, 0xc0, 0x62, 0x20,
-	0xc5, 0x51, 0x73, 0x7a, 0x54, 0xd1, 0x6c, 0x1a, 0x4d, 0x37, 0xcb, 0x3b, 0x9f, 0x0d, 0xd4, 0x1c,
-	0x82, 0xff, 0x2a, 0xf2, 0xa8, 0xe2, 0x5a, 0xdb, 0xed, 0xf3, 0x2c, 0x11, 0xaf, 0x2d, 0x13, 0x2f,
-	0xfb, 0x5b, 0xfd, 0x57, 0x7f, 0x4b, 0x42, 0x39, 0xda, 0x2d, 0x77, 0xb7, 0x82, 0xc8, 0x03, 0xb4,
-	0x23, 0xf8, 0x6c, 0x54, 0xea, 0x27, 0x6b, 0xb6, 0xbf, 0x9d, 0xce, 0x9d, 0xc6, 0x09, 0x9f, 0x15,
-	0xd5, 0x9a, 0x22, 0x4b, 0xf3, 0x82, 0xbd, 0x6f, 0x06, 0xaa, 0xea, 0x45, 0x91, 0x68, 0x7b, 0x79,
-	0xbb, 0xef, 0xe3, 0xdb, 0xbe, 0x33, 0x7c, 0x73, 0x00, 0xad, 0xde, 0xea, 0xd8, 0x6b, 0x1d, 0x0c,
-	0x35, 0xfe, 0x58, 0x7f, 0xef, 0xaf, 0x04, 0xd7, 0xb8, 0x16, 0x5e, 0x0d, 0xb7, 0x28, 0xd2, 0x7f,
-	0x71, 0x91, 0xda, 0xc6, 0x65, 0x6a, 0x1b, 0x3f, 0x52, 0xdb, 0xf8, 0x74, 0x65, 0x57, 0x2e, 0xaf,
-	0xec, 0xca, 0xd7, 0x2b, 0xbb, 0xf2, 0xe6, 0x41, 0x69, 0x2d, 0x35, 0xd9, 0x9e, 0x98, 0x65, 0x91,
-	0x9c, 0x91, 0xe5, 0x67, 0x47, 0x2f, 0xe8, 0xb8, 0x96, 0x3d, 0x03, 0x07, 0xbf, 0x03, 0x00, 0x00,
-	0xff, 0xff, 0xb4, 0x85, 0x03, 0xe6, 0x93, 0x04, 0x00, 0x00,
+	// 594 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x54, 0x41, 0x6b, 0xd4, 0x40,
+	0x14, 0x4e, 0xba, 0xed, 0x6e, 0x3b, 0x6d, 0x45, 0x82, 0x42, 0xdc, 0x43, 0xb2, 0xac, 0x1e, 0x56,
+	0x69, 0x33, 0x76, 0x8b, 0x82, 0xde, 0xdc, 0x15, 0x69, 0x29, 0x2b, 0x92, 0x8b, 0x20, 0xc8, 0x32,
+	0x99, 0x8c, 0x31, 0x6c, 0x33, 0x13, 0xf2, 0x26, 0x4d, 0xf3, 0x0f, 0x3c, 0x7a, 0xf3, 0xda, 0xb3,
+	0xbf, 0xa4, 0xc7, 0x5e, 0x04, 0x4f, 0xab, 0xa4, 0x17, 0x7f, 0x83, 0x27, 0x99, 0x24, 0xab, 0xd9,
+	0x82, 0xa5, 0xa7, 0xf7, 0x66, 0xde, 0x37, 0x5f, 0xbe, 0xf7, 0xcd, 0x9b, 0xa0, 0xbb, 0x10, 0x91,
+	0x44, 0x12, 0x4a, 0x45, 0xca, 0x25, 0x96, 0xa7, 0x4e, 0x9c, 0x08, 0x29, 0x0c, 0x93, 0xa4, 0x09,
+	0xe1, 0x99, 0xa3, 0x82, 0xd3, 0x84, 0x74, 0xef, 0x04, 0x22, 0x10, 0x25, 0x08, 0xab, 0xac, 0xc2,
+	0x77, 0x2d, 0x2a, 0x20, 0x12, 0x80, 0x3d, 0x02, 0x0c, 0x9f, 0xec, 0x79, 0x4c, 0x92, 0x3d, 0x4c,
+	0x45, 0xc8, 0xeb, 0x7a, 0xbf, 0xae, 0xd3, 0x24, 0x8f, 0xa5, 0xc0, 0xc0, 0x68, 0x3c, 0x7c, 0xf2,
+	0x74, 0xb6, 0x87, 0x67, 0x2c, 0x87, 0x0a, 0xd3, 0x2f, 0x56, 0xd0, 0xed, 0x09, 0x04, 0xe3, 0x84,
+	0x11, 0xc9, 0x5e, 0x54, 0x9f, 0x33, 0x4c, 0xd4, 0xa1, 0x6a, 0x43, 0x24, 0xa6, 0xde, 0xd3, 0x07,
+	0x1b, 0xee, 0x62, 0x69, 0xdc, 0x47, 0x1d, 0x2a, 0x7c, 0x36, 0x0d, 0x7d, 0x73, 0xa5, 0xa7, 0x0f,
+	0x56, 0x47, 0xa8, 0x98, 0xdb, 0xed, 0xb1, 0xf0, 0xd9, 0xe1, 0x4b, 0xb7, 0xad, 0x4a, 0x87, 0xbe,
+	0x41, 0xd1, 0x7a, 0xc8, 0x43, 0x39, 0x8d, 0x20, 0x30, 0x5b, 0x3d, 0x7d, 0xb0, 0x35, 0x3a, 0x28,
+	0xe6, 0x76, 0xe7, 0x90, 0x87, 0x72, 0x02, 0xc1, 0xef, 0xb9, 0xfd, 0x2c, 0x08, 0xe5, 0xc7, 0xd4,
+	0x73, 0xa8, 0x88, 0xf0, 0x58, 0x40, 0xf4, 0x96, 0x40, 0x84, 0x33, 0x02, 0x91, 0x8f, 0x4f, 0xcb,
+	0x88, 0x65, 0x1e, 0x33, 0x70, 0x5c, 0x92, 0x8d, 0x05, 0x97, 0x09, 0xa1, 0x72, 0xc2, 0x00, 0x48,
+	0xc0, 0xdc, 0x4e, 0x58, 0xb1, 0x18, 0x0f, 0x11, 0x8a, 0x53, 0xef, 0x38, 0xa4, 0xd3, 0x19, 0xcb,
+	0xcd, 0x55, 0x25, 0xb3, 0x12, 0xf3, 0x26, 0xf5, 0x8e, 0x58, 0xee, 0x6e, 0x54, 0xd5, 0x23, 0x96,
+	0x1b, 0x04, 0xad, 0x7d, 0x48, 0xb9, 0x0f, 0xe6, 0x5a, 0xaf, 0x35, 0xd8, 0x1c, 0xde, 0x73, 0x2a,
+	0x5f, 0x1c, 0xe5, 0x9b, 0x53, 0xfb, 0xe6, 0x8c, 0x45, 0xc8, 0x47, 0x8f, 0xcf, 0xe7, 0xb6, 0xf6,
+	0xf5, 0x87, 0x3d, 0x68, 0x08, 0x5c, 0x98, 0x58, 0x86, 0x5d, 0xf0, 0x67, 0xb5, 0x38, 0x75, 0x00,
+	0xdc, 0x8a, 0xd9, 0x30, 0xd0, 0x2a, 0x90, 0x63, 0x69, 0xb6, 0x55, 0xbb, 0x6e, 0x99, 0x3f, 0x5f,
+	0xff, 0x74, 0x66, 0x6b, 0xbf, 0xce, 0x6c, 0xad, 0x7f, 0x80, 0xcc, 0xab, 0x1e, 0xbb, 0x0c, 0x62,
+	0xc1, 0x81, 0x29, 0xaf, 0x89, 0xef, 0x27, 0x0c, 0x60, 0xe1, 0x75, 0xbd, 0x54, 0x9c, 0x3e, 0x91,
+	0xa4, 0x34, 0x7a, 0xcb, 0x2d, 0xf3, 0xfe, 0x17, 0x1d, 0xa1, 0x09, 0x04, 0x2e, 0xa3, 0xe2, 0x84,
+	0x25, 0xd7, 0x5c, 0x54, 0x83, 0x76, 0x65, 0x99, 0x76, 0xd9, 0xb8, 0xd6, 0x75, 0xc6, 0xf5, 0xd0,
+	0x26, 0x4d, 0x98, 0xcf, 0xb8, 0x0c, 0xc9, 0x31, 0x54, 0x26, 0xbb, 0xcd, 0xad, 0x46, 0x8f, 0x14,
+	0x19, 0xff, 0x84, 0xdd, 0xa0, 0xbb, 0x7d, 0x74, 0x8b, 0xb3, 0x6c, 0xda, 0x90, 0x52, 0xea, 0x1c,
+	0x6d, 0x17, 0x73, 0x7b, 0xe3, 0x35, 0xcb, 0x6a, 0x35, 0x5b, 0xbc, 0x4c, 0x2b, 0x41, 0xc3, 0x6f,
+	0x3a, 0x6a, 0xa9, 0xcb, 0x17, 0x68, 0x7b, 0x79, 0x62, 0x1f, 0x39, 0xff, 0x7b, 0x3b, 0xce, 0x55,
+	0xe7, 0xbb, 0xc3, 0x9b, 0x63, 0xff, 0xf6, 0xf1, 0x1e, 0x75, 0x16, 0x9e, 0x3f, 0xb8, 0xf6, 0x78,
+	0x8d, 0xea, 0xee, 0xdc, 0x04, 0xb5, 0xa0, 0x1f, 0xbd, 0x3a, 0x2f, 0x2c, 0xfd, 0xa2, 0xb0, 0xf4,
+	0x9f, 0x85, 0xa5, 0x7f, 0xbe, 0xb4, 0xb4, 0x8b, 0x4b, 0x4b, 0xfb, 0x7e, 0x69, 0x69, 0xef, 0x76,
+	0x1a, 0x93, 0xa8, 0xa8, 0x76, 0x79, 0x56, 0x46, 0x7c, 0x8a, 0x97, 0x7f, 0x22, 0x6a, 0x26, 0xbd,
+	0x76, 0xf9, 0xa8, 0xf7, 0xff, 0x04, 0x00, 0x00, 0xff, 0xff, 0x5f, 0x26, 0x61, 0xc4, 0x61, 0x04,
+	0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -291,7 +293,7 @@ const _ = grpc.SupportPackageIsVersion4
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type MsgClient interface {
 	CreateAccount(ctx context.Context, in *MsgCreateAccount, opts ...grpc.CallOption) (*MsgCreateAccountResponse, error)
-	UpdateKey(ctx context.Context, in *MsgUpdateKey, opts ...grpc.CallOption) (*MsgUpdateKeyResponse, error)
+	Recover(ctx context.Context, in *MsgRecover, opts ...grpc.CallOption) (*MsgRecoverResponse, error)
 }
 
 type msgClient struct {
@@ -311,9 +313,9 @@ func (c *msgClient) CreateAccount(ctx context.Context, in *MsgCreateAccount, opt
 	return out, nil
 }
 
-func (c *msgClient) UpdateKey(ctx context.Context, in *MsgUpdateKey, opts ...grpc.CallOption) (*MsgUpdateKeyResponse, error) {
-	out := new(MsgUpdateKeyResponse)
-	err := c.cc.Invoke(ctx, "/auranw.aura.smartaccount.Msg/UpdateKey", in, out, opts...)
+func (c *msgClient) Recover(ctx context.Context, in *MsgRecover, opts ...grpc.CallOption) (*MsgRecoverResponse, error) {
+	out := new(MsgRecoverResponse)
+	err := c.cc.Invoke(ctx, "/auranw.aura.smartaccount.Msg/Recover", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -323,7 +325,7 @@ func (c *msgClient) UpdateKey(ctx context.Context, in *MsgUpdateKey, opts ...grp
 // MsgServer is the server API for Msg service.
 type MsgServer interface {
 	CreateAccount(context.Context, *MsgCreateAccount) (*MsgCreateAccountResponse, error)
-	UpdateKey(context.Context, *MsgUpdateKey) (*MsgUpdateKeyResponse, error)
+	Recover(context.Context, *MsgRecover) (*MsgRecoverResponse, error)
 }
 
 // UnimplementedMsgServer can be embedded to have forward compatible implementations.
@@ -333,8 +335,8 @@ type UnimplementedMsgServer struct {
 func (*UnimplementedMsgServer) CreateAccount(ctx context.Context, req *MsgCreateAccount) (*MsgCreateAccountResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateAccount not implemented")
 }
-func (*UnimplementedMsgServer) UpdateKey(ctx context.Context, req *MsgUpdateKey) (*MsgUpdateKeyResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateKey not implemented")
+func (*UnimplementedMsgServer) Recover(ctx context.Context, req *MsgRecover) (*MsgRecoverResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Recover not implemented")
 }
 
 func RegisterMsgServer(s grpc1.Server, srv MsgServer) {
@@ -359,20 +361,20 @@ func _Msg_CreateAccount_Handler(srv interface{}, ctx context.Context, dec func(i
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Msg_UpdateKey_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(MsgUpdateKey)
+func _Msg_Recover_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgRecover)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MsgServer).UpdateKey(ctx, in)
+		return srv.(MsgServer).Recover(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/auranw.aura.smartaccount.Msg/UpdateKey",
+		FullMethod: "/auranw.aura.smartaccount.Msg/Recover",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MsgServer).UpdateKey(ctx, req.(*MsgUpdateKey))
+		return srv.(MsgServer).Recover(ctx, req.(*MsgRecover))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -386,8 +388,8 @@ var _Msg_serviceDesc = grpc.ServiceDesc{
 			Handler:    _Msg_CreateAccount_Handler,
 		},
 		{
-			MethodName: "UpdateKey",
-			Handler:    _Msg_UpdateKey_Handler,
+			MethodName: "Recover",
+			Handler:    _Msg_Recover_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -435,16 +437,13 @@ func (m *MsgCreateAccount) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 			dAtA[i] = 0x2a
 		}
 	}
-	{
-		size, err := m.PubKey.MarshalToSizedBuffer(dAtA[:i])
-		if err != nil {
-			return 0, err
-		}
-		i -= size
-		i = encodeVarintTx(dAtA, i, uint64(size))
+	if len(m.PubKey) > 0 {
+		i -= len(m.PubKey)
+		copy(dAtA[i:], m.PubKey)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.PubKey)))
+		i--
+		dAtA[i] = 0x22
 	}
-	i--
-	dAtA[i] = 0x22
 	if len(m.InitMsg) > 0 {
 		i -= len(m.InitMsg)
 		copy(dAtA[i:], m.InitMsg)
@@ -504,7 +503,7 @@ func (m *MsgCreateAccountResponse) MarshalToSizedBuffer(dAtA []byte) (int, error
 	return len(dAtA) - i, nil
 }
 
-func (m *MsgUpdateKey) Marshal() (dAtA []byte, err error) {
+func (m *MsgRecover) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -514,26 +513,30 @@ func (m *MsgUpdateKey) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *MsgUpdateKey) MarshalTo(dAtA []byte) (int, error) {
+func (m *MsgRecover) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *MsgUpdateKey) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *MsgRecover) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	{
-		size, err := m.PubKey.MarshalToSizedBuffer(dAtA[:i])
-		if err != nil {
-			return 0, err
-		}
-		i -= size
-		i = encodeVarintTx(dAtA, i, uint64(size))
+	if len(m.Credentials) > 0 {
+		i -= len(m.Credentials)
+		copy(dAtA[i:], m.Credentials)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Credentials)))
+		i--
+		dAtA[i] = 0x22
 	}
-	i--
-	dAtA[i] = 0x1a
+	if len(m.PubKey) > 0 {
+		i -= len(m.PubKey)
+		copy(dAtA[i:], m.PubKey)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.PubKey)))
+		i--
+		dAtA[i] = 0x1a
+	}
 	if len(m.Address) > 0 {
 		i -= len(m.Address)
 		copy(dAtA[i:], m.Address)
@@ -551,7 +554,7 @@ func (m *MsgUpdateKey) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *MsgUpdateKeyResponse) Marshal() (dAtA []byte, err error) {
+func (m *MsgRecoverResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -561,12 +564,12 @@ func (m *MsgUpdateKeyResponse) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *MsgUpdateKeyResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *MsgRecoverResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *MsgUpdateKeyResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *MsgRecoverResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -616,8 +619,10 @@ func (m *MsgCreateAccount) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovTx(uint64(l))
 	}
-	l = m.PubKey.Size()
-	n += 1 + l + sovTx(uint64(l))
+	l = len(m.PubKey)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
 	if len(m.Funds) > 0 {
 		for _, e := range m.Funds {
 			l = e.Size()
@@ -648,7 +653,7 @@ func (m *MsgCreateAccountResponse) Size() (n int) {
 	return n
 }
 
-func (m *MsgUpdateKey) Size() (n int) {
+func (m *MsgRecover) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -662,12 +667,18 @@ func (m *MsgUpdateKey) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovTx(uint64(l))
 	}
-	l = m.PubKey.Size()
-	n += 1 + l + sovTx(uint64(l))
+	l = len(m.PubKey)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.Credentials)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
 	return n
 }
 
-func (m *MsgUpdateKeyResponse) Size() (n int) {
+func (m *MsgRecoverResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -808,7 +819,7 @@ func (m *MsgCreateAccount) Unmarshal(dAtA []byte) error {
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field PubKey", wireType)
 			}
-			var msglen int
+			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowTx
@@ -818,24 +829,23 @@ func (m *MsgCreateAccount) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				stringLen |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			if msglen < 0 {
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
 				return ErrInvalidLengthTx
 			}
-			postIndex := iNdEx + msglen
+			postIndex := iNdEx + intStringLen
 			if postIndex < 0 {
 				return ErrInvalidLengthTx
 			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if err := m.PubKey.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
+			m.PubKey = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 5:
 			if wireType != 2 {
@@ -1042,7 +1052,7 @@ func (m *MsgCreateAccountResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *MsgUpdateKey) Unmarshal(dAtA []byte) error {
+func (m *MsgRecover) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1065,10 +1075,10 @@ func (m *MsgUpdateKey) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: MsgUpdateKey: wiretype end group for non-group")
+			return fmt.Errorf("proto: MsgRecover: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgUpdateKey: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: MsgRecover: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -1139,7 +1149,7 @@ func (m *MsgUpdateKey) Unmarshal(dAtA []byte) error {
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field PubKey", wireType)
 			}
-			var msglen int
+			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowTx
@@ -1149,24 +1159,55 @@ func (m *MsgUpdateKey) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				stringLen |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			if msglen < 0 {
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
 				return ErrInvalidLengthTx
 			}
-			postIndex := iNdEx + msglen
+			postIndex := iNdEx + intStringLen
 			if postIndex < 0 {
 				return ErrInvalidLengthTx
 			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if err := m.PubKey.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
+			m.PubKey = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Credentials", wireType)
 			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Credentials = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -1189,7 +1230,7 @@ func (m *MsgUpdateKey) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *MsgUpdateKeyResponse) Unmarshal(dAtA []byte) error {
+func (m *MsgRecoverResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1212,10 +1253,10 @@ func (m *MsgUpdateKeyResponse) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: MsgUpdateKeyResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: MsgRecoverResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgUpdateKeyResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: MsgRecoverResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:

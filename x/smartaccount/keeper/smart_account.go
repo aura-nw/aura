@@ -1,11 +1,13 @@
 package keeper
 
 import (
+	"encoding/hex"
 	"fmt"
 	"strconv"
 
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/aura-nw/aura/x/smartaccount/types"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -56,4 +58,20 @@ func InstantiateSmartAccount(ctx sdk.Context, keeper Keeper, wasmKeepper *wasmke
 	)
 
 	return address, data, nil
+}
+
+func PubKeyDecode(raw string) (*secp256k1.PubKey, error) {
+	bz, err := hex.DecodeString(raw)
+	if err != nil {
+		return nil, fmt.Errorf(types.ErrBadPublicKey, err.Error())
+	}
+
+	// secp25k61 public key
+	pubKey := &secp256k1.PubKey{Key: nil}
+	keyErr := pubKey.UnmarshalAmino(bz)
+	if keyErr != nil {
+		return nil, fmt.Errorf(types.ErrBadPublicKey, keyErr.Error())
+	}
+
+	return pubKey, nil
 }

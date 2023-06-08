@@ -5,19 +5,19 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
-const TypeMsgUpdateKey = "update_key"
+const TypeMsgRecover = "recover"
 
-var _ sdk.Msg = &MsgUpdateKey{}
+var _ sdk.Msg = &MsgRecover{}
 
-func (msg *MsgUpdateKey) Route() string {
+func (msg *MsgRecover) Route() string {
 	return RouterKey
 }
 
-func (msg *MsgUpdateKey) Type() string {
-	return TypeMsgUpdateKey
+func (msg *MsgRecover) Type() string {
+	return TypeMsgRecover
 }
 
-func (msg *MsgUpdateKey) GetSigners() []sdk.AccAddress {
+func (msg *MsgRecover) GetSigners() []sdk.AccAddress {
 	creator, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
 		panic(err)
@@ -25,12 +25,12 @@ func (msg *MsgUpdateKey) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{creator}
 }
 
-func (msg *MsgUpdateKey) GetSignBytes() []byte {
+func (msg *MsgRecover) GetSignBytes() []byte {
 	bz := ModuleCdc.MustMarshalJSON(msg)
 	return sdk.MustSortJSON(bz)
 }
 
-func (msg *MsgUpdateKey) ValidateBasic() error {
+func (msg *MsgRecover) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)

@@ -14,6 +14,7 @@ type AccountMsg struct {
 }
 
 type RecoverTx struct {
+	Caller      string `json:"caller"`
 	PubKey      []byte `json:"pub_key"`
 	Credentials []byte `json:"credentials"`
 }

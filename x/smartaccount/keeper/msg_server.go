@@ -97,6 +97,7 @@ func (k msgServer) Recover(goCtx context.Context, msg *types.MsgRecover) (*types
 
 	sudoMsgBytes, err := json.Marshal(&types.AccountMsg{
 		RecoverTx: &types.RecoverTx{
+			Caller:      msg.Creator,
 			PubKey:      pubKey.GetKey(),
 			Credentials: credentials,
 		},
@@ -105,6 +106,7 @@ func (k msgServer) Recover(goCtx context.Context, msg *types.MsgRecover) (*types
 		return nil, err
 	}
 
+	// check recover logic in smart acontract
 	_, err = k.ContractKeeper.Sudo(ctx, saAddr, sudoMsgBytes)
 	if err != nil {
 		return nil, err
@@ -118,6 +120,20 @@ func (k msgServer) Recover(goCtx context.Context, msg *types.MsgRecover) (*types
 
 	// update smartaccount
 	k.AccountKeeper.SetAccount(ctx, smartAccount)
+
+	ctx.Logger().Info(
+		"smart account recovery",
+		types.AttributeKeyCreator, msg.Creator,
+		types.AttributeKeyContractAddr, msg.Address,
+	)
+
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeAccountRecovery,
+			sdk.NewAttribute(types.AttributeKeyCreator, msg.Creator),
+			sdk.NewAttribute(types.AttributeKeyContractAddr, msg.Address),
+		),
+	)
 
 	return &types.MsgRecoverResponse{
 		Address:   msg.Address,

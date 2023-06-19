@@ -37,6 +37,11 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 ## Unreleased
 
+## [v0.5.2] - 2023-06-19
+
+### Improvements
+- Fix bug create vesting account
+
 ## [v0.5.1] - 2023-04-19
 
 ### Improvements

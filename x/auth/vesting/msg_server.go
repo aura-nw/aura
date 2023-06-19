@@ -45,11 +45,7 @@ func (s msgServer) CreatePeriodicVestingAccount(goCtx context.Context, msg *type
 		return nil, err
 	}
 
-	//if acc := ak.GetAccount(ctx, to); acc != nil {
-	//	return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "account %s already exists", msg.ToAddress)
-	//}
-
-	if exist := ak.HasAccount(ctx, to); !exist {
+	if exist := ak.HasAccount(ctx, to); exist {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "account %s already exists", msg.ToAddress)
 	}
 
@@ -94,7 +90,7 @@ func (s msgServer) CreatePeriodicVestingAccount(goCtx context.Context, msg *type
 }
 
 func (s msgServer) validateCreatePeriodVestingMsg(ctx sdk.Context, msg *types.MsgCreatePeriodicVestingAccount) error {
-	currentTime := ctx.BlockTime().UnixMilli()
+	currentTime := ctx.BlockTime().Unix()
 	if msg.GetStartTime() <= currentTime {
 		return errors.New("start time not valid, required larger than current block time")
 	}

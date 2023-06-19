@@ -32617,6 +32617,8 @@ definitions:
                   "@type": "type.googleapis.com/google.protobuf.Duration",
                   "value": "1.212s"
                 }
+  auranw.aura.smartaccount.MsgActivateAccountResponse:
+    type: object
   auranw.aura.smartaccount.MsgCreateAccountResponse:
     type: object
     properties:

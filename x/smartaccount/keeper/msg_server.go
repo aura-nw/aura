@@ -140,3 +140,5 @@ func (k msgServer) Recover(goCtx context.Context, msg *types.MsgRecover) (*types
 		NewPubKey: msg.PubKey,
 	}, nil
 }
+
+// this line is used by starport scaffolding # handler/msgServer

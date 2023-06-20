@@ -14,7 +14,12 @@ service Query {
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
     option (google.api.http).get = "/aura-nw/aura/smartaccount/params";
   }
-  // this line is used by starport scaffolding # 2
+  // Queries a list of GenerateAccount items.
+	rpc GenerateAccount(QueryGenerateAccountRequest) returns (QueryGenerateAccountResponse) {
+		option (google.api.http).get = "/aura-nw/aura/smartaccount/generate_account";
+	}
+
+// this line is used by starport scaffolding # 2
 }
 
 // QueryParamsRequest is request type for the Query/Params RPC method.
@@ -24,6 +29,26 @@ message QueryParamsRequest {}
 message QueryParamsResponse {
   // params holds all the parameters of this module.
   Params params = 1 [(gogoproto.nullable) = false];
+}
+
+message QueryGenerateAccountRequest {
+  // CodeID indicates which wasm binary code is to be used for creating account
+  uint64 code_id = 1 [(gogoproto.customname) = "CodeID"];
+
+  string owner = 2;
+
+  // InitMsg is the JSON-encoded instantiate message for creating account
+  bytes init_msg = 3 [
+    (gogoproto.customname) = "InitMsg",
+    (gogoproto.casttype) = "github.com/CosmWasm/wasmd/x/wasm/types.RawContractMessage"
+  ];
+
+  // PubKey of account
+  string public_key = 4 [(gogoproto.customname) = "PubKey"];
+}
+
+message QueryGenerateAccountResponse {
+  string address = 1;
 }
 
 // this line is used by starport scaffolding # 3

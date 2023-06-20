@@ -11,8 +11,8 @@ import (
 func RegisterCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgCreateAccount{}, "smartaccount/CreateAccount", nil)
 	cdc.RegisterConcrete(&MsgRecover{}, "smartaccount/Recover", nil)
-cdc.RegisterConcrete(&MsgActivateAccount{}, "smartaccount/ActivateAccount", nil)
-// this line is used by starport scaffolding # 2
+	cdc.RegisterConcrete(&MsgActivateAccount{}, "smartaccount/ActivateAccount", nil)
+	// this line is used by starport scaffolding # 2
 }
 
 func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
@@ -21,12 +21,12 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 		&MsgCreateAccount{},
 	)
 	registry.RegisterImplementations((*sdk.Msg)(nil),
-	&MsgRecover{},
-)
-registry.RegisterImplementations((*sdk.Msg)(nil),
-	&MsgActivateAccount{},
-)
-// this line is used by starport scaffolding # 3
+		&MsgRecover{},
+	)
+	registry.RegisterImplementations((*sdk.Msg)(nil),
+		&MsgActivateAccount{},
+	)
+	// this line is used by starport scaffolding # 3
 
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
 }

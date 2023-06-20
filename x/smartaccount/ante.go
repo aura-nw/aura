@@ -9,27 +9,12 @@ import (
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	smartaccountkeeper "github.com/aura-nw/aura/x/smartaccount/keeper"
 	"github.com/aura-nw/aura/x/smartaccount/types"
+	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	txsigning "github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 )
-
-// ------------------------- SmartAccount Decorator ------------------------- \\
-
-type SmartAccountDecorator struct {
-	SmartAccountKeeper smartaccountkeeper.Keeper
-	WasmKeeper         wasmkeeper.Keeper
-	AccountKeeper      authante.AccountKeeper
-}
-
-func NewSmartAccountDecorator(smartAccountKeeper smartaccountkeeper.Keeper, wasmKeeper wasmkeeper.Keeper, accountKeeper authante.AccountKeeper) *SmartAccountDecorator {
-	return &SmartAccountDecorator{
-		SmartAccountKeeper: smartAccountKeeper,
-		WasmKeeper:         wasmKeeper,
-		AccountKeeper:      accountKeeper,
-	}
-}
 
 func GenerateValidateQueryMessage(msg *wasmtypes.MsgExecuteContract, msgs []types.MsgData) ([]byte, error) {
 	var accMsg types.AccountMsg
@@ -98,6 +83,64 @@ func IsSmartAccountTx(ctx sdk.Context, tx sdk.Tx, accountKeeper authante.Account
 	return true, saAcc, &sigs[0], nil
 }
 
+func IsActivateAccountMessage(tx sdk.Tx) (bool, *types.MsgActivateAccount, *cryptotypes.PubKey, error) {
+	sigTx, ok := tx.(authsigning.SigVerifiableTx)
+	if !ok {
+		return false, nil, nil, fmt.Errorf(types.ErrInvalidTx, "not a SigVerifiableTx")
+	}
+
+	msgs := sigTx.GetMsgs()
+
+	if len(msgs) != 1 {
+		// smart account activation message must stand alone
+		for _, msg := range msgs {
+			if _, ok := msg.(*types.MsgActivateAccount); ok {
+				return false, nil, nil, fmt.Errorf(types.ErrInvalidTx, "smart account activation message must stand alone")
+			}
+		}
+
+		return false, nil, nil, nil
+	}
+
+	activateMsg, ok := msgs[0].(*types.MsgActivateAccount)
+	if !ok {
+		return false, nil, nil, nil
+	}
+
+	sigs, err := sigTx.GetSignaturesV2()
+	if err != nil {
+		return false, nil, nil, err
+	}
+
+	pubkeys, err := sigTx.GetPubKeys()
+	if err != nil {
+		return false, nil, nil, err
+	}
+
+	signerAddrs := sigTx.GetSigners()
+
+	// do not allow multi signer
+	if len(signerAddrs) != 1 || len(sigs) != 1 || len(pubkeys) != 1 {
+		return false, nil, nil, fmt.Errorf("invalid smart account activation message")
+	}
+
+	return true, activateMsg, &pubkeys[0], nil
+}
+
+// ------------------------- SmartAccount Decorator ------------------------- \\
+
+type SmartAccountDecorator struct {
+	WasmKeeper    wasmkeeper.Keeper
+	AccountKeeper authante.AccountKeeper
+}
+
+func NewSmartAccountDecorator(wasmKeeper wasmkeeper.Keeper, accountKeeper authante.AccountKeeper) *SmartAccountDecorator {
+	return &SmartAccountDecorator{
+		WasmKeeper:    wasmKeeper,
+		AccountKeeper: accountKeeper,
+	}
+}
+
 // AnteHandle is used for performing basic validity checks on a transaction such that it can be thrown out of the mempool.
 func (decorator *SmartAccountDecorator) AnteHandle(
 	ctx sdk.Context,
@@ -105,6 +148,17 @@ func (decorator *SmartAccountDecorator) AnteHandle(
 	simulate bool,
 	next sdk.AnteHandler,
 ) (newCtx sdk.Context, err error) {
+
+	isActivateAccount, _, _, err := IsActivateAccountMessage(tx)
+	if err != nil {
+		return ctx, err
+	}
+
+	// if is activate account message, next to ActivateAccountDecorator
+	if isActivateAccount {
+		aad := NewActivateAccountDecorator(decorator.WasmKeeper)
+		return aad.AnteHandle(ctx, tx, simulate, next)
+	}
 
 	isSmartAccountTx, signerAcc, _, err := IsSmartAccountTx(ctx, tx, decorator.AccountKeeper)
 	if err != nil {
@@ -162,17 +216,42 @@ func (decorator *SmartAccountDecorator) AnteHandle(
 	return next(ctx, tx, simulate)
 }
 
+// ------------------------- ActivateAccount Decorator ------------------------- \\
+
+type ActivateAccountDecorator struct {
+	SmartAccountKeeper smartaccountkeeper.Keeper
+	WasmKeeper         wasmkeeper.Keeper
+}
+
+func NewActivateAccountDecorator(wasmKeeper wasmkeeper.Keeper) *ActivateAccountDecorator {
+	return &ActivateAccountDecorator{
+		WasmKeeper: wasmKeeper,
+	}
+}
+
+// AnteHandle is used for performing basic validity checks on a transaction such that it can be thrown out of the mempool.
+func (decorator *ActivateAccountDecorator) AnteHandle(
+	ctx sdk.Context,
+	tx sdk.Tx,
+	simulate bool,
+	next sdk.AnteHandler,
+) (newCtx sdk.Context, err error) {
+
+	
+
+	return next(ctx, tx, simulate)
+}
+
+
 // ------------------------- SetPubKey Decorator ------------------------- \\
 
 type SetPubKeyDecorator struct {
-	SmartAccountKeeper smartaccountkeeper.Keeper
-	AccountKeeper      authante.AccountKeeper
+	AccountKeeper authante.AccountKeeper
 }
 
-func NewSetPubKeyDecorator(smartAccountKeeper smartaccountkeeper.Keeper, accountKeeper authante.AccountKeeper) *SetPubKeyDecorator {
+func NewSetPubKeyDecorator(accountKeeper authante.AccountKeeper) *SetPubKeyDecorator {
 	return &SetPubKeyDecorator{
-		SmartAccountKeeper: smartAccountKeeper,
-		AccountKeeper:      accountKeeper,
+		AccountKeeper: accountKeeper,
 	}
 }
 
@@ -183,11 +262,43 @@ func (decorator *SetPubKeyDecorator) AnteHandle(
 	next sdk.AnteHandler,
 ) (newCtx sdk.Context, err error) {
 
+	isActivateAccount, activateMsg, pubKey, err := IsActivateAccountMessage(tx)
+	if err != nil {
+		return ctx, err
+	}
+
+	// if is smart account activation message
+	if isActivateAccount {
+		// get message signer
+		signer := activateMsg.GetSigners()[0]
+
+		// get smart contract account by address
+		sAccount := decorator.AccountKeeper.GetAccount(ctx, signer)
+		if sAccount != nil {
+			return ctx, fmt.Errorf(types.ErrAccountNotFoundForAddress, activateMsg.AccountAddress)
+		}
+
+		if sAccount.GetPubKey() != nil {
+			return ctx, fmt.Errorf("account already exists")
+		}
+
+		// set temporary pubkey for account
+		// need this for the next ante signature checks
+		sAccount.SetPubKey(*pubKey)
+
+		// save account to checkTx state
+		decorator.AccountKeeper.SetAccount(ctx, sAccount)
+
+		return next(ctx, tx, simulate)
+	}
+
 	isSmartAccountTx, signerAcc, sig, err := IsSmartAccountTx(ctx, tx, decorator.AccountKeeper)
 	if err != nil {
 		return ctx, err
 	}
 
+	// if not smart account tx run authante NewSetPubKeyDecorator
+	// need this to avoid pubkey and address equal check of above decorator
 	if !isSmartAccountTx {
 		svd := authante.NewSetPubKeyDecorator(decorator.AccountKeeper)
 		return svd.AnteHandle(ctx, tx, simulate, next)

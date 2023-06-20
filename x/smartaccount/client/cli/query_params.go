@@ -3,10 +3,10 @@ package cli
 import (
 	"context"
 
+	"github.com/aura-nw/aura/x/smartaccount/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
-	"github.com/aura-nw/aura/x/smartaccount/types"
 )
 
 func CmdQueryParams() *cobra.Command {

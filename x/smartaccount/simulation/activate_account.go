@@ -20,7 +20,7 @@ func SimulateMsgActivateAccount(
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
 		simAccount, _ := simtypes.RandomAcc(r, accs)
 		msg := &types.MsgActivateAccount{
-			Creator: simAccount.Address.String(),
+			AccountAddress: simAccount.Address.String(),
 		}
 
 		// TODO: Handling the ActivateAccount simulation

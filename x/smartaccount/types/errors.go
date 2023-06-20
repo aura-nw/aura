@@ -18,4 +18,6 @@ var (
 	ErrSetSmartAccountStatus     = "cannot set smartaccount status: %s"
 	ErrStoreSmartAccount         = "cannot store smartaccount value: %s"
 	ErrInvalidTx                 = "invalid tx: %s"
+	ErrNoSuchCodeID              = "code id not found: %d"
+	ErrInstantiateDuplicate      = "instance with this code id, sender and label exists: try a different label"
 )

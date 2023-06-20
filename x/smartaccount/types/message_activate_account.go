@@ -9,12 +9,6 @@ const TypeMsgActivateAccount = "activate_account"
 
 var _ sdk.Msg = &MsgActivateAccount{}
 
-func NewMsgActivateAccount(creator string) *MsgActivateAccount {
-	return &MsgActivateAccount{
-		Creator: creator,
-	}
-}
-
 func (msg *MsgActivateAccount) Route() string {
 	return RouterKey
 }
@@ -24,7 +18,7 @@ func (msg *MsgActivateAccount) Type() string {
 }
 
 func (msg *MsgActivateAccount) GetSigners() []sdk.AccAddress {
-	creator, err := sdk.AccAddressFromBech32(msg.Creator)
+	creator, err := sdk.AccAddressFromBech32(msg.AccountAddress)
 	if err != nil {
 		panic(err)
 	}
@@ -37,9 +31,27 @@ func (msg *MsgActivateAccount) GetSignBytes() []byte {
 }
 
 func (msg *MsgActivateAccount) ValidateBasic() error {
-	_, err := sdk.AccAddressFromBech32(msg.Creator)
+	_, err := sdk.AccAddressFromBech32(msg.AccountAddress)
 	if err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
 	}
+
+	_, err = sdk.AccAddressFromBech32(msg.Owner)
+	if err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid owner address (%s)", err)
+	}
+
+	if msg.CodeID == 0 {
+		return sdkerrors.ErrInvalidRequest.Wrap("code id cannot be zero")
+	}
+
+	if err := msg.InitMsg.ValidateBasic(); err != nil {
+		return sdkerrors.ErrInvalidRequest.Wrapf("invalid init msg: %s", err.Error())
+	}
+
+	if !msg.Funds.IsValid() {
+		return sdkerrors.ErrInvalidCoins
+	}
+
 	return nil
 }

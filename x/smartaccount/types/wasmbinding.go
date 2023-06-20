@@ -50,3 +50,4 @@ func ParseMessagesString(msgs []sdk.Msg) ([]MsgData, error) {
 	}
 	return msgsStr, nil
 }
+

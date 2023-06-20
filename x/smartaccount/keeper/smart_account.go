@@ -1,7 +1,9 @@
 package keeper
 
 import (
+	"crypto/sha512"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"strconv"
 
@@ -13,10 +15,29 @@ import (
 
 func InstantiateSmartAccount(ctx sdk.Context, keeper Keeper, wasmKeepper *wasmkeeper.PermissionedKeeper, msg *types.MsgCreateAccount) (sdk.AccAddress, []byte, error) {
 
-	creator, aMsg := sdk.AccAddressFromBech32(msg.Creator)
-	if aMsg != nil {
-		return nil, nil, fmt.Errorf(types.ErrAddressFromBech32, aMsg)
+	creator, err := sdk.AccAddressFromBech32(msg.Creator)
+	if err != nil {
+		return nil, nil, fmt.Errorf(types.ErrAddressFromBech32, err)
 	}
+
+	pub_key, err := PubKeyDecode(msg.PubKey)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	salt := types.InstantiateSalt{
+		Owner:   msg.Creator,
+		CodeID:  msg.CodeID,
+		InitMsg: msg.InitMsg,
+		PubKey:  pub_key.Key,
+	}
+
+	salt_bytes, err := json.Marshal(salt)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	salt_hashed := sha512.Sum512(salt_bytes)
 
 	// instantiate smartcontract by code id
 	address, data, iErr := wasmKeepper.Instantiate2(
@@ -26,8 +47,8 @@ func InstantiateSmartAccount(ctx sdk.Context, keeper Keeper, wasmKeepper *wasmke
 		creator,     // admin
 		msg.InitMsg, // message
 		fmt.Sprintf("%s/%d", types.ModuleName, keeper.GetAndIncrementNextAccountID(ctx)), // label
-		msg.Funds, // funds
-		msg.Salt,  // salt
+		msg.Funds,      // funds
+		salt_hashed[:], // salt
 		true,
 	)
 	if iErr != nil {

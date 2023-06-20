@@ -14,8 +14,6 @@ import (
 
 var _ = strconv.Itoa(0)
 
-const flagFunds = "funds"
-
 func CmdCreateAccount() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create-account [code-id] [init-msg] [public-key] [salt] --funds [coins,optional]",

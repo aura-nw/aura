@@ -397,13 +397,6 @@ func New(
 		app.GetSubspace(auramoduletypes.ModuleName),
 	)
 
-	app.SaKeeper = samodulekeeper.NewKeeper(
-		appCodec,
-		keys[samoduletypes.StoreKey],
-		keys[samoduletypes.MemStoreKey],
-		app.GetSubspace(samoduletypes.ModuleName),
-	)
-
 	app.BankKeeper = custombankkeeper.NewBaseKeeper(
 		appCodec, keys[banktypes.StoreKey], app.AccountKeeper, app.GetSubspace(banktypes.ModuleName), internal.MergeExcludeAddrs(app.ModuleAccountAddrs()), app.AuraKeeper,
 	)
@@ -537,6 +530,14 @@ func New(
 		wasmConfig,
 		supportedFeatures,
 		wasmOpts...,
+	)
+
+	app.SaKeeper = samodulekeeper.NewKeeper(
+		appCodec,
+		keys[samoduletypes.StoreKey],
+		keys[samoduletypes.MemStoreKey],
+		app.GetSubspace(samoduletypes.ModuleName),
+		app.WasmKeeper,
 	)
 
 	app.ContractKeeper = wasmkeeper.NewDefaultPermissionKeeper(&app.WasmKeeper)

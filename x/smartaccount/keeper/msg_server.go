@@ -33,6 +33,40 @@ func NewMsgServerImpl(keeper Keeper, contractKeeper *wasmkeeper.PermissionedKeep
 func (k msgServer) CreateAccount(goCtx context.Context, msg *types.MsgCreateAccount) (*types.MsgCreateAccountResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
+	_ = ctx
+
+	return &types.MsgCreateAccountResponse{}, nil
+}
+
+func (k msgServer) ActivateAccount(goCtx context.Context, msg *types.MsgActivateAccount) (*types.MsgActivateAccountResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// get smart contract account by address, account must exist in chain before activation
+	signer, err := sdk.AccAddressFromBech32(msg.AccountAddress)
+	if err != nil {
+		return nil, fmt.Errorf(types.ErrAddressFromBech32, err)
+	}
+
+	sAccount := k.AccountKeeper.GetAccount(ctx, signer)
+	if _, ok := sAccount.(*authtypes.BaseAccount); !ok {
+		return nil, fmt.Errorf(types.ErrAccountNotFoundForAddress)
+	}
+
+	// check if account already has public key
+	if sAccount.GetPubKey() != nil {
+		return nil, fmt.Errorf(types.ErrAccountAlreadyExists)
+	}
+
+	// get current sequence of account
+	sequence := sAccount.GetSequence()
+	// set sequence to 0 so we can instantiate it later
+	err = sAccount.SetSequence(0)
+	if err != nil {
+		return nil, err
+	}
+	// save account with sequence set to 0
+	k.AccountKeeper.SetAccount(ctx, sAccount)
+
 	saAddress, data, err := InstantiateSmartAccount(ctx, k.Keeper, k.ContractKeeper, msg)
 	if err != nil {
 		return nil, err
@@ -46,14 +80,20 @@ func (k msgServer) CreateAccount(goCtx context.Context, msg *types.MsgCreateAcco
 		return nil, fmt.Errorf(types.ErrAccountNotFoundForAddress, saAddressStr)
 	}
 
-	// secp25k61 public key
-	pubKey, err := PubKeyDecode(msg.PubKey)
+	// set sequence of new account to pre-sequence
+	err = scAccount.SetSequence(sequence)
 	if err != nil {
 		return nil, err
 	}
 
 	// create new smartaccount type
 	smartAccount := types.NewSmartAccountFromAccount(scAccount)
+
+	// secp25k61 public key
+	pubKey, err := types.PubKeyDecode(msg.PubKey)
+	if err != nil {
+		return nil, err
+	}
 
 	// set smartaccount pubkey
 	err = smartAccount.SetPubKey(pubKey)
@@ -64,7 +104,7 @@ func (k msgServer) CreateAccount(goCtx context.Context, msg *types.MsgCreateAcco
 	// update smartaccount
 	k.AccountKeeper.SetAccount(ctx, smartAccount)
 
-	return &types.MsgCreateAccountResponse{
+	return &types.MsgActivateAccountResponse{
 		Address: saAddressStr,
 		Data:    data,
 	}, nil
@@ -84,7 +124,7 @@ func (k msgServer) Recover(goCtx context.Context, msg *types.MsgRecover) (*types
 	}
 
 	// secp25k61 public key
-	pubKey, err := PubKeyDecode(msg.PubKey)
+	pubKey, err := types.PubKeyDecode(msg.PubKey)
 	if err != nil {
 		return nil, err
 	}

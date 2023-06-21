@@ -14,7 +14,7 @@ var _ = strconv.Itoa(0)
 
 func CmdUpdateKey() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "recover [address] [pub-key] [credentials]",
+		Use:   "recover [address:str] [pub-key:hex] [credentials:base64]",
 		Short: "Recover a smart account public key",
 		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {

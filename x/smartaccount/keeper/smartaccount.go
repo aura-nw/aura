@@ -2,31 +2,34 @@ package keeper
 
 import (
 	"crypto/sha512"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"strconv"
 
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/aura-nw/aura/x/smartaccount/types"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func InstantiateSmartAccount(ctx sdk.Context, keeper Keeper, wasmKeepper *wasmkeeper.PermissionedKeeper, msg *types.MsgCreateAccount) (sdk.AccAddress, []byte, error) {
+func InstantiateSmartAccount(ctx sdk.Context, keeper Keeper, wasmKeepper *wasmkeeper.PermissionedKeeper, msg *types.MsgActivateAccount) (sdk.AccAddress, []byte, error) {
 
-	creator, err := sdk.AccAddressFromBech32(msg.Creator)
+	admin, err := sdk.AccAddressFromBech32(msg.AccountAddress)
 	if err != nil {
 		return nil, nil, fmt.Errorf(types.ErrAddressFromBech32, err)
 	}
 
-	pub_key, err := PubKeyDecode(msg.PubKey)
+	owner, err := sdk.AccAddressFromBech32(msg.Owner)
+	if err != nil {
+		return nil, nil, fmt.Errorf(types.ErrAddressFromBech32, err)
+	}
+
+	pub_key, err := types.PubKeyDecode(msg.PubKey)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	salt := types.InstantiateSalt{
-		Owner:   msg.Creator,
+		Owner:   msg.Owner,
 		CodeID:  msg.CodeID,
 		InitMsg: msg.InitMsg,
 		PubKey:  pub_key.Key,
@@ -39,12 +42,13 @@ func InstantiateSmartAccount(ctx sdk.Context, keeper Keeper, wasmKeepper *wasmke
 
 	salt_hashed := sha512.Sum512(salt_bytes)
 
+	
 	// instantiate smartcontract by code id
 	address, data, iErr := wasmKeepper.Instantiate2(
 		ctx,
 		msg.CodeID,
-		creator,     // owner
-		creator,     // admin
+		owner,       // owner
+		admin,       // admin
 		msg.InitMsg, // message
 		fmt.Sprintf("%s/%d", types.ModuleName, keeper.GetAndIncrementNextAccountID(ctx)), // label
 		msg.Funds,      // funds
@@ -55,16 +59,11 @@ func InstantiateSmartAccount(ctx sdk.Context, keeper Keeper, wasmKeepper *wasmke
 		return nil, nil, fmt.Errorf(types.ErrBadInstantiateMsg, iErr.Error())
 	}
 
-	// set the contract's admin to itself
-	if err := wasmKeepper.UpdateContractAdmin(ctx, address, creator, address); err != nil {
-		return nil, nil, err
-	}
-
 	contractAddrStr := address.String()
 
 	ctx.Logger().Info(
 		"smart account created",
-		types.AttributeKeyCreator, msg.Creator,
+		types.AttributeKeyCreator, msg.AccountAddress,
 		types.AttributeKeyCodeID, msg.CodeID,
 		types.AttributeKeyContractAddr, contractAddrStr,
 	)
@@ -72,27 +71,11 @@ func InstantiateSmartAccount(ctx sdk.Context, keeper Keeper, wasmKeepper *wasmke
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			types.EventTypeAccountRegistered,
-			sdk.NewAttribute(types.AttributeKeyCreator, msg.Creator),
+			sdk.NewAttribute(types.AttributeKeyCreator, msg.AccountAddress),
 			sdk.NewAttribute(types.AttributeKeyCodeID, strconv.FormatUint(msg.CodeID, 10)),
 			sdk.NewAttribute(types.AttributeKeyContractAddr, contractAddrStr),
 		),
 	)
 
 	return address, data, nil
-}
-
-func PubKeyDecode(raw string) (*secp256k1.PubKey, error) {
-	bz, err := hex.DecodeString(raw)
-	if err != nil {
-		return nil, fmt.Errorf(types.ErrBadPublicKey, err.Error())
-	}
-
-	// secp25k61 public key
-	pubKey := &secp256k1.PubKey{Key: nil}
-	keyErr := pubKey.UnmarshalAmino(bz)
-	if keyErr != nil {
-		return nil, fmt.Errorf(types.ErrBadPublicKey, keyErr.Error())
-	}
-
-	return pubKey, nil
 }

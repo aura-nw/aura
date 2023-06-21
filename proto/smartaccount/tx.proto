@@ -81,15 +81,18 @@ message MsgActivateAccount {
   
   // CodeID indicates which wasm binary code is to be used for this contract
   uint64 code_id = 3 [(gogoproto.customname) = "CodeID"];
+  
+  // Public key of smart account
+  string pub_key = 4 [(gogoproto.customname) = "PubKey"];
 
   // InitMsg is the JSON-encoded instantiate message for the contract
-  bytes init_msg = 4 [
+  bytes init_msg = 5 [
     (gogoproto.customname) = "InitMsg",
     (gogoproto.casttype) = "github.com/CosmWasm/wasmd/x/wasm/types.RawContractMessage"
   ];
 
   // Funds are coins to be deposited to the contract on instantiattion
-  repeated cosmos.base.v1beta1.Coin funds = 5 [
+  repeated cosmos.base.v1beta1.Coin funds = 6 [
     (gogoproto.nullable)     = false,
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
   ];

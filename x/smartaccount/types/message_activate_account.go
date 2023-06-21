@@ -41,6 +41,11 @@ func (msg *MsgActivateAccount) ValidateBasic() error {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid owner address (%s)", err)
 	}
 
+	_, err = PubKeyDecode(msg.PubKey)
+	if err != nil {
+		return err
+	}
+
 	if msg.CodeID == 0 {
 		return sdkerrors.ErrInvalidRequest.Wrap("code id cannot be zero")
 	}

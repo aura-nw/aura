@@ -41,5 +41,10 @@ func (msg *MsgRecover) ValidateBasic() error {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid smart account address (%s)", err)
 	}
 
+	_, err = PubKeyDecode(msg.PubKey)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

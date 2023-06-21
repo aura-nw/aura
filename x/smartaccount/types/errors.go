@@ -14,10 +14,12 @@ var (
 	ErrBadPublicKey              = "cannot convert publickey: %v"
 	ErrSetPublickey              = "cannot set public key: %v"
 	ErrAccountNotFoundForAddress = "account not found for smartcontract address: %s"
+	ErrSmartAccountAddress       = "Invalid address: %s"
 	ErrAddressFromBech32         = "cannot convert string to address: %s"
 	ErrSetSmartAccountStatus     = "cannot set smartaccount status: %s"
 	ErrStoreSmartAccount         = "cannot store smartaccount value: %s"
 	ErrInvalidTx                 = "invalid tx: %s"
 	ErrNoSuchCodeID              = "code id not found: %d"
+	ErrAccountAlreadyExists      = "account already exists"
 	ErrInstantiateDuplicate      = "instance with this code id, sender and label exists: try a different label"
 )

@@ -16,9 +16,9 @@ var _ = strconv.Itoa(0)
 
 func CmdActivateAccount() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "activate-account [creator] [owner] [code_id] [init_msg] --funds [coins,optional]",
+		Use:   "activate-account [account-address:str] [owner:str] [code_id:uint64] [pub_key:hex] [init_msg:str] --funds [coins,optional]",
 		Short: "Broadcast message ActivateAccount",
-		Args:  cobra.ExactArgs(4),
+		Args:  cobra.ExactArgs(5),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 
 			clientCtx, err := client.GetClientTxContext(cmd)
@@ -45,7 +45,8 @@ func CmdActivateAccount() *cobra.Command {
 				AccountAddress: args[0],
 				Owner:          args[1],
 				CodeID:         codeID,
-				InitMsg:        []byte(args[3]),
+				PubKey:         args[3],
+				InitMsg:        []byte(args[4]),
 				Funds:          funds,
 			}
 
@@ -57,6 +58,8 @@ func CmdActivateAccount() *cobra.Command {
 	}
 
 	flags.AddTxFlagsToCmd(cmd)
+
+	cmd.Flags().String(flagFunds, "", "Coins to send to the account during instantiation")
 
 	return cmd
 }

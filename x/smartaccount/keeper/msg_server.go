@@ -30,14 +30,6 @@ func NewMsgServerImpl(keeper Keeper, contractKeeper *wasmkeeper.PermissionedKeep
 	}
 }
 
-func (k msgServer) CreateAccount(goCtx context.Context, msg *types.MsgCreateAccount) (*types.MsgCreateAccountResponse, error) {
-	ctx := sdk.UnwrapSDKContext(goCtx)
-
-	_ = ctx
-
-	return &types.MsgCreateAccountResponse{}, nil
-}
-
 func (k msgServer) ActivateAccount(goCtx context.Context, msg *types.MsgActivateAccount) (*types.MsgActivateAccountResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 

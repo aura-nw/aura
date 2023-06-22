@@ -18,9 +18,6 @@ func NewHandler(k keeper.Keeper, w *wasmkeeper.PermissionedKeeper, a types.Accou
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
 
 		switch msg := msg.(type) {
-		case *types.MsgCreateAccount:
-			res, err := msgServer.CreateAccount(sdk.WrapSDKContext(ctx), msg)
-			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgRecover:
 			res, err := msgServer.Recover(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)

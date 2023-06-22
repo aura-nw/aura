@@ -27,9 +27,9 @@ func GetTxCmd() *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 
-	// create new smart account
-	cmd.AddCommand(CmdCreateAccount())
+	// update smart-account key
 	cmd.AddCommand(CmdUpdateKey())
+	// activate smart-account
 	cmd.AddCommand(CmdActivateAccount())
 	// this line is used by starport scaffolding # 1
 

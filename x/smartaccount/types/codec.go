@@ -9,7 +9,6 @@ import (
 )
 
 func RegisterCodec(cdc *codec.LegacyAmino) {
-	cdc.RegisterConcrete(&MsgCreateAccount{}, "smartaccount/CreateAccount", nil)
 	cdc.RegisterConcrete(&MsgRecover{}, "smartaccount/Recover", nil)
 	cdc.RegisterConcrete(&MsgActivateAccount{}, "smartaccount/ActivateAccount", nil)
 	// this line is used by starport scaffolding # 2
@@ -17,9 +16,6 @@ func RegisterCodec(cdc *codec.LegacyAmino) {
 
 func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 	registry.RegisterImplementations((*authtypes.AccountI)(nil), &SmartAccount{})
-	registry.RegisterImplementations((*sdk.Msg)(nil),
-		&MsgCreateAccount{},
-	)
 	registry.RegisterImplementations((*sdk.Msg)(nil),
 		&MsgRecover{},
 	)

@@ -8,6 +8,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cobra"
 )
@@ -16,7 +17,7 @@ var _ = strconv.Itoa(0)
 
 func CmdActivateAccount() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "activate-account [account-address:str] [owner:str] [code_id:uint64] [pub_key:hex] [init_msg:str] --funds [coins,optional]",
+		Use:   "activate-account [account-address:str] [owner:str] [code_id:uint64] [pub_key] [init_msg:str] --funds [coins,optional]",
 		Short: "Broadcast message ActivateAccount",
 		Args:  cobra.ExactArgs(5),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
@@ -41,11 +42,16 @@ func CmdActivateAccount() *cobra.Command {
 				return fmt.Errorf("funds: %s", err)
 			}
 
+			pubKey, err := types.PubKeyToAny(clientCtx.Codec, []byte(args[3]))
+			if err != nil {
+				return err
+			}
+
 			msg := &types.MsgActivateAccount{
 				AccountAddress: args[0],
 				Owner:          args[1],
 				CodeID:         codeID,
-				PubKey:         args[3],
+				PubKey:         pubKey,
 				InitMsg:        []byte(args[4]),
 				Funds:          funds,
 			}

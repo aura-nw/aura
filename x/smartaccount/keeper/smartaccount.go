@@ -32,7 +32,7 @@ func InstantiateSmartAccount(ctx sdk.Context, keeper Keeper, wasmKeepper *wasmke
 		Owner:   msg.Owner,
 		CodeID:  msg.CodeID,
 		InitMsg: msg.InitMsg,
-		PubKey:  pub_key.Key,
+		PubKey:  pub_key.Bytes(),
 	}
 
 	salt_bytes, err := json.Marshal(salt)
@@ -42,7 +42,6 @@ func InstantiateSmartAccount(ctx sdk.Context, keeper Keeper, wasmKeepper *wasmke
 
 	salt_hashed := sha512.Sum512(salt_bytes)
 
-	
 	// instantiate smartcontract by code id
 	address, data, iErr := wasmKeepper.Instantiate2(
 		ctx,
@@ -51,7 +50,7 @@ func InstantiateSmartAccount(ctx sdk.Context, keeper Keeper, wasmKeepper *wasmke
 		admin,       // admin
 		msg.InitMsg, // message
 		fmt.Sprintf("%s/%d", types.ModuleName, keeper.GetAndIncrementNextAccountID(ctx)), // label
-		msg.Funds,      // funds
+		sdk.NewCoins(), // empty funds
 		salt_hashed[:], // salt
 		true,
 	)

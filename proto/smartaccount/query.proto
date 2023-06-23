@@ -4,6 +4,7 @@ package auranw.aura.smartaccount;
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "smartaccount/params.proto";
+import "google/protobuf/any.proto";
 // this line is used by starport scaffolding # 1
 
 option go_package = "github.com/aura-nw/aura/x/smartaccount/types";
@@ -44,7 +45,7 @@ message QueryGenerateAccountRequest {
   ];
 
   // PubKey of account
-  string public_key = 4 [(gogoproto.customname) = "PubKey"];
+  google.protobuf.Any public_key = 4 [(gogoproto.customname) = "PubKey"];
 }
 
 message QueryGenerateAccountResponse {

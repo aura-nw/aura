@@ -183,7 +183,7 @@ func (decorator *SmartAccountDecorator) AnteHandle(
 		return ctx, fmt.Errorf(types.ErrSmartAccountAddress, "not the same as predictive address generation")
 	}
 
-	// if in delivery mode, remove temporary pubkey for account
+	// if in delivery mode, remove temporary pubkey from account
 	if !ctx.IsCheckTx() && !ctx.IsReCheckTx() && !simulate {
 		// get smart contract account by address
 		sAccount := decorator.AccountKeeper.GetAccount(ctx, signer)
@@ -194,14 +194,14 @@ func (decorator *SmartAccountDecorator) AnteHandle(
 		// remove temporary pubkey for account
 		sAccount.SetPubKey(nil)
 
-		// save account to checkTx state
+		// save account to deliveryTx state
 		decorator.AccountKeeper.SetAccount(ctx, sAccount)
 	}
 
 	return next(ctx, tx, simulate)
 }
 
-// ------------------------- ActivateAccount Decorator ------------------------- \\
+// ------------------------- SmartAccountTx Decorator ------------------------- \\
 
 type SmartAccountTxDecorator struct {
 	WasmKeeper    wasmkeeper.Keeper
@@ -308,15 +308,10 @@ func (decorator *SetPubKeyDecorator) AnteHandle(
 		// get message signer
 		signer := activateMsg.GetSigners()[0]
 
-		// get smart contract account by address, account must exist in chain before activation
-		sAccount := decorator.AccountKeeper.GetAccount(ctx, signer)
-		if _, ok := sAccount.(*authtypes.BaseAccount); !ok {
-			return ctx, fmt.Errorf(types.ErrAccountNotFoundForAddress, activateMsg.AccountAddress)
-		}
-
-		// check if account already has public key
-		if sAccount.GetPubKey() != nil {
-			return ctx, fmt.Errorf(types.ErrAccountAlreadyExists)
+		// get smart contract account by address, account must be inactivate smart account
+		sAccount, err := types.IsInactivateAccount(ctx, signer, activateMsg.AccountAddress, decorator.AccountKeeper)
+		if err != nil {
+			return ctx, err
 		}
 
 		// decode string to pubkey

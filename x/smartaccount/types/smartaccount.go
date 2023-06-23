@@ -2,13 +2,15 @@ package types
 
 import (
 	"crypto/sha512"
-	"encoding/hex"
 	"encoding/json"
 	fmt "fmt"
 
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	"github.com/cosmos/cosmos-sdk/codec"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 )
 
 type InstantiateSalt struct {
@@ -18,6 +20,7 @@ type InstantiateSalt struct {
 	PubKey  []byte `json:"pub_key"`
 }
 
+// generate salt for contract Instantiate2
 func GenerateSalt(owner string, codeId uint64, initMsg []byte, pubKey []byte) ([]byte, error) {
 	salt := InstantiateSalt{
 		Owner:   owner,
@@ -70,18 +73,45 @@ func Instantiate2Address(
 	return contractAddress, nil
 }
 
-func PubKeyDecode(raw string) (*secp256k1.PubKey, error) {
-	bz, err := hex.DecodeString(raw)
+func PubKeyDecode(pubKey *codectypes.Any) (cryptotypes.PubKey, error) {
+	pkAny := pubKey.GetCachedValue()
+	pk, ok := pkAny.(cryptotypes.PubKey)
+	if ok {
+		return pk, nil
+	} else {
+		return nil, fmt.Errorf("expecting PubKey, got: %T", pkAny)
+	}
+}
+
+// Inactivate smart-account must be base account with empty public key
+func IsInactivateAccount(ctx sdk.Context, acc sdk.AccAddress, acc_str string, accountKeeper AccountKeeper) (authtypes.AccountI, error) {
+	sAccount := accountKeeper.GetAccount(ctx, acc)
+
+	// check if account has type base
+	if _, ok := sAccount.(*authtypes.BaseAccount); !ok {
+		return nil, fmt.Errorf(ErrAccountNotFoundForAddress, acc_str)
+	}
+
+	// check if account already has public key
+	if sAccount.GetPubKey() != nil {
+		return nil, fmt.Errorf(ErrAccountAlreadyExists)
+	}
+
+	return sAccount, nil
+}
+
+// Convert pubkey string to *Any
+func PubKeyToAny(cdc codec.Codec, raw []byte) (*codectypes.Any, error) {
+	var pubKey cryptotypes.PubKey
+	err := cdc.UnmarshalInterfaceJSON(raw, pubKey)
 	if err != nil {
-		return nil, fmt.Errorf(ErrBadPublicKey, err.Error())
+		return nil, err
 	}
 
-	// secp25k61 public key
-	pubKey := &secp256k1.PubKey{Key: nil}
-	keyErr := pubKey.UnmarshalAmino(bz)
-	if keyErr != nil {
-		return nil, fmt.Errorf(ErrBadPublicKey, keyErr.Error())
+	any, err := codectypes.NewAnyWithValue(pubKey)
+	if err != nil {
+		return nil, err
 	}
 
-	return pubKey, nil
+	return any, nil
 }

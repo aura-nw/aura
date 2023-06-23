@@ -39,14 +39,10 @@ func (k msgServer) ActivateAccount(goCtx context.Context, msg *types.MsgActivate
 		return nil, fmt.Errorf(types.ErrAddressFromBech32, err)
 	}
 
-	sAccount := k.AccountKeeper.GetAccount(ctx, signer)
-	if _, ok := sAccount.(*authtypes.BaseAccount); !ok {
-		return nil, fmt.Errorf(types.ErrAccountNotFoundForAddress)
-	}
-
-	// check if account already has public key
-	if sAccount.GetPubKey() != nil {
-		return nil, fmt.Errorf(types.ErrAccountAlreadyExists)
+	// Only allow inactivate smart account to activated
+	sAccount, err := types.IsInactivateAccount(ctx, signer, msg.AccountAddress, k.AccountKeeper)
+	if err != nil {
+		return nil, err
 	}
 
 	// get current sequence of account
@@ -115,7 +111,7 @@ func (k msgServer) Recover(goCtx context.Context, msg *types.MsgRecover) (*types
 		return nil, fmt.Errorf(types.ErrAccountNotFoundForAddress, msg.Address)
 	}
 
-	// secp25k61 public key
+	// public key
 	pubKey, err := types.PubKeyDecode(msg.PubKey)
 	if err != nil {
 		return nil, err
@@ -130,7 +126,7 @@ func (k msgServer) Recover(goCtx context.Context, msg *types.MsgRecover) (*types
 	sudoMsgBytes, err := json.Marshal(&types.AccountMsg{
 		RecoverTx: &types.RecoverTx{
 			Caller:      msg.Creator,
-			PubKey:      pubKey.GetKey(),
+			PubKey:      pubKey.Bytes(),
 			Credentials: credentials,
 		},
 	})
@@ -167,10 +163,7 @@ func (k msgServer) Recover(goCtx context.Context, msg *types.MsgRecover) (*types
 		),
 	)
 
-	return &types.MsgRecoverResponse{
-		Address:   msg.Address,
-		NewPubKey: msg.PubKey,
-	}, nil
+	return &types.MsgRecoverResponse{}, nil
 }
 
 // this line is used by starport scaffolding # handler/msgServer

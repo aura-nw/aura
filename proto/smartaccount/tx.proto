@@ -2,8 +2,9 @@ syntax = "proto3";
 package auranw.aura.smartaccount;
 
 import "gogoproto/gogo.proto";
+import "cosmos_proto/cosmos.proto";
 import "cosmos/base/v1beta1/coin.proto";
-import "cosmos/crypto/secp256k1/keys.proto";
+import "google/protobuf/any.proto";
 
 option go_package = "github.com/aura-nw/aura/x/smartaccount/types";
 
@@ -25,16 +26,13 @@ message MsgRecover {
   string address = 2;
 
   // New PubKey using for signature verification of this account
-  string public_key = 3 [(gogoproto.customname) = "PubKey"];
+  google.protobuf.Any public_key = 3 [(gogoproto.customname) = "PubKey"];
 
   // Credentials
   string credentials = 4;
 }
 
-message MsgRecoverResponse {
-  string address = 1;
-  string new_public_key = 2 [(gogoproto.customname) = "NewPubKey"];
-}
+message MsgRecoverResponse {}
 
 message MsgActivateAccount {
   // AccountAddress is the actor who signs the message
@@ -47,7 +45,7 @@ message MsgActivateAccount {
   uint64 code_id = 3 [(gogoproto.customname) = "CodeID"];
   
   // Public key of smart account
-  string pub_key = 4 [(gogoproto.customname) = "PubKey"];
+  google.protobuf.Any pub_key = 4 [(gogoproto.customname) = "PubKey"];
 
   // InitMsg is the JSON-encoded instantiate message for the contract
   bytes init_msg = 5 [

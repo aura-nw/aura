@@ -133,7 +133,7 @@ func (k msgServer) Recover(goCtx context.Context, msg *types.MsgRecover) (*types
 	// check recover logic in smart acontract
 	_, err = k.ContractKeeper.Sudo(ctx, saAddr, sudoMsgBytes)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf(types.ErrSmartAccountCall, err.Error())
 	}
 
 	// set new pubkey for smartaccount

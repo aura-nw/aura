@@ -2,7 +2,6 @@ package types
 
 import (
 	"encoding/json"
-	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -35,10 +34,10 @@ type MsgData struct {
 func ParseMessagesString(msgs []sdk.Msg) ([]MsgData, error) {
 	msgsStr := make([]MsgData, 0)
 
-	for index, msg := range msgs {
+	for _, msg := range msgs {
 		msgData, err := json.Marshal(msg)
 		if err != nil {
-			return nil, fmt.Errorf("error in json marshal msg %d: %s", index, err.Error())
+			return nil, err
 		}
 
 		data := MsgData{
@@ -50,4 +49,3 @@ func ParseMessagesString(msgs []sdk.Msg) ([]MsgData, error) {
 	}
 	return msgsStr, nil
 }
-

@@ -19,9 +19,9 @@ func GenerateValidateQueryMessage(msg *wasmtypes.MsgExecuteContract, msgs []type
 	var accMsg types.AccountMsg
 	umErr := json.Unmarshal(msg.GetMsg(), &accMsg)
 	if umErr != nil {
-		return nil, fmt.Errorf("invalid smart account message: %s", umErr.Error())
+		return nil, fmt.Errorf(types.ErrInvalidMsg, umErr.Error())
 	} else if accMsg.AfterExecuteTx == nil {
-		return nil, fmt.Errorf("must be AfterExecute message")
+		return nil, fmt.Errorf(types.ErrInvalidMsg, "must be AfterExecute message")
 	}
 
 	callMsgData, err := json.Marshal(accMsg.AfterExecuteTx.Msgs)
@@ -36,7 +36,7 @@ func GenerateValidateQueryMessage(msg *wasmtypes.MsgExecuteContract, msgs []type
 
 	// data in validate message must compatiable to tx.messages
 	if !bytes.Equal(msgData, callMsgData) {
-		return nil, fmt.Errorf("invalid after-execute message data: not compatible with tx.messages")
+		return nil, fmt.Errorf(types.ErrInvalidMsg, "after-execute message data not compatible with tx.messages")
 	}
 
 	validateMessage, err := json.Marshal(&types.AccountMsg{
@@ -45,7 +45,7 @@ func GenerateValidateQueryMessage(msg *wasmtypes.MsgExecuteContract, msgs []type
 		},
 	})
 	if err != nil {
-		return nil, fmt.Errorf("cannot json marshal validate message: %s", err.Error())
+		return nil, err
 	}
 
 	return validateMessage, nil
@@ -237,7 +237,7 @@ func (decorator *SmartAccountTxDecorator) AnteHandle(
 	msgs := tx.GetMsgs()
 
 	if len(msgs) < 1 {
-		return ctx, fmt.Errorf("tx must contain at least the validate message")
+		return ctx, fmt.Errorf(types.ErrInvalidTx, "must contain at least the validate message")
 	}
 
 	// validate message must be the last message and must be MsgExecuteContract
@@ -245,7 +245,7 @@ func (decorator *SmartAccountTxDecorator) AnteHandle(
 	if msg, err := msgs[len(msgs)-1].(*wasmtypes.MsgExecuteContract); err {
 		valMsg = msg
 	} else {
-		return ctx, fmt.Errorf("validate message must be type MsgExecuteContract")
+		return ctx, fmt.Errorf(types.ErrInvalidMsg, "validate message must be type MsgExecuteContract")
 	}
 
 	// get smartaccount address
@@ -253,9 +253,7 @@ func (decorator *SmartAccountTxDecorator) AnteHandle(
 
 	// the message must be sent from the signer's address which is also the smart contract address
 	if valMsg.Sender != saAddress || valMsg.Contract != saAddress {
-		return ctx, fmt.Errorf(
-			"invalid validate message: sender address and smart contract must be the same",
-		)
+		return ctx, fmt.Errorf(types.ErrInvalidMsg, "sender address and smart contract must be the same")
 	}
 
 	// parse messages in tx to list of string
@@ -273,7 +271,7 @@ func (decorator *SmartAccountTxDecorator) AnteHandle(
 	// query SA contract for validating transaction
 	_, vErr := decorator.WasmKeeper.QuerySmart(ctx, signerAcc.GetAddress(), validateMessage)
 	if vErr != nil {
-		return ctx, fmt.Errorf("tx validate fail: %s", vErr.Error())
+		return ctx, fmt.Errorf(types.ErrSmartAccountCall, vErr.Error())
 	}
 
 	return next(ctx, tx, simulate)
@@ -346,7 +344,7 @@ func (decorator *SetPubKeyDecorator) AnteHandle(
 
 	// if this is smart account tx, check if pubkey is set
 	if signerAcc.GetPubKey() == nil {
-		return ctx, fmt.Errorf("smart-account PublicKey must not be null")
+		return ctx, fmt.Errorf(types.ErrNilPubkey)
 	}
 
 	// Also emit the following events, so that txs can be indexed by these

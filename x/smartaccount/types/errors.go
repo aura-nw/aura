@@ -19,7 +19,10 @@ var (
 	ErrSetSmartAccountStatus     = "cannot set smartaccount status: %s"
 	ErrStoreSmartAccount         = "cannot store smartaccount value: %s"
 	ErrInvalidTx                 = "invalid tx: %s"
+	ErrSmartAccountCall          = "smart-account call fail: %s"
+	ErrInvalidMsg                = "invalid smart-account message: %s"
 	ErrNoSuchCodeID              = "code id not found: %d"
+	ErrNilPubkey                 = "smart-account PublicKey must not be null"
 	ErrAccountAlreadyExists      = "account already exists"
 	ErrInstantiateDuplicate      = "instance with this code id, sender and label exists: try a different label"
 )

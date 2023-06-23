@@ -11,6 +11,7 @@ import (
 
 var (
 	_ authtypes.AccountI                 = (*SmartAccount)(nil)
+	_ authtypes.GenesisAccount           = (*SmartAccount)(nil)
 	_ codectypes.UnpackInterfacesMessage = (*SmartAccount)(nil)
 )
 
@@ -84,6 +85,20 @@ func (acc *SmartAccount) GetSequence() uint64 {
 
 func (acc *SmartAccount) SetSequence(seq uint64) error {
 	acc.Sequence = seq
+
+	return nil
+}
+
+func (acc *SmartAccount) Validate() error {
+
+	if acc.Address == "" || acc.PubKey == nil {
+		return nil
+	}
+
+	_, err := sdk.AccAddressFromBech32(acc.Address)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

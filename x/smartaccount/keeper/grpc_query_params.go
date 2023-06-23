@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/aura-nw/aura/x/smartaccount/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -14,6 +15,8 @@ func (k Keeper) Params(c context.Context, req *types.QueryParamsRequest) (*types
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 	ctx := sdk.UnwrapSDKContext(c)
+
+	fmt.Println("=================================================================================================")
 
 	return &types.QueryParamsResponse{Params: k.GetParams(ctx)}, nil
 }

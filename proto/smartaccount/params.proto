@@ -5,8 +5,21 @@ import "gogoproto/gogo.proto";
 
 option go_package = "github.com/aura-nw/aura/x/smartaccount/types";
 
+
+
+message CodeID {
+  option (gogoproto.equal) = true;
+
+  // whitelist code id
+  uint64 code_id = 1 [(gogoproto.customname) = "CodeID"];
+
+  // status of code id
+  bool status = 2;
+}
+
 // Params defines the parameters for the module.
 message Params {
   option (gogoproto.goproto_stringer) = false;
-  
+
+  repeated CodeID whitelist_code_id = 1 [(gogoproto.customname) = "WhitelistCodeID"];
 }

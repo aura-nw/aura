@@ -6,16 +6,16 @@ import (
 	"fmt"
 	"strconv"
 
-	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/aura-nw/aura/x/smartaccount/types"
+	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func InstantiateSmartAccount(
-	ctx sdk.Context, 
-	keeper Keeper, 
-	wasmKeepper *wasmkeeper.PermissionedKeeper, 
+	ctx sdk.Context,
+	keeper Keeper,
+	wasmKeepper *wasmkeeper.PermissionedKeeper,
 	msg *types.MsgActivateAccount,
 ) (sdk.AccAddress, []byte, cryptotypes.PubKey, error) {
 
@@ -83,4 +83,23 @@ func InstantiateSmartAccount(
 	)
 
 	return address, data, pubKey, nil
+}
+
+func IsWhitelistCodeID(ctx sdk.Context, keeper Keeper, codeID uint64) bool {
+	params := keeper.GetParams(ctx)
+	if params.WhitelistCodeID == nil {
+		return false
+	}
+
+	for _, codeIDAllowed := range params.WhitelistCodeID {
+		if codeID == codeIDAllowed.CodeID {
+			if codeIDAllowed.Status {
+				return true
+			} else {
+				return false
+			}
+		}
+	}
+
+	return false
 }

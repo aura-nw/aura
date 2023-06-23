@@ -33,6 +33,11 @@ func NewMsgServerImpl(keeper Keeper, contractKeeper *wasmkeeper.PermissionedKeep
 func (k msgServer) ActivateAccount(goCtx context.Context, msg *types.MsgActivateAccount) (*types.MsgActivateAccountResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
+	// check if codeID is in whitelist
+	if !IsWhitelistCodeID(ctx, k.Keeper, msg.CodeID) {
+		return nil, fmt.Errorf(types.ErrInvalidMsg, "codeID not allowed")
+	}
+
 	// get smart contract account by address, account must exist in chain before activation
 	signer, err := sdk.AccAddressFromBech32(msg.AccountAddress)
 	if err != nil {

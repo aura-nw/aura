@@ -19,6 +19,10 @@ const (
 	AccountIDKey = "smartaccount_id"
 )
 
+var (
+	ParamsKey = []byte{0x00}
+)
+
 func KeyPrefix(p string) []byte {
 	return []byte(p)
 }

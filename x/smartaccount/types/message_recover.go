@@ -1,13 +1,18 @@
 package types
 
 import (
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 const TypeMsgRecover = "recover"
 
-var _ sdk.Msg = &MsgRecover{}
+var (
+	_ sdk.Msg                            = &MsgRecover{}
+	_ codectypes.UnpackInterfacesMessage = (*MsgRecover)(nil)
+)
 
 func (msg *MsgRecover) Route() string {
 	return RouterKey
@@ -47,4 +52,13 @@ func (msg *MsgRecover) ValidateBasic() error {
 	}
 
 	return nil
+}
+
+// UnpackInterfaces implements UnpackInterfacesMessage.UnpackInterfaces
+func (msg MsgRecover) UnpackInterfaces(unpacker codectypes.AnyUnpacker) error {
+	if msg.PubKey == nil {
+		return nil
+	}
+	var pubKey cryptotypes.PubKey
+	return unpacker.UnpackAny(msg.PubKey, &pubKey)
 }

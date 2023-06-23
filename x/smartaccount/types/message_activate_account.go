@@ -1,13 +1,18 @@
 package types
 
 import (
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 const TypeMsgActivateAccount = "activate_account"
 
-var _ sdk.Msg = &MsgActivateAccount{}
+var (
+	_ sdk.Msg                            = &MsgActivateAccount{}
+	_ codectypes.UnpackInterfacesMessage = (*MsgActivateAccount)(nil)
+)
 
 func (msg *MsgActivateAccount) Route() string {
 	return RouterKey
@@ -59,4 +64,13 @@ func (msg *MsgActivateAccount) ValidateBasic() error {
 	}
 
 	return nil
+}
+
+// UnpackInterfaces implements UnpackInterfacesMessage.UnpackInterfaces
+func (msg MsgActivateAccount) UnpackInterfaces(unpacker codectypes.AnyUnpacker) error {
+	if msg.PubKey == nil {
+		return nil
+	}
+	var pubKey cryptotypes.PubKey
+	return unpacker.UnpackAny(msg.PubKey, &pubKey)
 }

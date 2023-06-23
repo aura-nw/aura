@@ -103,7 +103,7 @@ func IsInactivateAccount(ctx sdk.Context, acc sdk.AccAddress, acc_str string, ac
 // Convert pubkey string to *Any
 func PubKeyToAny(cdc codec.Codec, raw []byte) (*codectypes.Any, error) {
 	var pubKey cryptotypes.PubKey
-	err := cdc.UnmarshalInterfaceJSON(raw, pubKey)
+	err := cdc.UnmarshalInterfaceJSON(raw, &pubKey)
 	if err != nil {
 		return nil, err
 	}

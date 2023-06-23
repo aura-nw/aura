@@ -6,41 +6,47 @@ import (
 	"fmt"
 	"strconv"
 
+	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/aura-nw/aura/x/smartaccount/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func InstantiateSmartAccount(ctx sdk.Context, keeper Keeper, wasmKeepper *wasmkeeper.PermissionedKeeper, msg *types.MsgActivateAccount) (sdk.AccAddress, []byte, error) {
+func InstantiateSmartAccount(
+	ctx sdk.Context, 
+	keeper Keeper, 
+	wasmKeepper *wasmkeeper.PermissionedKeeper, 
+	msg *types.MsgActivateAccount,
+) (sdk.AccAddress, []byte, cryptotypes.PubKey, error) {
 
 	admin, err := sdk.AccAddressFromBech32(msg.AccountAddress)
 	if err != nil {
-		return nil, nil, fmt.Errorf(types.ErrAddressFromBech32, err)
+		return nil, nil, nil, fmt.Errorf(types.ErrAddressFromBech32, err)
 	}
 
 	owner, err := sdk.AccAddressFromBech32(msg.Owner)
 	if err != nil {
-		return nil, nil, fmt.Errorf(types.ErrAddressFromBech32, err)
+		return nil, nil, nil, fmt.Errorf(types.ErrAddressFromBech32, err)
 	}
 
-	pub_key, err := types.PubKeyDecode(msg.PubKey)
+	pubKey, err := types.PubKeyDecode(msg.PubKey)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
 	salt := types.InstantiateSalt{
 		Owner:   msg.Owner,
 		CodeID:  msg.CodeID,
 		InitMsg: msg.InitMsg,
-		PubKey:  pub_key.Bytes(),
+		PubKey:  pubKey.Bytes(),
 	}
 
-	salt_bytes, err := json.Marshal(salt)
+	saltBytes, err := json.Marshal(salt)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
-	salt_hashed := sha512.Sum512(salt_bytes)
+	salt_hashed := sha512.Sum512(saltBytes)
 
 	// instantiate smartcontract by code id
 	address, data, iErr := wasmKeepper.Instantiate2(
@@ -55,7 +61,7 @@ func InstantiateSmartAccount(ctx sdk.Context, keeper Keeper, wasmKeepper *wasmke
 		true,
 	)
 	if iErr != nil {
-		return nil, nil, fmt.Errorf(types.ErrBadInstantiateMsg, iErr.Error())
+		return nil, nil, nil, fmt.Errorf(types.ErrBadInstantiateMsg, iErr.Error())
 	}
 
 	contractAddrStr := address.String()
@@ -76,5 +82,5 @@ func InstantiateSmartAccount(ctx sdk.Context, keeper Keeper, wasmKeepper *wasmke
 		),
 	)
 
-	return address, data, nil
+	return address, data, pubKey, nil
 }

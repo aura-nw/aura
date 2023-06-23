@@ -73,18 +73,9 @@ func Instantiate2Address(
 	return contractAddress, nil
 }
 
-func PubKeyDecode(pubKey *codectypes.Any) (cryptotypes.PubKey, error) {
-	pkAny := pubKey.GetCachedValue()
-	pk, ok := pkAny.(cryptotypes.PubKey)
-	if ok {
-		return pk, nil
-	} else {
-		return nil, fmt.Errorf("expecting PubKey, got: %T", pkAny)
-	}
-}
-
-// Inactivate smart-account must be base account with empty public key
-func IsInactivateAccount(ctx sdk.Context, acc sdk.AccAddress, acc_str string, accountKeeper AccountKeeper) (authtypes.AccountI, error) {
+// Inactive smart-account must be base account with empty public key
+// and has not been used to initiate a contract before
+func IsInactiveAccount(ctx sdk.Context, acc sdk.AccAddress, acc_str string, accountKeeper AccountKeeper, wasmKeeper wasmkeeper.Keeper) (authtypes.AccountI, error) {
 	sAccount := accountKeeper.GetAccount(ctx, acc)
 
 	// check if account has type base
@@ -97,7 +88,22 @@ func IsInactivateAccount(ctx sdk.Context, acc sdk.AccAddress, acc_str string, ac
 		return nil, fmt.Errorf(ErrAccountAlreadyExists)
 	}
 
+	// check if contract with account not been initiated
+	if wasmKeeper.HasContractInfo(ctx, acc) {
+		return nil, fmt.Errorf(ErrAccountAlreadyExists)
+	}
+
 	return sAccount, nil
+}
+
+func PubKeyDecode(pubKey *codectypes.Any) (cryptotypes.PubKey, error) {
+	pkAny := pubKey.GetCachedValue()
+	pk, ok := pkAny.(cryptotypes.PubKey)
+	if ok {
+		return pk, nil
+	} else {
+		return nil, fmt.Errorf("expecting PubKey, got: %T", pkAny)
+	}
 }
 
 // Convert pubkey string to *Any

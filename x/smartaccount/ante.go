@@ -283,11 +283,13 @@ func (decorator *SmartAccountTxDecorator) AnteHandle(
 
 type SetPubKeyDecorator struct {
 	AccountKeeper authante.AccountKeeper
+	WasmKeeper    wasmkeeper.Keeper
 }
 
-func NewSetPubKeyDecorator(accountKeeper authante.AccountKeeper) *SetPubKeyDecorator {
+func NewSetPubKeyDecorator(accountKeeper authante.AccountKeeper, wasmKeeper wasmkeeper.Keeper) *SetPubKeyDecorator {
 	return &SetPubKeyDecorator{
 		AccountKeeper: accountKeeper,
+		WasmKeeper:    wasmKeeper,
 	}
 }
 
@@ -298,18 +300,18 @@ func (decorator *SetPubKeyDecorator) AnteHandle(
 	next sdk.AnteHandler,
 ) (newCtx sdk.Context, err error) {
 
-	isActivateAccount, activateMsg, err := IsActivateAccountMessage(tx)
+	isActivateAccountMsg, activateMsg, err := IsActivateAccountMessage(tx)
 	if err != nil {
 		return ctx, err
 	}
 
 	// if is smart account activation message
-	if isActivateAccount {
+	if isActivateAccountMsg {
 		// get message signer
 		signer := activateMsg.GetSigners()[0]
 
 		// get smart contract account by address, account must be inactivate smart account
-		sAccount, err := types.IsInactivateAccount(ctx, signer, activateMsg.AccountAddress, decorator.AccountKeeper)
+		sAccount, err := types.IsInactiveAccount(ctx, signer, activateMsg.AccountAddress, decorator.AccountKeeper, decorator.WasmKeeper)
 		if err != nil {
 			return ctx, err
 		}

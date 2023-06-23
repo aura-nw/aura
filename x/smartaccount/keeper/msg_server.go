@@ -39,8 +39,8 @@ func (k msgServer) ActivateAccount(goCtx context.Context, msg *types.MsgActivate
 		return nil, fmt.Errorf(types.ErrAddressFromBech32, err)
 	}
 
-	// Only allow inactivate smart account to activated
-	sAccount, err := types.IsInactivateAccount(ctx, signer, msg.AccountAddress, k.AccountKeeper)
+	// Only allow inactive smart account to be activated
+	sAccount, err := types.IsInactiveAccount(ctx, signer, msg.AccountAddress, k.AccountKeeper, k.Keeper.wasmKeeper)
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +55,7 @@ func (k msgServer) ActivateAccount(goCtx context.Context, msg *types.MsgActivate
 	// save account with sequence set to 0
 	k.AccountKeeper.SetAccount(ctx, sAccount)
 
-	saAddress, data, err := InstantiateSmartAccount(ctx, k.Keeper, k.ContractKeeper, msg)
+	saAddress, data, pubKey, err := InstantiateSmartAccount(ctx, k.Keeper, k.ContractKeeper, msg)
 	if err != nil {
 		return nil, err
 	}
@@ -76,12 +76,6 @@ func (k msgServer) ActivateAccount(goCtx context.Context, msg *types.MsgActivate
 
 	// create new smartaccount type
 	smartAccount := types.NewSmartAccountFromAccount(scAccount)
-
-	// secp25k61 public key
-	pubKey, err := types.PubKeyDecode(msg.PubKey)
-	if err != nil {
-		return nil, err
-	}
 
 	// set smartaccount pubkey
 	err = smartAccount.SetPubKey(pubKey)
@@ -106,6 +100,7 @@ func (k msgServer) Recover(goCtx context.Context, msg *types.MsgRecover) (*types
 		return nil, fmt.Errorf(types.ErrAddressFromBech32, err.Error())
 	}
 
+	// only allow accounts with type SmartAccount to be restored pubkey
 	smartAccount := k.AccountKeeper.GetAccount(ctx, saAddr)
 	if _, ok := smartAccount.(*types.SmartAccount); !ok {
 		return nil, fmt.Errorf(types.ErrAccountNotFoundForAddress, msg.Address)
@@ -123,11 +118,12 @@ func (k msgServer) Recover(goCtx context.Context, msg *types.MsgRecover) (*types
 		return nil, err
 	}
 
+	// data pass into recover message call
 	sudoMsgBytes, err := json.Marshal(&types.AccountMsg{
 		RecoverTx: &types.RecoverTx{
-			Caller:      msg.Creator,
-			PubKey:      pubKey.Bytes(),
-			Credentials: credentials,
+			Caller:      msg.Creator,    // caller of message
+			PubKey:      pubKey.Bytes(), // new public key
+			Credentials: credentials,    // credentials
 		},
 	})
 	if err != nil {

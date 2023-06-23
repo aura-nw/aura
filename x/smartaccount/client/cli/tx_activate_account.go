@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"fmt"
 	"strconv"
 
 	"github.com/aura-nw/aura/x/smartaccount/types"
@@ -9,7 +8,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cobra"
 )
 
@@ -17,7 +15,7 @@ var _ = strconv.Itoa(0)
 
 func CmdActivateAccount() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "activate-account [account-address:str] [owner:str] [code_id:uint64] [pub_key] [init_msg:str] --funds [coins,optional]",
+		Use:   "activate-account [account-address:str] [owner:str] [code_id:uint64] [pub_key] [init_msg:str]",
 		Short: "Broadcast message ActivateAccount",
 		Args:  cobra.ExactArgs(5),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
@@ -32,16 +30,6 @@ func CmdActivateAccount() *cobra.Command {
 				return err
 			}
 
-			fundsStr, err := cmd.Flags().GetString(flagFunds)
-			if err != nil {
-				return fmt.Errorf("funds: %s", err)
-			}
-
-			funds, err := sdk.ParseCoinsNormalized(fundsStr)
-			if err != nil {
-				return fmt.Errorf("funds: %s", err)
-			}
-
 			pubKey, err := types.PubKeyToAny(clientCtx.Codec, []byte(args[3]))
 			if err != nil {
 				return err
@@ -53,7 +41,6 @@ func CmdActivateAccount() *cobra.Command {
 				CodeID:         codeID,
 				PubKey:         pubKey,
 				InitMsg:        []byte(args[4]),
-				Funds:          funds,
 			}
 
 			if err := msg.ValidateBasic(); err != nil {
@@ -64,8 +51,6 @@ func CmdActivateAccount() *cobra.Command {
 	}
 
 	flags.AddTxFlagsToCmd(cmd)
-
-	cmd.Flags().String(flagFunds, "", "Coins to send to the account during instantiation")
 
 	return cmd
 }

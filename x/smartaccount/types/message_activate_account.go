@@ -59,10 +59,6 @@ func (msg *MsgActivateAccount) ValidateBasic() error {
 		return sdkerrors.ErrInvalidRequest.Wrapf("invalid init msg: %s", err.Error())
 	}
 
-	if !msg.Funds.IsValid() {
-		return sdkerrors.ErrInvalidCoins
-	}
-
 	return nil
 }
 

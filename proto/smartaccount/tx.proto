@@ -52,12 +52,6 @@ message MsgActivateAccount {
     (gogoproto.customname) = "InitMsg",
     (gogoproto.casttype) = "github.com/CosmWasm/wasmd/x/wasm/types.RawContractMessage"
   ];
-
-  // Funds are coins to be deposited to the contract on instantiattion
-  repeated cosmos.base.v1beta1.Coin funds = 6 [
-    (gogoproto.nullable)     = false,
-    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
-  ];
 }
 
 message MsgActivateAccountResponse {

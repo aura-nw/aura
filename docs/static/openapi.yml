@@ -295,6 +295,19 @@ paths:
               params:
                 description: params holds all the parameters of this module.
                 type: object
+                properties:
+                  whitelist_code_id:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code_id:
+                          type: string
+                          format: uint64
+                          title: whitelist code id
+                        status:
+                          type: boolean
+                          title: status of code id
             description: >-
               QueryParamsResponse is response type for the Query/Params RPC
               method.
@@ -32895,6 +32908,16 @@ definitions:
                   "@type": "type.googleapis.com/google.protobuf.Duration",
                   "value": "1.212s"
                 }
+  auranw.aura.smartaccount.CodeID:
+    type: object
+    properties:
+      code_id:
+        type: string
+        format: uint64
+        title: whitelist code id
+      status:
+        type: boolean
+        title: status of code id
   auranw.aura.smartaccount.MsgActivateAccountResponse:
     type: object
     properties:
@@ -32907,6 +32930,19 @@ definitions:
     type: object
   auranw.aura.smartaccount.Params:
     type: object
+    properties:
+      whitelist_code_id:
+        type: array
+        items:
+          type: object
+          properties:
+            code_id:
+              type: string
+              format: uint64
+              title: whitelist code id
+            status:
+              type: boolean
+              title: status of code id
     description: Params defines the parameters for the module.
   auranw.aura.smartaccount.QueryGenerateAccountResponse:
     type: object
@@ -32919,19 +32955,20 @@ definitions:
       params:
         description: params holds all the parameters of this module.
         type: object
+        properties:
+          whitelist_code_id:
+            type: array
+            items:
+              type: object
+              properties:
+                code_id:
+                  type: string
+                  format: uint64
+                  title: whitelist code id
+                status:
+                  type: boolean
+                  title: status of code id
     description: QueryParamsResponse is response type for the Query/Params RPC method.
-  cosmos.base.v1beta1.Coin:
-    type: object
-    properties:
-      denom:
-        type: string
-      amount:
-        type: string
-    description: |-
-      Coin defines a token with a denomination and an amount.
-
-      NOTE: The amount field is an Int which implements the custom method
-      signatures required by gogoproto.
   cosmos.auth.v1beta1.Params:
     type: object
     properties:
@@ -34964,6 +35001,18 @@ definitions:
     description: |-
       SendEnabled maps coin denom to a send_enabled status (whether a denom is
       sendable).
+  cosmos.base.v1beta1.Coin:
+    type: object
+    properties:
+      denom:
+        type: string
+      amount:
+        type: string
+    description: |-
+      Coin defines a token with a denomination and an amount.
+
+      NOTE: The amount field is an Int which implements the custom method
+      signatures required by gogoproto.
   cosmos.base.tendermint.v1beta1.GetBlockByHeightResponse:
     type: object
     properties:

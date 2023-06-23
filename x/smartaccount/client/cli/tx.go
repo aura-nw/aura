@@ -15,7 +15,6 @@ var (
 	DefaultRelativePacketTimeoutTimestamp = uint64((time.Duration(10) * time.Minute).Nanoseconds())
 )
 
-const flagFunds = "funds"
 
 // GetTxCmd returns the transaction commands for this module
 func GetTxCmd() *cobra.Command {

@@ -59,7 +59,13 @@ func validateWhitelistCodeID(i interface{}) error {
 
 // Validate validates the set of params
 func (p Params) Validate() error {
-	return validateWhitelistCodeID(p.WhitelistCodeID)
+	// validate whitelist_code_id param
+	err := validateWhitelistCodeID(p.WhitelistCodeID)
+	if err != nil {
+		return err
+	}
+
+	return err
 }
 
 // String implements the Stringer interface.

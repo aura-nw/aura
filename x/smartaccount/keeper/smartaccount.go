@@ -1,8 +1,6 @@
 package keeper
 
 import (
-	"crypto/sha512"
-	"encoding/json"
 	"fmt"
 	"strconv"
 
@@ -34,19 +32,17 @@ func InstantiateSmartAccount(
 		return nil, nil, nil, err
 	}
 
-	salt := types.InstantiateSalt{
-		Owner:   msg.Owner,
-		CodeID:  msg.CodeID,
-		InitMsg: msg.InitMsg,
-		PubKey:  pubKey.Bytes(),
-	}
-
-	saltBytes, err := json.Marshal(salt)
+	// generate salt using owner, codeId, initMsg and pubkey
+	// make sure the contract that is initiated will have the address according to the pre-configured configuration
+	salt, err := types.GenerateSalt(
+		msg.Owner,
+		msg.CodeID,
+		msg.InitMsg,
+		pubKey.Bytes(),
+	)
 	if err != nil {
 		return nil, nil, nil, err
 	}
-
-	salt_hashed := sha512.Sum512(saltBytes)
 
 	// instantiate smartcontract by code id
 	address, data, iErr := wasmKeepper.Instantiate2(
@@ -57,7 +53,7 @@ func InstantiateSmartAccount(
 		msg.InitMsg, // message
 		fmt.Sprintf("%s/%d", types.ModuleName, keeper.GetAndIncrementNextAccountID(ctx)), // label
 		sdk.NewCoins(), // empty funds
-		salt_hashed[:], // salt
+		salt,           // salt
 		true,
 	)
 	if iErr != nil {

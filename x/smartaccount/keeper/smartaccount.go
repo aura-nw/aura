@@ -44,7 +44,7 @@ func InstantiateSmartAccount(
 		return nil, nil, nil, err
 	}
 
-	// instantiate smartcontract by code id
+	// instantiate smartcontract by contract with code_id
 	address, data, iErr := wasmKeepper.Instantiate2(
 		ctx,
 		msg.CodeID,
@@ -61,6 +61,11 @@ func InstantiateSmartAccount(
 	}
 
 	contractAddrStr := address.String()
+
+	// make sure the new contract has the same address as predicted
+	if contractAddrStr != msg.AccountAddress {
+		return nil, nil, nil, fmt.Errorf(types.ErrBadInstantiateMsg, "wrong predicted address")
+	}
 
 	ctx.Logger().Info(
 		"smart account created",
@@ -87,6 +92,7 @@ func IsWhitelistCodeID(ctx sdk.Context, keeper Keeper, codeID uint64) bool {
 		return false
 	}
 
+	// code_id must be in whitelist and has activated status
 	for _, codeIDAllowed := range params.WhitelistCodeID {
 		if codeID == codeIDAllowed.CodeID {
 			if codeIDAllowed.Status {

@@ -20,6 +20,8 @@ message CodeID {
 // Params defines the parameters for the module.
 message Params {
   option (gogoproto.goproto_stringer) = false;
-
+  
+  // code_id whitelist indicates which contract can be initialized as smart account
+	// using gov proposal for updates
   repeated CodeID whitelist_code_id = 1 [(gogoproto.customname) = "WhitelistCodeID"];
 }

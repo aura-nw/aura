@@ -36,6 +36,8 @@ func DefaultParams() Params {
 // ParamSetPairs get the params.ParamSet
 func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 	return paramtypes.ParamSetPairs{
+		// code_id whitelist indicates which contract can be initialized as smart account
+		// using gov proposal for updates
 		paramtypes.NewParamSetPair(WhitelistCodeID, &p.WhitelistCodeID, validateWhitelistCodeID),
 	}
 }
@@ -45,6 +47,7 @@ func validateWhitelistCodeID(i interface{}) error {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}
 
+	// not allowed duplicate code_id in whitelist
 	visited := make(map[uint64]bool, 0)
 	for _, codeID := range v {
 		if visited[codeID.CodeID] {
@@ -65,7 +68,7 @@ func (p Params) Validate() error {
 		return err
 	}
 
-	return err
+	return nil
 }
 
 // String implements the Stringer interface.

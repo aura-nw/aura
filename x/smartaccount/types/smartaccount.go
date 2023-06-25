@@ -74,8 +74,8 @@ func Instantiate2Address(
 	return contractAddress, nil
 }
 
-// Inactive smart-account must be base account with empty public key
-// and has not been used to initiate a contract before
+// Inactive smart-account must be base account with empty public key or smart account
+// and has not been used for any instantiated contracts
 func IsInactiveAccount(ctx sdk.Context, acc sdk.AccAddress, acc_str string, accountKeeper AccountKeeper, wasmKeeper wasmkeeper.Keeper) (authtypes.AccountI, error) {
 	sAccount := accountKeeper.GetAccount(ctx, acc)
 
@@ -86,12 +86,12 @@ func IsInactiveAccount(ctx sdk.Context, acc sdk.AccAddress, acc_str string, acco
 		return nil, fmt.Errorf(ErrAccountNotFoundForAddress, acc_str)
 	}
 
-	// check if account already has public key
-	if sAccount.GetPubKey() != nil {
+	// check if base account already has public key
+	if sAccount.GetPubKey() != nil && isBaseAccount {
 		return nil, fmt.Errorf(ErrAccountAlreadyExists)
 	}
 
-	// check if contract with account not been initiated
+	// check if contract with account not been instantiated
 	if wasmKeeper.HasContractInfo(ctx, acc) {
 		return nil, fmt.Errorf(ErrAccountAlreadyExists)
 	}

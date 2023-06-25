@@ -314,7 +314,7 @@ func (decorator *SetPubKeyDecorator) AnteHandle(
 			return ctx, err
 		}
 
-		// decode string to pubkey
+		// decode any to pubkey
 		pubKey, err := types.PubKeyDecode(activateMsg.PubKey)
 		if err != nil {
 			return ctx, err
@@ -335,27 +335,28 @@ func (decorator *SetPubKeyDecorator) AnteHandle(
 		return ctx, err
 	}
 
-	// if not smart account tx run authante NewSetPubKeyDecorator
+	// if is smart account tx skip authante NewSetPubKeyDecorator
 	// need this to avoid pubkey and address equal check of above decorator
-	if !isSmartAccountTx {
-		svd := authante.NewSetPubKeyDecorator(decorator.AccountKeeper)
-		return svd.AnteHandle(ctx, tx, simulate, next)
+	if isSmartAccountTx {
+		// if this is smart account tx, check if pubkey is set
+		if signerAcc.GetPubKey() == nil {
+			return ctx, fmt.Errorf(types.ErrNilPubkey)
+		}
+
+		// Also emit the following events, so that txs can be indexed by these
+		var events sdk.Events
+		events = append(events, sdk.NewEvent(sdk.EventTypeTx,
+			sdk.NewAttribute(sdk.AttributeKeyAccountSequence, fmt.Sprintf("%s/%d", signerAcc, sig.Sequence)),
+		))
+
+		// maybe need add more event here
+
+		ctx.EventManager().EmitEvents(events)
+
+		return next(ctx, tx, simulate)
 	}
 
-	// if this is smart account tx, check if pubkey is set
-	if signerAcc.GetPubKey() == nil {
-		return ctx, fmt.Errorf(types.ErrNilPubkey)
-	}
-
-	// Also emit the following events, so that txs can be indexed by these
-	var events sdk.Events
-	events = append(events, sdk.NewEvent(sdk.EventTypeTx,
-		sdk.NewAttribute(sdk.AttributeKeyAccountSequence, fmt.Sprintf("%s/%d", signerAcc, sig.Sequence)),
-	))
-
-	// maybe need add more event here
-
-	ctx.EventManager().EmitEvents(events)
-
-	return next(ctx, tx, simulate)
+	// default authant SetPubKeyDecorator
+	svd := authante.NewSetPubKeyDecorator(decorator.AccountKeeper)
+	return svd.AnteHandle(ctx, tx, simulate, next)
 }

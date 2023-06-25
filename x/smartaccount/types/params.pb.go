@@ -79,6 +79,8 @@ func (m *CodeID) GetStatus() bool {
 
 // Params defines the parameters for the module.
 type Params struct {
+	// code_id whitelist indicates which contract can be initialized as smart account
+	// using gov proposal for updates
 	WhitelistCodeID []*CodeID `protobuf:"bytes,1,rep,name=whitelist_code_id,json=whitelistCodeId,proto3" json:"whitelist_code_id,omitempty"`
 }
 

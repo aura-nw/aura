@@ -44,7 +44,7 @@ func InstantiateSmartAccount(
 		return nil, nil, nil, err
 	}
 
-	// instantiate smartcontract by contract with code_id
+	// instantiate smartcontract by code_id
 	address, data, iErr := wasmKeepper.Instantiate2(
 		ctx,
 		msg.CodeID,

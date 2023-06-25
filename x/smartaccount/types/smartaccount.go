@@ -40,6 +40,7 @@ func GenerateSalt(owner string, codeId uint64, initMsg []byte, pubKey []byte) ([
 	return salt_hashed[:], nil
 }
 
+// generate predictable contract address
 func Instantiate2Address(
 	ctx sdk.Context,
 	wasmKeeper wasmkeeper.Keeper,
@@ -78,8 +79,10 @@ func Instantiate2Address(
 func IsInactiveAccount(ctx sdk.Context, acc sdk.AccAddress, acc_str string, accountKeeper AccountKeeper, wasmKeeper wasmkeeper.Keeper) (authtypes.AccountI, error) {
 	sAccount := accountKeeper.GetAccount(ctx, acc)
 
-	// check if account has type base
-	if _, ok := sAccount.(*authtypes.BaseAccount); !ok {
+	// check if account has type base or smart
+	_, isBaseAccount := sAccount.(*authtypes.BaseAccount)
+	_, isSmartAccount := sAccount.(*SmartAccount)
+	if !isBaseAccount && !isSmartAccount {
 		return nil, fmt.Errorf(ErrAccountNotFoundForAddress, acc_str)
 	}
 
@@ -96,6 +99,7 @@ func IsInactiveAccount(ctx sdk.Context, acc sdk.AccAddress, acc_str string, acco
 	return sAccount, nil
 }
 
+// decode *Any to cryptotypes.PubKey
 func PubKeyDecode(pubKey *codectypes.Any) (cryptotypes.PubKey, error) {
 	pkAny := pubKey.GetCachedValue()
 	pk, ok := pkAny.(cryptotypes.PubKey)

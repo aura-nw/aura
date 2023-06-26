@@ -8,6 +8,7 @@ import (
 	"github.com/aura-nw/aura/x/smartaccount/types"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 func InstantiateSmartAccount(
@@ -19,12 +20,14 @@ func InstantiateSmartAccount(
 
 	admin, err := sdk.AccAddressFromBech32(msg.AccountAddress)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf(types.ErrAddressFromBech32, err)
+		return nil, nil, nil,
+			sdkerrors.Wrapf(types.ErrInvalidAddress, "invalid smart account address (%s)", err)
 	}
 
 	owner, err := sdk.AccAddressFromBech32(msg.Owner)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf(types.ErrAddressFromBech32, err)
+		return nil, nil, nil,
+			sdkerrors.Wrapf(types.ErrInvalidAddress, "invalid owner address (%s)", err)
 	}
 
 	pubKey, err := types.PubKeyDecode(msg.PubKey)
@@ -45,7 +48,7 @@ func InstantiateSmartAccount(
 	}
 
 	// instantiate smartcontract by code_id
-	address, data, iErr := wasmKeepper.Instantiate2(
+	address, data, err := wasmKeepper.Instantiate2(
 		ctx,
 		msg.CodeID,
 		owner,       // owner
@@ -56,15 +59,15 @@ func InstantiateSmartAccount(
 		salt,           // salt
 		true,
 	)
-	if iErr != nil {
-		return nil, nil, nil, fmt.Errorf(types.ErrBadInstantiateMsg, iErr.Error())
+	if err != nil {
+		return nil, nil, nil, err
 	}
 
 	contractAddrStr := address.String()
 
 	// make sure the new contract has the same address as predicted
 	if contractAddrStr != msg.AccountAddress {
-		return nil, nil, nil, fmt.Errorf(types.ErrBadInstantiateMsg, "wrong predicted address")
+		return nil, nil, nil, sdkerrors.Wrap(types.ErrBadInstantiateMsg, "wrong predicted address")
 	}
 
 	ctx.Logger().Info(

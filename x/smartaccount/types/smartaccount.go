@@ -3,13 +3,11 @@ package types
 import (
 	"crypto/sha512"
 	"encoding/json"
-	fmt "fmt"
+	"strconv"
 
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-	"github.com/cosmos/cosmos-sdk/codec"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 )
 
@@ -52,7 +50,7 @@ func Instantiate2Address(
 
 	ownerAcc, err := sdk.AccAddressFromBech32(owner)
 	if err != nil {
-		return nil, fmt.Errorf(ErrAddressFromBech32, err)
+		return nil, sdkerrors.Wrapf(ErrInvalidAddress, "invalid owner address (%s)", err)
 	}
 
 	salt, err := GenerateSalt(owner, codeId, initMsg, pubKey)
@@ -62,13 +60,13 @@ func Instantiate2Address(
 
 	codeInfo := wasmKeeper.GetCodeInfo(ctx, codeId)
 	if codeInfo == nil {
-		return nil, fmt.Errorf(ErrNoSuchCodeID, codeId)
+		return nil, sdkerrors.Wrap(ErrNoSuchCodeID, strconv.FormatUint(codeId, 10))
 	}
 
 	addrGenerator := wasmkeeper.PredicableAddressGenerator(ownerAcc, salt, initMsg, true)
 	contractAddress := addrGenerator(ctx, codeId, codeInfo.CodeHash)
 	if wasmKeeper.HasContractInfo(ctx, contractAddress) {
-		return nil, fmt.Errorf(ErrInstantiateDuplicate)
+		return nil, sdkerrors.Wrap(ErrInstantiateDuplicate, contractAddress.String())
 	}
 
 	return contractAddress, nil
@@ -76,52 +74,26 @@ func Instantiate2Address(
 
 // Inactive smart-account must be base account with empty public key or smart account
 // and has not been used for any instantiated contracts
-func IsInactiveAccount(ctx sdk.Context, acc sdk.AccAddress, acc_str string, accountKeeper AccountKeeper, wasmKeeper wasmkeeper.Keeper) (authtypes.AccountI, error) {
+func IsInactiveAccount(ctx sdk.Context, acc sdk.AccAddress, accountKeeper AccountKeeper, wasmKeeper wasmkeeper.Keeper) (authtypes.AccountI, error) {
 	sAccount := accountKeeper.GetAccount(ctx, acc)
 
 	// check if account has type base or smart
 	_, isBaseAccount := sAccount.(*authtypes.BaseAccount)
 	_, isSmartAccount := sAccount.(*SmartAccount)
 	if !isBaseAccount && !isSmartAccount {
-		return nil, fmt.Errorf(ErrAccountNotFoundForAddress, acc_str)
+		return nil, sdkerrors.Wrap(ErrAccountNotFoundForAddress, acc.String())
 	}
 
 	// check if base account already has public key
 	if sAccount.GetPubKey() != nil && isBaseAccount {
-		return nil, fmt.Errorf(ErrAccountAlreadyExists)
+		return nil, sdkerrors.Wrap(ErrAccountAlreadyExists, acc.String())
 	}
 
 	// check if contract with account not been instantiated
 	if wasmKeeper.HasContractInfo(ctx, acc) {
-		return nil, fmt.Errorf(ErrAccountAlreadyExists)
+		return nil, sdkerrors.Wrap(ErrAccountAlreadyExists, acc.String())
 	}
 
 	return sAccount, nil
 }
 
-// decode *Any to cryptotypes.PubKey
-func PubKeyDecode(pubKey *codectypes.Any) (cryptotypes.PubKey, error) {
-	pkAny := pubKey.GetCachedValue()
-	pk, ok := pkAny.(cryptotypes.PubKey)
-	if ok {
-		return pk, nil
-	} else {
-		return nil, fmt.Errorf("expecting PubKey, got: %T", pkAny)
-	}
-}
-
-// Convert pubkey string to *Any
-func PubKeyToAny(cdc codec.Codec, raw []byte) (*codectypes.Any, error) {
-	var pubKey cryptotypes.PubKey
-	err := cdc.UnmarshalInterfaceJSON(raw, &pubKey)
-	if err != nil {
-		return nil, err
-	}
-
-	any, err := codectypes.NewAnyWithValue(pubKey)
-	if err != nil {
-		return nil, err
-	}
-
-	return any, nil
-}

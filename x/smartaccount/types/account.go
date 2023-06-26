@@ -3,9 +3,11 @@ package types
 import (
 	"errors"
 
+	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 )
 
@@ -110,4 +112,53 @@ func (acc SmartAccount) UnpackInterfaces(unpacker codectypes.AnyUnpacker) error 
 	}
 	var pubKey cryptotypes.PubKey
 	return unpacker.UnpackAny(acc.PubKey, &pubKey)
+}
+
+func UpdateAccountPubKey(ctx sdk.Context, accountKeeper AccountKeeper, acc authtypes.AccountI, pubKey cryptotypes.PubKey) error {
+	err := acc.SetPubKey(pubKey)
+	if err != nil {
+		return err
+	}
+
+	accountKeeper.SetAccount(ctx, acc)
+
+	return nil
+}
+
+func UpdateAccountSequence(ctx sdk.Context, accountKeeper AccountKeeper, acc authtypes.AccountI, sequence uint64) error {
+	err := acc.SetSequence(sequence)
+	if err != nil {
+		return err
+	}
+
+	accountKeeper.SetAccount(ctx, acc)
+
+	return nil
+}
+
+// decode *Any to cryptotypes.PubKey
+func PubKeyDecode(pubKey *codectypes.Any) (cryptotypes.PubKey, error) {
+	pkAny := pubKey.GetCachedValue()
+	pk, ok := pkAny.(cryptotypes.PubKey)
+	if ok {
+		return pk, nil
+	} else {
+		return nil, sdkerrors.Wrapf(ErrInvalidPubKey, "expecting PubKey, got: %T", pkAny)
+	}
+}
+
+// Convert pubkey string to *Any
+func PubKeyToAny(cdc codec.Codec, raw []byte) (*codectypes.Any, error) {
+	var pubKey cryptotypes.PubKey
+	err := cdc.UnmarshalInterfaceJSON(raw, &pubKey)
+	if err != nil {
+		return nil, err
+	}
+
+	any, err := codectypes.NewAnyWithValue(pubKey)
+	if err != nil {
+		return nil, err
+	}
+
+	return any, nil
 }

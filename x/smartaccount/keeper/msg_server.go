@@ -4,11 +4,11 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
 
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/aura-nw/aura/x/smartaccount/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 )
 
@@ -35,30 +35,29 @@ func (k msgServer) ActivateAccount(goCtx context.Context, msg *types.MsgActivate
 
 	// check if codeID is in whitelist
 	if !IsWhitelistCodeID(ctx, k.Keeper, msg.CodeID) {
-		return nil, fmt.Errorf(types.ErrInvalidMsg, "codeID not allowed")
+		return nil, sdkerrors.Wrap(types.ErrInvalidMsg, "codeID not allowed")
 	}
 
 	// get smart contract account by address, account must exist in chain before activation
 	signer, err := sdk.AccAddressFromBech32(msg.AccountAddress)
 	if err != nil {
-		return nil, fmt.Errorf(types.ErrAddressFromBech32, err)
+		return nil, sdkerrors.Wrapf(types.ErrInvalidAddress, "invalid smart account address (%s)", err)
 	}
 
 	// Only allow inactive smart account to be activated
-	sAccount, err := types.IsInactiveAccount(ctx, signer, msg.AccountAddress, k.AccountKeeper, k.Keeper.wasmKeeper)
+	sAccount, err := types.IsInactiveAccount(ctx, signer, k.AccountKeeper, k.Keeper.wasmKeeper)
 	if err != nil {
 		return nil, err
 	}
 
 	// get current sequence of account
 	sequence := sAccount.GetSequence()
+
 	// set sequence to 0 so we can instantiate it later
-	err = sAccount.SetSequence(0)
+	err = types.UpdateAccountSequence(ctx, k.AccountKeeper, sAccount, 0)
 	if err != nil {
 		return nil, err
 	}
-	// save account with sequence set to 0
-	k.AccountKeeper.SetAccount(ctx, sAccount)
 
 	saAddress, data, pubKey, err := InstantiateSmartAccount(ctx, k.Keeper, k.ContractKeeper, msg)
 	if err != nil {
@@ -70,7 +69,7 @@ func (k msgServer) ActivateAccount(goCtx context.Context, msg *types.MsgActivate
 	// get smart contract account by address
 	scAccount := k.AccountKeeper.GetAccount(ctx, saAddress)
 	if _, ok := scAccount.(*authtypes.BaseAccount); !ok {
-		return nil, fmt.Errorf(types.ErrAccountNotFoundForAddress, saAddressStr)
+		return nil, sdkerrors.Wrap(types.ErrAccountNotFoundForAddress, saAddressStr)
 	}
 
 	// set sequence of new account to pre-sequence
@@ -83,13 +82,10 @@ func (k msgServer) ActivateAccount(goCtx context.Context, msg *types.MsgActivate
 	smartAccount := types.NewSmartAccountFromAccount(scAccount)
 
 	// set smartaccount pubkey
-	err = smartAccount.SetPubKey(pubKey)
+	err = types.UpdateAccountPubKey(ctx, k.AccountKeeper, smartAccount, pubKey)
 	if err != nil {
 		return nil, err
 	}
-
-	// update smartaccount
-	k.AccountKeeper.SetAccount(ctx, smartAccount)
 
 	return &types.MsgActivateAccountResponse{
 		Address: saAddressStr,
@@ -102,13 +98,13 @@ func (k msgServer) Recover(goCtx context.Context, msg *types.MsgRecover) (*types
 
 	saAddr, err := sdk.AccAddressFromBech32(msg.Address)
 	if err != nil {
-		return nil, fmt.Errorf(types.ErrAddressFromBech32, err.Error())
+		return nil, sdkerrors.Wrapf(types.ErrInvalidAddress, "invalid smart account address (%s)", err)
 	}
 
 	// only allow accounts with type SmartAccount to be restored pubkey
 	smartAccount := k.AccountKeeper.GetAccount(ctx, saAddr)
 	if _, ok := smartAccount.(*types.SmartAccount); !ok {
-		return nil, fmt.Errorf(types.ErrAccountNotFoundForAddress, msg.Address)
+		return nil, sdkerrors.Wrap(types.ErrAccountNotFoundForAddress, msg.Address)
 	}
 
 	// public key
@@ -138,7 +134,7 @@ func (k msgServer) Recover(goCtx context.Context, msg *types.MsgRecover) (*types
 	// check recover logic in smart acontract
 	_, err = k.ContractKeeper.Sudo(ctx, saAddr, sudoMsgBytes)
 	if err != nil {
-		return nil, fmt.Errorf(types.ErrSmartAccountCall, err.Error())
+		return nil, err
 	}
 
 	// set new pubkey for smartaccount

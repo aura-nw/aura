@@ -19,4 +19,5 @@ var (
 	ErrNilPubkey                 = sdkerrors.Register(ModuleName, 9, "nil pubkey")
 	ErrAccountAlreadyExists      = sdkerrors.Register(ModuleName, 10, "account already exists")
 	ErrInstantiateDuplicate      = sdkerrors.Register(ModuleName, 11, "instance with this code id, sender, salt and label exists")
+	ErrInvalidCredentials        = sdkerrors.Register(ModuleName, 12, "invalid credentials")
 )

@@ -116,7 +116,7 @@ func (k msgServer) Recover(goCtx context.Context, msg *types.MsgRecover) (*types
 	// credentials
 	credentials, err := base64.StdEncoding.DecodeString(msg.Credentials)
 	if err != nil {
-		return nil, err
+		return nil, sdkerrors.Wrapf(types.ErrInvalidCredentials, err.Error())
 	}
 
 	// data pass into recover message call

@@ -38,12 +38,12 @@ func (msg *MsgActivateAccount) GetSignBytes() []byte {
 func (msg *MsgActivateAccount) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.AccountAddress)
 	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
+		return sdkerrors.Wrapf(ErrInvalidAddress, "invalid smart account address (%s)", err)
 	}
 
 	_, err = sdk.AccAddressFromBech32(msg.Owner)
 	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid owner address (%s)", err)
+		return sdkerrors.Wrapf(ErrInvalidAddress, "invalid owner address (%s)", err)
 	}
 
 	_, err = PubKeyDecode(msg.PubKey)

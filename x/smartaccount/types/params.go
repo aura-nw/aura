@@ -7,9 +7,12 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+const DefaultMaxGas = 2_000_000
+
 // Parameter store keys
 var (
 	WhitelistCodeID = []byte("WhitelistCodeID")
+	MaxGasQuery     = []byte("MaxGasQuery")
 )
 
 var _ paramtypes.ParamSet = (*Params)(nil)
@@ -20,9 +23,10 @@ func ParamKeyTable() paramtypes.KeyTable {
 }
 
 // NewParams creates a new Params instance
-func NewParams(whitelist []*CodeID) Params {
+func NewParams(whitelist []*CodeID, limitGas uint64) Params {
 	return Params{
 		WhitelistCodeID: whitelist,
+		MaxGasQuery:     limitGas,
 	}
 }
 
@@ -30,7 +34,7 @@ func NewParams(whitelist []*CodeID) Params {
 func DefaultParams() Params {
 	empty := make([]*CodeID, 0)
 
-	return NewParams(empty)
+	return NewParams(empty, DefaultMaxGas)
 }
 
 // ParamSetPairs get the params.ParamSet
@@ -39,8 +43,11 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 		// code_id whitelist indicates which contract can be initialized as smart account
 		// using gov proposal for updates
 		paramtypes.NewParamSetPair(WhitelistCodeID, &p.WhitelistCodeID, validateWhitelistCodeID),
+		// max_gas_query limits the amount of gas that the validation query can use
+		paramtypes.NewParamSetPair(MaxGasQuery, &p.MaxGasQuery, validateMaxGasQuery),
 	}
 }
+
 func validateWhitelistCodeID(i interface{}) error {
 	v, ok := i.([]*CodeID)
 	if !ok {
@@ -60,10 +67,29 @@ func validateWhitelistCodeID(i interface{}) error {
 	return nil
 }
 
+func validateMaxGasQuery(i interface{}) error {
+	v, ok := i.(uint64)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	if v <= 0 {
+		return fmt.Errorf("zero max gas query")
+	}
+
+	return nil
+}
+
 // Validate validates the set of params
 func (p Params) Validate() error {
 	// validate whitelist_code_id param
 	err := validateWhitelistCodeID(p.WhitelistCodeID)
+	if err != nil {
+		return err
+	}
+
+	// validate max gas query
+	err = validateMaxGasQuery(p.MaxGasQuery)
 	if err != nil {
 		return err
 	}

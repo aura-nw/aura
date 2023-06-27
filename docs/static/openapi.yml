@@ -308,6 +308,15 @@ paths:
                         status:
                           type: boolean
                           title: status of code id
+                    title: >-
+                      code_id whitelist indicates which contract can be
+                      initialized as smart account
+
+                      using gov proposal for updates
+                  max_gas_query:
+                    type: string
+                    format: uint64
+                    title: max_gas_query
             description: >-
               QueryParamsResponse is response type for the Query/Params RPC
               method.
@@ -32943,6 +32952,15 @@ definitions:
             status:
               type: boolean
               title: status of code id
+        title: >-
+          code_id whitelist indicates which contract can be initialized as smart
+          account
+
+          using gov proposal for updates
+      max_gas_query:
+        type: string
+        format: uint64
+        title: max_gas_query
     description: Params defines the parameters for the module.
   auranw.aura.smartaccount.QueryGenerateAccountResponse:
     type: object
@@ -32968,6 +32986,15 @@ definitions:
                 status:
                   type: boolean
                   title: status of code id
+            title: >-
+              code_id whitelist indicates which contract can be initialized as
+              smart account
+
+              using gov proposal for updates
+          max_gas_query:
+            type: string
+            format: uint64
+            title: max_gas_query
     description: QueryParamsResponse is response type for the Query/Params RPC method.
   cosmos.auth.v1beta1.Params:
     type: object

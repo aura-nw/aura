@@ -7,6 +7,7 @@ import (
 
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	sakeeper "github.com/aura-nw/aura/x/smartaccount/keeper"
 	"github.com/aura-nw/aura/x/smartaccount/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -125,12 +126,14 @@ func IsActivateAccountMessage(tx sdk.Tx) (bool, *types.MsgActivateAccount, error
 // ------------------------- SmartAccount Decorator ------------------------- \\
 
 type SmartAccountDecorator struct {
+	SaKeeper      sakeeper.Keeper
 	WasmKeeper    wasmkeeper.Keeper
 	AccountKeeper authante.AccountKeeper
 }
 
-func NewSmartAccountDecorator(wasmKeeper wasmkeeper.Keeper, accountKeeper authante.AccountKeeper) *SmartAccountDecorator {
+func NewSmartAccountDecorator(wasmKeeper wasmkeeper.Keeper, accountKeeper authante.AccountKeeper, saKeeper sakeeper.Keeper) *SmartAccountDecorator {
 	return &SmartAccountDecorator{
+		SaKeeper:      saKeeper,
 		WasmKeeper:    wasmKeeper,
 		AccountKeeper: accountKeeper,
 	}
@@ -151,7 +154,7 @@ func (decorator *SmartAccountDecorator) AnteHandle(
 
 	// if is not activate account message, next to SmartAccountTxDecorator
 	if !isActivateAccount {
-		satd := NewSmartAccountTxDecorator(decorator.WasmKeeper, decorator.AccountKeeper)
+		satd := NewSmartAccountTxDecorator(decorator.WasmKeeper, decorator.AccountKeeper, decorator.SaKeeper)
 		return satd.AnteHandle(ctx, tx, simulate, next)
 	}
 
@@ -205,12 +208,14 @@ func (decorator *SmartAccountDecorator) AnteHandle(
 // ------------------------- SmartAccountTx Decorator ------------------------- \\
 
 type SmartAccountTxDecorator struct {
+	SaKeeper      sakeeper.Keeper
 	WasmKeeper    wasmkeeper.Keeper
 	AccountKeeper authante.AccountKeeper
 }
 
-func NewSmartAccountTxDecorator(wasmKeeper wasmkeeper.Keeper, accountKeeper authante.AccountKeeper) *SmartAccountTxDecorator {
+func NewSmartAccountTxDecorator(wasmKeeper wasmkeeper.Keeper, accountKeeper authante.AccountKeeper, saKeeper sakeeper.Keeper) *SmartAccountTxDecorator {
 	return &SmartAccountTxDecorator{
+		SaKeeper:      saKeeper,
 		WasmKeeper:    wasmKeeper,
 		AccountKeeper: accountKeeper,
 	}
@@ -269,13 +274,35 @@ func (decorator *SmartAccountTxDecorator) AnteHandle(
 		return ctx, err
 	}
 
-	// query SA contract for validating transaction
-	_, vErr := decorator.WasmKeeper.QuerySmart(ctx, signerAcc.GetAddress(), validateMessage)
-	if vErr != nil {
-		return ctx, vErr
+	params := decorator.SaKeeper.GetParams(ctx)
+
+	// query SA contract for validating transaction with limit gas
+	err = querySmartWithGasLimit(ctx, decorator.WasmKeeper, signerAcc.GetAddress(), validateMessage, params.MaxGasQuery)
+	if err != nil {
+		return ctx, err
 	}
 
 	return next(ctx, tx, simulate)
+}
+
+// Call a contract's query smart with a gas limit
+// referenced from Osmosis' protorev posthandler:
+// https://github.com/osmosis-labs/osmosis/blob/98025f185ab2ee1b060511ed22679112abcc08fa/x/protorev/keeper/posthandler.go#L42-L43
+func querySmartWithGasLimit(
+	ctx sdk.Context, wasmKeeper wasmkeeper.Keeper,
+	contractAddr sdk.AccAddress, msg []byte, maxGas sdk.Gas,
+) error {
+	cacheCtx, write := ctx.CacheContext()
+	cacheCtx = cacheCtx.WithGasMeter(sdk.NewGasMeter(maxGas))
+
+	if _, err := wasmKeeper.QuerySmart(cacheCtx, contractAddr, msg); err != nil {
+		return err
+	}
+
+	write()
+	ctx.EventManager().EmitEvents(cacheCtx.EventManager().Events())
+
+	return nil
 }
 
 // ------------------------- SetPubKey Decorator ------------------------- \\

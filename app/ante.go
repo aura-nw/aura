@@ -76,7 +76,7 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 		ante.NewSigVerificationDecorator(options.AccountKeeper, options.SignModeHandler),
 
 		// new ante for account abstraction
-		smartaccount.NewSmartAccountDecorator(options.WasmKeeper, options.AccountKeeper),
+		smartaccount.NewSmartAccountDecorator(options.WasmKeeper, options.AccountKeeper, options.SmartAccountKeeper),
 		ante.NewIncrementSequenceDecorator(options.AccountKeeper),
 		ibcante.NewAnteDecorator(options.IBCKeeper),
 	}

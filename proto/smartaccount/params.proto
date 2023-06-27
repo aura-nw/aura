@@ -24,4 +24,7 @@ message Params {
   // code_id whitelist indicates which contract can be initialized as smart account
 	// using gov proposal for updates
   repeated CodeID whitelist_code_id = 1 [(gogoproto.customname) = "WhitelistCodeID"];
+
+  // max_gas_query
+  uint64 max_gas_query = 2 [(gogoproto.customname) = "MaxGasQuery"];
 }

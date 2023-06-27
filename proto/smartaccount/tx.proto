@@ -56,7 +56,6 @@ message MsgActivateAccount {
 
 message MsgActivateAccountResponse {
   string address = 1;
-  bytes data = 2;
 }
 
 // this line is used by starport scaffolding # proto/tx/message

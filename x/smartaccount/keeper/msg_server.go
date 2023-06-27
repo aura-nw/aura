@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+
 	"github.com/aura-nw/aura/x/smartaccount/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -50,7 +51,6 @@ func (k msgServer) ActivateAccount(goCtx context.Context, msg *types.MsgActivate
 
 	return &types.MsgActivateAccountResponse{
 		Address: sAccount.String(),
-		Data:    nil,
 	}, nil
 }
 

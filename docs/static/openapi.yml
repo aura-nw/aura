@@ -32932,9 +32932,6 @@ definitions:
     properties:
       address:
         type: string
-      data:
-        type: string
-        format: byte
   auranw.aura.smartaccount.MsgRecoverResponse:
     type: object
   auranw.aura.smartaccount.Params:

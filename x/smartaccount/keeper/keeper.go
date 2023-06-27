@@ -4,11 +4,12 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"strconv"
+
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/tendermint/tendermint/libs/log"
-	"strconv"
 
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/aura-nw/aura/x/smartaccount/types"
@@ -81,7 +82,7 @@ func (k Keeper) SetNextAccountID(ctx sdk.Context, id uint64) {
 
 func (k Keeper) ValidateActiveSA(ctx sdk.Context, msg *types.MsgActivateAccount) (authtypes.AccountI, error) {
 	// validate code id use to init smart account
-	if k.isWhitelistCodeID(ctx, msg.CodeID) {
+	if !k.isWhitelistCodeID(ctx, msg.CodeID) {
 		k.Logger(ctx).Error("active-sm", "code-id", msg.CodeID)
 		return nil, types.ErrInvalidCodeID
 	}

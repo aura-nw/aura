@@ -116,6 +116,10 @@ func (acc SmartAccount) UnpackInterfaces(unpacker codectypes.AnyUnpacker) error 
 
 // PubKeyDecode decode *Any to cryptotypes.PubKey
 func PubKeyDecode(pubKey *codectypes.Any) (cryptotypes.PubKey, error) {
+	if pubKey == nil {
+		return nil, ErrNilPubkey
+	}
+
 	pkAny := pubKey.GetCachedValue()
 	pk, ok := pkAny.(cryptotypes.PubKey)
 	if ok {

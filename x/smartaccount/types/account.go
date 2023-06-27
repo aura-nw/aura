@@ -114,29 +114,7 @@ func (acc SmartAccount) UnpackInterfaces(unpacker codectypes.AnyUnpacker) error 
 	return unpacker.UnpackAny(acc.PubKey, &pubKey)
 }
 
-func UpdateAccountPubKey(ctx sdk.Context, accountKeeper AccountKeeper, acc authtypes.AccountI, pubKey cryptotypes.PubKey) error {
-	err := acc.SetPubKey(pubKey)
-	if err != nil {
-		return err
-	}
-
-	accountKeeper.SetAccount(ctx, acc)
-
-	return nil
-}
-
-func UpdateAccountSequence(ctx sdk.Context, accountKeeper AccountKeeper, acc authtypes.AccountI, sequence uint64) error {
-	err := acc.SetSequence(sequence)
-	if err != nil {
-		return err
-	}
-
-	accountKeeper.SetAccount(ctx, acc)
-
-	return nil
-}
-
-// decode *Any to cryptotypes.PubKey
+// PubKeyDecode decode *Any to cryptotypes.PubKey
 func PubKeyDecode(pubKey *codectypes.Any) (cryptotypes.PubKey, error) {
 	pkAny := pubKey.GetCachedValue()
 	pk, ok := pkAny.(cryptotypes.PubKey)
@@ -147,7 +125,7 @@ func PubKeyDecode(pubKey *codectypes.Any) (cryptotypes.PubKey, error) {
 	}
 }
 
-// Convert pubkey string to *Any
+// PubKeyToAny convert pubkey string to *Any
 func PubKeyToAny(cdc codec.Codec, raw []byte) (*codectypes.Any, error) {
 	var pubKey cryptotypes.PubKey
 	err := cdc.UnmarshalInterfaceJSON(raw, &pubKey)

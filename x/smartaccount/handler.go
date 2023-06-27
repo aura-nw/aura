@@ -3,7 +3,6 @@ package smartaccount
 import (
 	"fmt"
 
-	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/aura-nw/aura/x/smartaccount/keeper"
 	"github.com/aura-nw/aura/x/smartaccount/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -11,8 +10,8 @@ import (
 )
 
 // NewHandler ...
-func NewHandler(k keeper.Keeper, w *wasmkeeper.PermissionedKeeper, a types.AccountKeeper) sdk.Handler {
-	msgServer := keeper.NewMsgServerImpl(k, w, a)
+func NewHandler(k keeper.Keeper) sdk.Handler {
+	msgServer := keeper.NewMsgServerImpl(k)
 
 	return func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())

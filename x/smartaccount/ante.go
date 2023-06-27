@@ -196,7 +196,7 @@ func (decorator *SmartAccountDecorator) AnteHandle(
 		}
 
 		// remove temporary pubkey for account
-		err = types.UpdateAccountPubKey(ctx, decorator.AccountKeeper, sAccount, nil)
+		err = decorator.SaKeeper.UpdateAccountPubKey(ctx, sAccount, nil)
 		if err != nil {
 			return ctx, err
 		}
@@ -310,12 +310,14 @@ func querySmartWithGasLimit(
 type SetPubKeyDecorator struct {
 	AccountKeeper authante.AccountKeeper
 	WasmKeeper    wasmkeeper.Keeper
+	saKeeper      sakeeper.Keeper
 }
 
-func NewSetPubKeyDecorator(accountKeeper authante.AccountKeeper, wasmKeeper wasmkeeper.Keeper) *SetPubKeyDecorator {
+func NewSetPubKeyDecorator(accountKeeper authante.AccountKeeper, wasmKeeper wasmkeeper.Keeper, saKeeper sakeeper.Keeper) *SetPubKeyDecorator {
 	return &SetPubKeyDecorator{
 		AccountKeeper: accountKeeper,
 		WasmKeeper:    wasmKeeper,
+		saKeeper:      saKeeper,
 	}
 }
 
@@ -337,7 +339,7 @@ func (decorator *SetPubKeyDecorator) AnteHandle(
 		signer := activateMsg.GetSigners()[0]
 
 		// get smart contract account by address, account must be inactivate smart account
-		sAccount, err := types.IsInactiveAccount(ctx, signer, decorator.AccountKeeper, decorator.WasmKeeper)
+		sAccount, err := decorator.saKeeper.IsInactiveAccount(ctx, signer)
 		if err != nil {
 			return ctx, err
 		}
@@ -351,7 +353,7 @@ func (decorator *SetPubKeyDecorator) AnteHandle(
 		// set temporary pubkey for account
 		// need this for the next ante signature checks
 		// set sequence to 0 so we can instantiate it later
-		err = types.UpdateAccountPubKey(ctx, decorator.AccountKeeper, sAccount, pubKey)
+		err = decorator.saKeeper.UpdateAccountPubKey(ctx, sAccount, pubKey)
 		if err != nil {
 			return ctx, err
 		}

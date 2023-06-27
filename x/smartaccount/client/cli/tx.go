@@ -15,7 +15,6 @@ var (
 	DefaultRelativePacketTimeoutTimestamp = uint64((time.Duration(10) * time.Minute).Nanoseconds())
 )
 
-
 // GetTxCmd returns the transaction commands for this module
 func GetTxCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -28,9 +27,6 @@ func GetTxCmd() *cobra.Command {
 
 	// update smart-account key
 	cmd.AddCommand(CmdUpdateKey())
-	// activate smart-account
-	cmd.AddCommand(CmdActivateAccount())
-	// this line is used by starport scaffolding # 1
 
 	return cmd
 }

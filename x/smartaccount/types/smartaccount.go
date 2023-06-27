@@ -8,7 +8,6 @@ import (
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 )
 
 type InstantiateSalt struct {
@@ -71,29 +70,3 @@ func Instantiate2Address(
 
 	return contractAddress, nil
 }
-
-// Inactive smart-account must be base account with empty public key or smart account
-// and has not been used for any instantiated contracts
-func IsInactiveAccount(ctx sdk.Context, acc sdk.AccAddress, accountKeeper AccountKeeper, wasmKeeper wasmkeeper.Keeper) (authtypes.AccountI, error) {
-	sAccount := accountKeeper.GetAccount(ctx, acc)
-
-	// check if account has type base or smart
-	_, isBaseAccount := sAccount.(*authtypes.BaseAccount)
-	_, isSmartAccount := sAccount.(*SmartAccount)
-	if !isBaseAccount && !isSmartAccount {
-		return nil, sdkerrors.Wrap(ErrAccountNotFoundForAddress, acc.String())
-	}
-
-	// check if base account already has public key
-	if sAccount.GetPubKey() != nil && isBaseAccount {
-		return nil, sdkerrors.Wrap(ErrAccountAlreadyExists, acc.String())
-	}
-
-	// check if contract with account not been instantiated
-	if wasmKeeper.HasContractInfo(ctx, acc) {
-		return nil, sdkerrors.Wrap(ErrAccountAlreadyExists, acc.String())
-	}
-
-	return sAccount, nil
-}
-

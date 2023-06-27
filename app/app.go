@@ -531,6 +531,7 @@ func New(
 		supportedFeatures,
 		wasmOpts...,
 	)
+	app.ContractKeeper = wasmkeeper.NewDefaultPermissionKeeper(&app.WasmKeeper)
 
 	app.SaKeeper = samodulekeeper.NewKeeper(
 		appCodec,
@@ -538,9 +539,9 @@ func New(
 		keys[samoduletypes.MemStoreKey],
 		app.GetSubspace(samoduletypes.ModuleName),
 		app.WasmKeeper,
+		app.ContractKeeper,
+		app.AccountKeeper,
 	)
-
-	app.ContractKeeper = wasmkeeper.NewDefaultPermissionKeeper(&app.WasmKeeper)
 
 	// sa module
 	saModule := samodule.NewAppModule(appCodec, app.SaKeeper, app.ContractKeeper, app.AccountKeeper)

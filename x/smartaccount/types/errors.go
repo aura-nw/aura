@@ -21,4 +21,5 @@ var (
 	ErrInstantiateDuplicate      = sdkerrors.Register(ModuleName, 11, "instance with this code id, sender, salt and label exists")
 	ErrInvalidCredentials        = sdkerrors.Register(ModuleName, 12, "invalid credentials")
 	ErrInvalidCodeID             = sdkerrors.Register(ModuleName, 13, "invalid code id")
+	ErrNotSupported              = sdkerrors.Register(ModuleName, 14, "not supported")
 )

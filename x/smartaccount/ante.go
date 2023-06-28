@@ -229,10 +229,6 @@ func (decorator *SmartAccountTxDecorator) AnteHandle(
 	next sdk.AnteHandler,
 ) (newCtx sdk.Context, err error) {
 
-	if simulate {
-		return ctx, sdkerrors.Wrap(types.ErrNotSupported, "Simulation of SmartAccount txs isn't supported yet")
-	}
-
 	isSmartAccountTx, signerAcc, _, err := IsSmartAccountTx(ctx, tx, decorator.AccountKeeper)
 	if err != nil {
 		return ctx, err
@@ -242,6 +238,11 @@ func (decorator *SmartAccountTxDecorator) AnteHandle(
 	if !isSmartAccountTx {
 		// do some thing
 		return next(ctx, tx, simulate)
+	}
+
+	// not support smartaccount tx simulation yet
+	if simulate {
+		return ctx, sdkerrors.Wrap(types.ErrNotSupported, "Simulation of SmartAccount txs isn't supported yet")
 	}
 
 	msgs := tx.GetMsgs()

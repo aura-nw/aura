@@ -66,7 +66,7 @@ func IsSmartAccountTx(ctx sdk.Context, tx sdk.Tx, accountKeeper authante.Account
 
 	signerAddrs := sigTx.GetSigners()
 
-	// do not allow multi signer yet
+	// do not allow multi signer
 	if len(signerAddrs) != 1 || len(sigs) != 1 {
 		return false, nil, nil, nil
 	}
@@ -375,7 +375,7 @@ func (decorator *SetPubKeyDecorator) AnteHandle(
 
 		// Also emit the following events, so that txs can be indexed by these
 		var events sdk.Events
-		events = append(events, sdk.NewEvent(sdk.EventTypeTx,
+		events = append(events, sdk.NewEvent(types.EventTypeSmartAccountTx,
 			sdk.NewAttribute(sdk.AttributeKeyAccountSequence, fmt.Sprintf("%s/%d", signerAcc, sig.Sequence)),
 		))
 

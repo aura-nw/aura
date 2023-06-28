@@ -171,7 +171,7 @@ func (k Keeper) ActiveSmartAccount(
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
-			types.EventTypeAccountRegistered,
+			types.EventTypeSmartAccountActivated,
 			sdk.NewAttribute(types.AttributeKeyCreator, msg.AccountAddress),
 			sdk.NewAttribute(types.AttributeKeyCodeID, strconv.FormatUint(msg.CodeID, 10)),
 			sdk.NewAttribute(types.AttributeKeyContractAddr, contractAddrStr),

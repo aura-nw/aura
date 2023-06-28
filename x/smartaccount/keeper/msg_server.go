@@ -88,7 +88,7 @@ func (k msgServer) Recover(goCtx context.Context, msg *types.MsgRecover) (*types
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
-			types.EventTypeAccountRecovery,
+			types.EventTypeSmartAccountRecovery,
 			sdk.NewAttribute(types.AttributeKeyCreator, msg.Creator),
 			sdk.NewAttribute(types.AttributeKeyContractAddr, msg.Address),
 		),

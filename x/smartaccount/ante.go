@@ -242,10 +242,6 @@ func (decorator *SmartAccountTxDecorator) AnteHandle(
 
 	msgs := tx.GetMsgs()
 
-	if len(msgs) < 1 {
-		return ctx, sdkerrors.Wrap(types.ErrInvalidTx, "must contain at least the validate message")
-	}
-
 	// validate message must be the last message and must be MsgExecuteContract
 	var valMsg *wasmtypes.MsgExecuteContract
 	if msg, err := msgs[len(msgs)-1].(*wasmtypes.MsgExecuteContract); err {

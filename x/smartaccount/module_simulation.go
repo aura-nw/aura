@@ -22,13 +22,9 @@ var (
 )
 
 const (
-	opWeightMsgCreateAccount = "op_weight_msg_create_account"
+	opWeightMsgRecover= "op_weight_msg_recover"
 	// TODO: Determine the simulation weight value
-	defaultWeightMsgCreateAccount int = 100
-
-	opWeightMsgUpdateKey = "op_weight_msg_update_key"
-	// TODO: Determine the simulation weight value
-	defaultWeightMsgUpdateKey int = 100
+	defaultWeightMsgRecover int = 100
 
 	opWeightMsgActivateAccount = "op_weight_msg_activate_account"
 	// TODO: Determine the simulation weight value
@@ -68,15 +64,15 @@ func (am AppModule) RegisterStoreDecoder(_ sdk.StoreDecoderRegistry) {}
 func (am AppModule) WeightedOperations(simState module.SimulationState) []simtypes.WeightedOperation {
 	operations := make([]simtypes.WeightedOperation, 0)
 
-	var weightMsgUpdateKey int
-	simState.AppParams.GetOrGenerate(simState.Cdc, opWeightMsgUpdateKey, &weightMsgUpdateKey, nil,
+	var weightMsgRecover int
+	simState.AppParams.GetOrGenerate(simState.Cdc, opWeightMsgRecover, &weightMsgRecover, nil,
 		func(_ *rand.Rand) {
-			weightMsgUpdateKey = defaultWeightMsgUpdateKey
+			weightMsgRecover = defaultWeightMsgRecover
 		},
 	)
 	operations = append(operations, simulation.NewWeightedOperation(
-		weightMsgUpdateKey,
-		smartaccountsimulation.SimulateMsgUpdateKey(am.contractKeeper, am.accountKeeper, am.keeper),
+		weightMsgRecover,
+		smartaccountsimulation.SimulateMsgRecover(am.contractKeeper, am.accountKeeper, am.keeper),
 	))
 
 	var weightMsgActivateAccount int

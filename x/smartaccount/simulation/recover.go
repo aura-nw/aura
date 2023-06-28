@@ -11,7 +11,7 @@ import (
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 )
 
-func SimulateMsgUpdateKey(
+func SimulateMsgRecover(
 	wk *wasmkeeper.PermissionedKeeper,
 	ak types.AccountKeeper,
 	k keeper.Keeper,

@@ -12,7 +12,7 @@ import (
 
 var _ = strconv.Itoa(0)
 
-func CmdUpdateKey() *cobra.Command {
+func CmdRecover() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "recover [address:str] [pub-key] [credentials:base64]",
 		Short: "Recover a smart account public key",

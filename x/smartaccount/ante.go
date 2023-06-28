@@ -352,7 +352,6 @@ func (decorator *SetPubKeyDecorator) AnteHandle(
 
 		// set temporary pubkey for account
 		// need this for the next ante signature checks
-		// set sequence to 0 so we can instantiate it later
 		err = decorator.saKeeper.UpdateAccountPubKey(ctx, sAccount, pubKey)
 		if err != nil {
 			return ctx, err

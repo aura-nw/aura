@@ -26,7 +26,7 @@ func GetTxCmd() *cobra.Command {
 	}
 
 	// update smart-account key
-	cmd.AddCommand(CmdUpdateKey())
+	cmd.AddCommand(CmdRecover())
 
 	return cmd
 }

@@ -53,6 +53,9 @@ genesis:
         signed_blocks_window: "1000"
         downtime_jail_duration: "600s"
     smartaccount:
+      params:
+        whitelist_code_id: []
+        max_gas_query: 2000000
       smart_account_id: 0
 
 

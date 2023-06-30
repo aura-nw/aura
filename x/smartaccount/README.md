@@ -4,7 +4,7 @@ a [smart account][4] solution for [CosmWasm][1]-enabled chains.
 
 In our context, `smart account` is a contract account associated with a public key, so it can be considered a programmable EOA. The difference is that unlike an EOA account where **Address** and **PubKey** must be the same, the **PubKey** of a `smart account` can be any key that the account owner set for it. 
 
-Our new account will have `SmartAccount` type instead of `BaseAccount` or other existing types.
+Our new account will have **SmartAccount** type instead of **BaseAccount** or other existing types.
 
 </br>
 
@@ -50,7 +50,7 @@ Using a salt calculation formula, a smart account can be claimed to be owned by 
 </br>
 
 ### Message `activate-account`
-Allows users to activate their smart account using a pre-generated. This message will take `BaseAccount` type and convert it to `SmartAccount` type with preconfigured public key.
+Allows users to activate their smart account using a pre-generated. This message will take **BaseAccount** type and convert it to **SmartAccount** type with preconfigured public key.
 ```Go
 struct MessageActivateAccount {
     // AccountAddress is the actor who signs the message
@@ -74,15 +74,15 @@ This message is signed by the user's private key, and the signer's address is a 
 
 **Required**
 - valid parameters.
-- The signer must have received the funds, so it can exist on-chain as `BaseAccount` type with an account number, sequence and empty public key.
+- The signer must have received the funds, so it can exist on-chain as **BaseAccount** type with an account number, sequence and empty public key.
 - The signer address was not used to initiate any smart contract before.
 - In some cases, we also allow reactivation of activated accounts that are not associated to any smart contracts.
-- Code_id must be in whitelist.
+- **code_id**    must be in whitelist.
  
 </br>
 
 ## Recover Account
-We provide a smart account recovery way in case the user forgets the account's private key or wants to change the new one. Recovery is simply changing the **PubKey** of an account of type `Smart Account` with the new setting. This is not a required function so users can choose whether their account is recoverable or not.
+We provide a smart account recovery way in case the user forgets the account's private key or wants to change the new one. Recovery is simply changing the **PubKey** of an account of type **SmartAccount** with the new setting. This is not a required function so users can choose whether their account is recoverable or not.
 
 </br>
 
@@ -121,16 +121,69 @@ The module makes a call to the `recover` contract method specified by *address*.
 
 **Required**
 - valid parameters.
-- Account with *address* must exists on-chain and has type `SmartAccount`.
+- Account with *address* must exists on-chain and has type **SmartAccount**.
 - Smart account enables recovery function by implementing `recover` method in **sudo** entry point.
 
 </br> 
 
 ## Smart account Tx 
-When build transaction with smart account, user must includes `Validate message` into tx. This message has type `MsgExecutedContract` and will use to trigger smart contract logic that applies to this account.
+When build transaction with smart account, user must includes `Validate message` into tx. This message has type **MsgExecuteContract** and will use to trigger smart contract logic that applies to this account.
 
 `Validate message` call to `after_execute` method of contract that associated with smart account. It's value is information of all other messages included in tx. Firstly, the module uses this message data to execute a contract's query before the tx is passed to the mempool. The query calls the `validate` method for basic validation tx, if it fails, the tx will be denied to enter the mempool and the user will not incur gas charges for it. Finnaly, after all messages included in tx are executed, `Validate message` will be executed to determine whether tx was successful or not.
 
+**Required**
+- Signer is account with type **SmartAccount**
+- `Validate message` must be the last message in tx.
+- `Validate message` must has type **MsgExecutedContract** and call to `after_execute` method of smart contract associated with signer
+- `Validate Message` data must be compatible with all other tx messages
+
+</br> 
+
+## Params
+Parameters are updatable by the module's authority, typically set to the gov module account.
+- `max_gas_query`: limit how much gas can bo consumed by the `validate` method
+- `whitelist_code_id`: determine which **code_id** can be instantiated as a `smart account`
+
+</br> 
+
+## WASM
+To be considered as `smart account`, smart contract associated with account must implement execute and query methods, `after_execute` and `validate`:
+```Rust
+// execute method
+struct AfterExecute {
+    pub msgs: Vec<MsgData>
+}
+
+// query method
+struct Validate { 
+    pub msgs: Vec<MsgData>
+}
+```
+- **MsgData**: is json encoded message
+    ```Rust
+    struct MsgData {
+        pub type_url: String, // url type of message
+        pub value:    String, // value of message
+        // etc.
+        //  MsgData {
+        //      type_url: "/cosmos.bank.v1beta1.MsgSend",
+        //      value: "{fromAddress:\"aura172r4c7mng5y6ccfqp5klwyulshx6dh2mmd2r0xnmsgugaa754kws8u96pq\",toAddress:\"aura1y3u4ht0p69gz757myr3l0fttchhw3fj2gpeznd\",amount:[{denom:\"uaura\",amount:\"200\"}]}"
+        //  }
+    }
+    ```
+- `validate` method must not consumes exceed `max_gas_query` gas 
+
+Optional sudo method recover that activate the smart account recovery function
+```Rust
+// sudo method
+struct Recover {
+    pub caller: String,
+    pub pub_key: Binary,
+    pub credentials: Binary,
+}
+```
+
+[smart account samples][2]
 
 [1]: https://cosmwasm.com/
 [2]: https://github.com/aura-nw/smart-account-sample/

@@ -72,16 +72,9 @@ struct MessageActivateAccount {
 
 This message is signed by the user's private key, and the signer's address is a pre-generated one. The module will recalculate the address based on the user input then check if it is equal to the signer, so other parameters must be the same as the configuration used to generate the account address and the signer must have enough funds to pay for the transaction.
 
+</br>
+
 To illustrate this in a graph:
-
-```plain
-      ┌──────────tx──────────┐
-      │  ┌────────────────┐  │
-      │  │  msg activate  │  │
-      │  └────────────────┘  │
-      └──────────────────────┘
-```
-
 
 ```plain
              tx
@@ -111,20 +104,20 @@ To illustrate this in a graph:
       └────────────────┘
               ↓
   ┌───────  module ───────┐
-  │   ┌───────────────┐   │
-  │   │    module 1   │   │
-  │   └───────────────┘   │
-  │   ┌───────────────┐   │
-  │   │    module 2   │   │
-  │   └───────────────┘   │
   │   ┌───────────────┐   │   instantiate contract   ┌───────────────┐
-  │   │   SA module   │---│------------------------->|     wasmd     |
+  │   │   SA module   │---│------------------------->|  wasmd module |
   │   └───────────────┘   │                          └───────────────┘
   └───────────────────────┘
               ↓
             done
 ```
+- **AnteHandler**
+    - Since the account doesn't have **PubKey** yet, for signature verification, `SA SetPubKey` will set a temporary **PubKey** for this account based on the `public_key` parameter in the message.
+    - After successful signature verification, `SA decorator` will remove temporary **PubKey** so that `SA module` can initiate contract with this account later (action remove only needed in DeliveryTx).
+- **SA module**
+    - if the message meets all the checks, the module initiates a contract based on its parameters. The new contract will be linked to the pre-created account (contract address will be same as account address). The module will then set **PubKey** for this account and save it to the `auth` module.
 
+</br>
 
 **Required**
 - valid parameters.
@@ -174,22 +167,9 @@ The module makes a call to the `recover` contract method specified by *address*.
     }
     ```
 
+</br>
+
 To illustrate this in a graph:
-
-```plain
-      ┌──────────tx──────────┐
-      │  ┌────────────────┐  │
-      │  │      msg 0     │  │
-      │  └────────────────┘  │
-      │  ┌────────────────┐  │
-      │  │      msg 1     │  │
-      │  └────────────────┘  │
-      │  ┌────────────────┐  │
-      │  │   msg recover  │  │
-      │  └────────────────┘  │
-      └──────────────────────┘
-```
-
 
 ```plain
              tx
@@ -207,31 +187,22 @@ To illustrate this in a graph:
   └───────────────────────┘
               ↓
       ┌────────────────┐
-      │      msg 0     │
-      └────────────────┘
-      ┌────────────────┐
-      │      msg 1     │
-      └────────────────┘
-          ...........
-      ┌────────────────┐
       │  msg recover   │ 
       └────────────────┘
               ↓
   ┌───────  module ───────┐
-  │   ┌───────────────┐   │
-  │   │    module 1   │   │
-  │   └───────────────┘   │
-  │   ┌───────────────┐   │
-  │   │    module 2   │   │
-  │   └───────────────┘   │
   │   ┌───────────────┐   │   `recover` sudo      ┌───────────────┐
-  │   │   SA module   │---│---------------------->|     wasmd     |
+  │   │   SA module   │---│---------------------->|  wasmd module |
   │   └───────────────┘   │                       └───────────────┘
   └───────────────────────┘
               ↓
             done
 ```
+- **SA Module**
+    - The `smart accounts` module checks if the requested account is of type `SmartAccount`, if not, rejects it.
+    - if `recover` call success, module will update new **PubKey** for account then save account to `auth` module
 
+</br>
 
 **Required**
 - valid parameters.
@@ -245,21 +216,23 @@ When build transaction with smart account, user must includes `Validate message`
 
 `Validate message` call to `after_execute` method of contract that associated with smart account. It's value is information of all other messages included in tx. Firstly, the module uses this message data to execute a contract's query before the tx is passed to the mempool. The query calls the `validate` method for basic validation tx, if it fails, the tx will be denied to enter the mempool and the user will not incur gas charges for it. Finnaly, after all messages included in tx are executed, `Validate message` will be executed to determine whether tx was successful or not.
 
+</br>
+
 To illustrate this in a graph:
 
 ```plain
-      ┌──────────tx──────────┐
-      │  ┌────────────────┐  │
-      │  │      msg 0     │  │
-      │  └────────────────┘  │
-      │  ┌────────────────┐  │
-      │  │      msg 1     │  │
-      │  └────────────────┘  │
-      |     .............    |
-      │  ┌────────────────┐  │
-      │  │  msg validate  │  │
-      │  └────────────────┘  │
-      └──────────────────────┘
+  ┌──────────tx──────────┐
+  │  ┌────────────────┐  │
+  │  │      msg 0     │  │
+  │  └────────────────┘  │
+  │  ┌────────────────┐  │
+  │  │      msg 1     │  │
+  │  └────────────────┘  │
+  |     .............    |
+  │  ┌────────────────┐  │
+  │  │  msg validate  │  │
+  │  └────────────────┘  │
+  └──────────────────────┘
 ```
 
 
@@ -270,8 +243,11 @@ To illustrate this in a graph:
   │   ┌───────────────┐   │
   │   │  decorator 0  │   │
   │   └───────────────┘   │
+  │   ┌───────────────┐   │
+  │   │ SA SetPubKey  │   │
+  │   └───────────────┘   │
   │   ┌───────────────┐   │ `validate` query     ┌───────────────┐
-  │   │ SA decorator  │---│--------------------->|     wasmd     |
+  │   │ SA decorator  │---│--------------------->|  wasmd module |
   │   └───────────────┘   │                      └───────────────┘
   │   ┌───────────────┐   │
   │   │  decorator 2  │   │
@@ -300,6 +276,11 @@ To illustrate this in a graph:
               ↓
             done
 ```
+- **Antehandler**
+    - tx will be identified as having type `smart account`. If true, it will be redirected to `SA SetPubKey` and `SA decorator`
+    - `smart account` tx will go through the `SA SetPubKey` decorator instead of the `auth Set PubKey` decorator. This will avoid the check for similarity of **Account Address** and **PubKey**. 
+    
+</br>
 
 **Required**
 - Signer is account with type **SmartAccount**

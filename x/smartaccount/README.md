@@ -52,7 +52,7 @@ Using a salt calculation formula, a smart account can be claimed to be owned by 
 ### Message `activate-account`
 Allows users to activate their smart account using a pre-generated one. This message will take account with type **BaseAccount** and convert it to **SmartAccount** type with preconfigured public key.
 ```Go
-struct MessageActivateAccount {
+type MessageActivateAccount struct {
     // AccountAddress is the actor who signs the message
     account_address string
 
@@ -112,7 +112,7 @@ To illustrate this in a graph:
             done
 ```
 - **AnteHandler**
-    - Since the account doesn't have **PubKey** yet, for signature verification, `SA SetPubKey` will set a temporary **PubKey** for this account based on the `public_key` parameter in the message.
+    - Since the account doesn't have **PubKey** yet, for signature verification, `SA SetPubKey` will set a temporary **PubKey** for this account using the `public_key` parameter in the message.
     - After successful signature verification, `SA decorator` will remove temporary **PubKey** so that `SA module` can initiate contract with this account later (action remove only needed in DeliveryTx).
 - **SA module**
     - if the message meets all the checks, the module initiates a contract based on its parameters. The new contract will be linked to the pre-generated account (contract address will be same as account address). The module will then convert account to type `SmartAccount` and set **PubKey** for it. Finnaly, save account to `auth` module.
@@ -273,7 +273,7 @@ To illustrate this in a graph:
 ```
 - **Antehandler**
     - tx will be identified as signed by smart account. If true, it will be redirected to `SA SetPubKey` and `SA decorator`
-    - `smart account` tx will go through the `SA SetPubKey` decorator instead of the `auth Set PubKey` decorator. This will avoid the check for similarity of **Account Address** and **PubKey**. 
+    - `smart account` tx will go through the `SA SetPubKey` decorator instead of the `auth SetPubKey` decorator. This will avoid the check for similarity of **Account Address** and **PubKey**. 
     
 </br>
 

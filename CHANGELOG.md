@@ -37,6 +37,11 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 ## Unreleased
 
+## [v0.6.0] - 2023-06-30
+
+### Features
+- Support module SmartAccount
+
 ## [v0.5.2] - 2023-06-19
 
 ### Improvements

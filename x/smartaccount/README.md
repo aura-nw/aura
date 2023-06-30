@@ -72,12 +72,67 @@ struct MessageActivateAccount {
 
 This message is signed by the user's private key, and the signer's address is a pre-generated one. The module will recalculate the address based on the user input then check if it is equal to the signer, so other parameters must be the same as the configuration used to generate the account address and the signer must have enough funds to pay for the transaction.
 
+To illustrate this in a graph:
+
+```plain
+      ┌──────────tx──────────┐
+      │  ┌────────────────┐  │
+      │  │  msg activate  │  │
+      │  └────────────────┘  │
+      └──────────────────────┘
+```
+
+
+```plain
+             tx
+              ↓
+  ┌───── Antehandler ─────┐
+  │   ┌───────────────┐   │
+  │   │  decorator 0  │   │
+  │   └───────────────┘   │
+  │   ┌───────────────┐   │ Set temporary PubKey      ┌───────────────┐
+  │   │  SA SetPubKey │---│-------------------------->|  auth module  |
+  │   └───────────────┘   │                           └───────────────┘
+  |      ...........      |
+  │   ┌───────────────┐   │
+  │   │SigVerification│   │
+  │   └───────────────┘   │
+  |      ...........      |
+  │   ┌───────────────┐   │ Remove temporary Pubkey   ┌───────────────┐
+  │   │  SA decorator │---│-------------------------->|  auth module  |
+  │   └───────────────┘   │                           └───────────────┘
+  │   ┌───────────────┐   │
+  │   │  decorator 2  │   │
+  │   └───────────────┘   │
+  └───────────────────────┘
+              ↓
+      ┌────────────────┐
+      │  msg activate  │ 
+      └────────────────┘
+              ↓
+  ┌───────  module ───────┐
+  │   ┌───────────────┐   │
+  │   │    module 1   │   │
+  │   └───────────────┘   │
+  │   ┌───────────────┐   │
+  │   │    module 2   │   │
+  │   └───────────────┘   │
+  │   ┌───────────────┐   │   instantiate contract   ┌───────────────┐
+  │   │   SA module   │---│------------------------->|     wasmd     |
+  │   └───────────────┘   │                          └───────────────┘
+  └───────────────────────┘
+              ↓
+            done
+```
+
+
 **Required**
 - valid parameters.
 - The signer must have received the funds, so it can exist on-chain as **BaseAccount** type with an account number, sequence and empty public key.
 - The signer address was not used to initiate any smart contract before.
 - In some cases, we also allow reactivation of activated accounts that are not associated to any smart contracts.
-- **code_id**    must be in whitelist.
+- **code_id** must be in whitelist.
+- `actiavte message` is the only message in tx.
  
 </br>
 
@@ -119,6 +174,65 @@ The module makes a call to the `recover` contract method specified by *address*.
     }
     ```
 
+To illustrate this in a graph:
+
+```plain
+      ┌──────────tx──────────┐
+      │  ┌────────────────┐  │
+      │  │      msg 0     │  │
+      │  └────────────────┘  │
+      │  ┌────────────────┐  │
+      │  │      msg 1     │  │
+      │  └────────────────┘  │
+      │  ┌────────────────┐  │
+      │  │   msg recover  │  │
+      │  └────────────────┘  │
+      └──────────────────────┘
+```
+
+
+```plain
+             tx
+              ↓
+  ┌───── Antehandler ─────┐
+  │   ┌───────────────┐   │
+  │   │  decorator 0  │   │
+  │   └───────────────┘   │
+  │   ┌───────────────┐   │
+  │   │  decorator 1  │   │
+  │   └───────────────┘   │ 
+  │   ┌───────────────┐   │
+  │   │  decorator 2  │   │
+  │   └───────────────┘   │
+  └───────────────────────┘
+              ↓
+      ┌────────────────┐
+      │      msg 0     │
+      └────────────────┘
+      ┌────────────────┐
+      │      msg 1     │
+      └────────────────┘
+          ...........
+      ┌────────────────┐
+      │  msg recover   │ 
+      └────────────────┘
+              ↓
+  ┌───────  module ───────┐
+  │   ┌───────────────┐   │
+  │   │    module 1   │   │
+  │   └───────────────┘   │
+  │   ┌───────────────┐   │
+  │   │    module 2   │   │
+  │   └───────────────┘   │
+  │   ┌───────────────┐   │   `recover` sudo      ┌───────────────┐
+  │   │   SA module   │---│---------------------->|     wasmd     |
+  │   └───────────────┘   │                       └───────────────┘
+  └───────────────────────┘
+              ↓
+            done
+```
+
+
 **Required**
 - valid parameters.
 - Account with *address* must exists on-chain and has type **SmartAccount**.
@@ -130,6 +244,62 @@ The module makes a call to the `recover` contract method specified by *address*.
 When build transaction with smart account, user must includes `Validate message` into tx. This message has type **MsgExecuteContract** and will use to trigger smart contract logic that applies to this account.
 
 `Validate message` call to `after_execute` method of contract that associated with smart account. It's value is information of all other messages included in tx. Firstly, the module uses this message data to execute a contract's query before the tx is passed to the mempool. The query calls the `validate` method for basic validation tx, if it fails, the tx will be denied to enter the mempool and the user will not incur gas charges for it. Finnaly, after all messages included in tx are executed, `Validate message` will be executed to determine whether tx was successful or not.
+
+To illustrate this in a graph:
+
+```plain
+      ┌──────────tx──────────┐
+      │  ┌────────────────┐  │
+      │  │      msg 0     │  │
+      │  └────────────────┘  │
+      │  ┌────────────────┐  │
+      │  │      msg 1     │  │
+      │  └────────────────┘  │
+      |     .............    |
+      │  ┌────────────────┐  │
+      │  │  msg validate  │  │
+      │  └────────────────┘  │
+      └──────────────────────┘
+```
+
+
+```plain
+             tx
+              ↓
+  ┌───── Antehandler ─────┐
+  │   ┌───────────────┐   │
+  │   │  decorator 0  │   │
+  │   └───────────────┘   │
+  │   ┌───────────────┐   │ `validate` query     ┌───────────────┐
+  │   │ SA decorator  │---│--------------------->|     wasmd     |
+  │   └───────────────┘   │                      └───────────────┘
+  │   ┌───────────────┐   │
+  │   │  decorator 2  │   │
+  │   └───────────────┘   │
+  └───────────────────────┘
+              ↓
+      ┌────────────────┐
+      │      msg 0     │
+      └────────────────┘
+      ┌────────────────┐
+      │      msg 1     │
+      └────────────────┘
+          ...........
+      ┌────────────────┐
+      │  msg validate  │ -> MsgExecuteContract `after_execute`
+      └────────────────┘
+              ↓
+  ┌───────  module ───────┐
+  │   ┌───────────────┐   │
+  │   │    module 1   │   │
+  │   └───────────────┘   │
+  │   ┌───────────────┐   │
+  │   │    module 2   │   │
+  │   └───────────────┘   │
+  └───────────────────────┘
+              ↓
+            done
+```
 
 **Required**
 - Signer is account with type **SmartAccount**

@@ -33,7 +33,6 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 // MsgCreatePeriodicVestingAccount defines a message that enables creating a periodic vesting
 // account.
-//
 type MsgCreatePeriodicVestingAccount struct {
 	FromAddress    string         `protobuf:"bytes,1,opt,name=from_address,json=fromAddress,proto3" json:"from_address,omitempty"`
 	ToAddress      string         `protobuf:"bytes,2,opt,name=to_address,json=toAddress,proto3" json:"to_address,omitempty"`
@@ -104,7 +103,6 @@ func (m *MsgCreatePeriodicVestingAccount) GetVestingPeriods() []types.Period {
 
 // MsgCreateVestingAccountResponse defines the Msg/CreatePeriodicVestingAccount
 // response type.
-//
 type MsgCreatePeriodicVestingAccountResponse struct {
 }
 

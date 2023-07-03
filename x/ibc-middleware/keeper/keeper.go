@@ -22,7 +22,7 @@ type (
 func NewKeeper(
 	storeKey sdk.StoreKey,
 ) Keeper {
-	
+
 	return Keeper{
 		storeKey: storeKey,
 	}

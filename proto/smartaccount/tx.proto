@@ -1,0 +1,61 @@
+syntax = "proto3";
+package auranw.aura.smartaccount;
+
+import "gogoproto/gogo.proto";
+import "cosmos_proto/cosmos.proto";
+import "cosmos/base/v1beta1/coin.proto";
+import "google/protobuf/any.proto";
+
+option go_package = "github.com/aura-nw/aura/x/smartaccount/types";
+
+// Msg defines the Msg service.
+service Msg {
+  rpc   Recover(MsgRecover) returns (MsgRecoverResponse);
+  rpc ActivateAccount(MsgActivateAccount) returns (MsgActivateAccountResponse);
+// this line is used by starport scaffolding # proto/tx/rpc
+}
+
+message MsgRecover {
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+
+  // Sender is the actor who signs the message
+  string creator = 1;
+
+  // smart-account address that need update
+  string address = 2;
+
+  // New PubKey using for signature verification of this account
+  google.protobuf.Any public_key = 3 [(gogoproto.customname) = "PubKey"];
+
+  // Credentials
+  string credentials = 4;
+}
+
+message MsgRecoverResponse {}
+
+message MsgActivateAccount {
+  // AccountAddress is the actor who signs the message
+  string account_address = 1 [(gogoproto.customname) = "AccountAddress"];
+  
+  // Owner of smart account contract
+  string owner = 2;
+  
+  // CodeID indicates which wasm binary code is to be used for this contract
+  uint64 code_id = 3 [(gogoproto.customname) = "CodeID"];
+  
+  // Public key of smart account
+  google.protobuf.Any pub_key = 4 [(gogoproto.customname) = "PubKey"];
+
+  // InitMsg is the JSON-encoded instantiate message for the contract
+  bytes init_msg = 5 [
+    (gogoproto.customname) = "InitMsg",
+    (gogoproto.casttype) = "github.com/CosmWasm/wasmd/x/wasm/types.RawContractMessage"
+  ];
+}
+
+message MsgActivateAccountResponse {
+  string address = 1;
+}
+
+// this line is used by starport scaffolding # proto/tx/message

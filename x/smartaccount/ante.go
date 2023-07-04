@@ -174,8 +174,8 @@ func (decorator *SmartAccountDecorator) AnteHandle(
 		ctx,
 		decorator.WasmKeeper,
 		activateMsg.CodeID,
-		activateMsg.Salt,
 		activateMsg.InitMsg,
+		activateMsg.Salt,
 		pubKey,
 	)
 	if err != nil {

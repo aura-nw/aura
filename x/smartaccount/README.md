@@ -18,7 +18,7 @@ Like EOA, users can create a local `smart account` and decide when to actually u
     - **msg**: json encoded message to be passed to the contract on instantiation. 
     - **funds**: coins that are transferred to the contract on instantiation. 
     - **salt**: an arbitrary value provided by the sender. Size can be 1 to 64. 
-    - **fix_msg**: include the msg value into the hash for the predictable address. Default is false. 
+    - **fix_msg**: include the msg value into the hash for the predictable address. Default is false.  
 
 </br>
 
@@ -29,8 +29,8 @@ type QueryGenerateAccount struct{
     // reference to the stored WASM code, must be in whitelist
     code_id    uint64
 
-    // the infor.sender field of the contract instantiate method
-    sender     string
+    // an arbitrary value provided by the sender. Size can be 1 to 64.
+    salt       []byte
 
     // json encoded message to be passed to the contract on instantiation
     init_msg   []byte
@@ -40,12 +40,11 @@ type QueryGenerateAccount struct{
 }
 ``` 
 
-When create a new EOA, users can generate their private key locally and claim their account without sending any transactions. In our smart account case, the mechanism enabling this is a `salt` field on `Instantiate2` method.
-- **Formula**
-    ```Go
-    salt = sha512.hash(code_id | sender | init_msg | public_key)
-    ```
-Using a salt calculation formula, a smart account can be claimed to be owned by the user who has configured the parameters to generate the account address.
+Internally a address is built by `Instantiate2` containing:
+```
+(len(checksum) | checksum | len(sender_address) | sender_address | len(salt) | salt| len(initMsg) | initMsg)
+```
+When create a new EOA, users can generate their private key locally and claim their account without sending any transactions. In our smart account case, using `public_key` as `sender_address`, a smart account can be claimed to be owned by the user who has configured the parameters to generate the account address.
 
 </br>
 
@@ -59,8 +58,8 @@ type MessageActivateAccount struct {
     // reference to the stored WASM code, must be in whitelist
     code_id         uint64
 
-    // the infor.sender field of the contract instantiate method
-    sender          string
+    // an arbitrary value provided by the sender. Size can be 1 to 64.
+    salt            []byte
 
     // json encoded message to be passed to the contract on instantiation
     init_msg        []byte

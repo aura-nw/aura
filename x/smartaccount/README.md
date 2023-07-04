@@ -4,7 +4,7 @@ a [smart account][4] solution for [CosmWasm][1]-enabled chains.
 
 In our context, `smart account` is a contract account associated with a public key, so it can be considered a programmable EOA. The difference is that unlike an EOA account where **Address** and **PubKey** must be the same, the **PubKey** of a `smart account` can be any key that the account owner set for it. 
 
-Our new account will have **SmartAccount** type instead of **BaseAccount** or other existing types.
+Our new account will have **SmartAccount** type instead of [BaseAccount][5] or other existing types.
 
 </br>
 
@@ -18,66 +18,113 @@ Like EOA, users can create a local `smart account` and decide when to actually u
     - **msg**: json encoded message to be passed to the contract on instantiation. 
     - **funds**: coins that are transferred to the contract on instantiation. 
     - **salt**: an arbitrary value provided by the sender. Size can be 1 to 64. 
-    - **fix_msg**: include the msg value into the hash for the predictable address. Default is false. 
+    - **fix_msg**: include the msg value into the hash for the predictable address. Default is false.  
 
 </br>
 
 ### Query `generate-account` 
 Allows users to create smart account addresses based on optional configuration
 ```Go
-struct QueryGenerateAccount {
+type QueryGenerateAccount struct{
     // reference to the stored WASM code, must be in whitelist
-    uint64 code_id;
+    code_id    uint64
 
-    // the infor.sender field of the contract instantiate method
-    string sender;
+    // an arbitrary value provided by the sender. Size can be 1 to 64.
+    salt       []byte
 
     // json encoded message to be passed to the contract on instantiation
-    []byte init_msg;
+    init_msg   []byte
 
     // public key of this account, must be cosmos supported schemas
-    Any public_key;
+    public_key Any
 }
 ``` 
 
-When create a new EOA, users can generate their private key locally and claim their account without sending any transactions. In our smart account case, the mechanism enabling this is a `salt` field on `Instantiate2` method.
-- **Formula**
-    ```Go
-    salt = sha512.hash(code_id | sender | init_msg | public_key)
-    ```
-Using a salt calculation formula, a smart account can be claimed to be owned by the user who has configured the parameters to generate the account address.
+Internally a address is built by `Instantiate2` containing:
+```
+(len(checksum) | checksum | len(sender_address) | sender_address | len(salt) | salt| len(initMsg) | initMsg)
+```
+When create a new EOA, users can generate their private key locally and claim their account without sending any transactions. In our smart account case, using `public_key` as `sender_address`, a smart account can be claimed to be owned by the user who has configured the parameters to generate the account address.
 
 </br>
 
 ### Message `activate-account`
-Allows users to activate their smart account using a pre-generated. This message will take **BaseAccount** type and convert it to **SmartAccount** type with preconfigured public key.
+Allows users to activate their smart account using a pre-generated one. This message will take account with type **BaseAccount** and convert it to **SmartAccount** type with preconfigured public key.
 ```Go
-struct MessageActivateAccount {
+type MessageActivateAccount struct {
     // AccountAddress is the actor who signs the message
-    string account_address;
+    account_address string
 
     // reference to the stored WASM code, must be in whitelist
-    uint64 code_id;
+    code_id         uint64
 
-    // the infor.sender field of the contract instantiate method
-    string sender;
+    // an arbitrary value provided by the sender. Size can be 1 to 64.
+    salt            []byte
 
     // json encoded message to be passed to the contract on instantiation
-    []byte init_msg;
+    init_msg        []byte
 
     // public key of this account, must be cosmos supported schemas
-    Any public_key;
+    public_key      Any
 }
 ```
 
-This message is signed by the user's private key, and the signer's address is a pre-generated one. The module will recalculate the address based on the user input then check if it is equal to the signer, so other parameters must be the same as the configuration used to generate the account address and the signer must have enough funds to pay for the transaction.
+This message is signed by the user's private key, and the signer's address is a pre-generated one. The module will recalculate the address based on the user input then check if it is equal to the signer's address, so other parameters must be the same as the configuration used to generate the account address and the signer must have enough funds to pay for the transaction.
+
+</br>
+
+To illustrate this in a graph:
+
+```plain
+             tx
+              ↓
+  ┌───── Antehandler ─────┐
+  │   ┌───────────────┐   │
+  │   │  decorator 0  │   │
+  │   └───────────────┘   │
+  │   ┌───────────────┐   │ Set temporary PubKey      ┌───────────────┐
+  │   │  SA SetPubKey │---│-------------------------->|  auth module  |
+  │   └───────────────┘   │                           └───────────────┘
+  |      ...........      |
+  │   ┌───────────────┐   │
+  │   │SigVerification│   │
+  │   └───────────────┘   │
+  |      ...........      |
+  │   ┌───────────────┐   │ Remove temporary Pubkey   ┌───────────────┐
+  │   │  SA decorator │---│-------------------------->|  auth module  |
+  │   └───────────────┘   │                           └───────────────┘
+  │   ┌───────────────┐   │
+  │   │  decorator 2  │   │
+  │   └───────────────┘   │
+  └───────────────────────┘
+              ↓
+      ┌────────────────┐
+      │  msg activate  │ 
+      └────────────────┘
+              ↓
+  ┌───────  module ───────┐
+  │   ┌───────────────┐   │   instantiate contract   ┌───────────────┐
+  │   │   SA module   │---│------------------------->|  wasmd module |
+  │   └───────────────┘   │                          └───────────────┘
+  └───────────────────────┘
+              ↓
+            done
+```
+- **AnteHandler**
+    - Since the account doesn't have **PubKey** yet, for signature verification, `SA SetPubKey` will set a temporary **PubKey** for this account using the `public_key` parameter in the message.
+    - After successful signature verification, `SA decorator` will remove temporary **PubKey** so that `SA module` can initiate contract with this account later (action remove only needed in DeliveryTx).
+- **SA module**
+    - if the message meets all the checks, the module initiates a contract based on its parameters. The new contract will be linked to the pre-generated account (contract address will be same as account address). The module will then convert account to type `SmartAccount` and set **PubKey** for it. Finnaly, save account to `auth` module.
+
+</br>
 
 **Required**
 - valid parameters.
-- The signer must have received the funds, so it can exist on-chain as **BaseAccount** type with an account number, sequence and empty public key.
-- The signer address was not used to initiate any smart contract before.
-- In some cases, we also allow reactivation of activated accounts that are not associated to any smart contracts.
-- **code_id**    must be in whitelist.
+- The account must have received the funds, so it can exist on-chain as **BaseAccount** type with an account number, sequence and empty public key before activated.
+- The account address was not used to initiate any smart contract before.
+- In some cases, we also allow reactivation of activated accounts that are not linked to any smart contracts.
+- **code_id** must be in whitelist.
+- `actiavte message` is the only message in tx.
  
 </br>
 
@@ -89,52 +136,150 @@ We provide a smart account recovery way in case the user forgets the account's p
 ### Message `recover`
 The caller specifies the address to recover, the public key and provides credentials to prove they have the authority to perform the recovery.
 ```Go
-struct MsgRecover {
+type MsgRecover struct{
   // Sender is the actor who signs the message
-  string creator;
+  creator     string
 
   // smart-account address that want to recover
-  string address;
+  address     string
 
   // New PubKey using for signature verification of this account, 
   // must be cosmos supported schemas
-  Any public_key;
+  public_key  Any
 
   // Credentials
-  string credentials;
+  credentials string
 }
 ```
-The module makes a call to the `recover` contract method specified by *address*. If the message parameters meet the verification logic implemented in the contract, the smart account will be updated with the new **PubKey**.
+The module makes a call to the `recover` method of contract that linked to smart account. If the message parameters meet the verification logic implemented in the contract, the smart account will be updated with the new **PubKey**.
 - `recover` call
-    ```Rust
-    struct Recover {
-        // actor who signs the recover message
-        pub caller: String,
-
-        // new PubKey
-        pub pub_key: Binary,
-
-        // credentials 
-        pub credentials: Binary,
+    ```Go
+    type RecoverTx struct {
+        Caller      string 
+        PubKey      []byte
+        Credentials []byte
     }
     ```
+
+</br>
+
+To illustrate this in a graph:
+
+```plain
+             tx
+              ↓
+  ┌───── Antehandler ─────┐
+  │   ┌───────────────┐   │
+  │   │  decorator 0  │   │
+  │   └───────────────┘   │
+  │   ┌───────────────┐   │
+  │   │  decorator 1  │   │
+  │   └───────────────┘   │ 
+  │   ┌───────────────┐   │
+  │   │  decorator 2  │   │
+  │   └───────────────┘   │
+  └───────────────────────┘
+              ↓
+      ┌────────────────┐
+      │  msg recover   │ 
+      └────────────────┘
+              ↓
+  ┌───────  module ───────┐
+  │   ┌───────────────┐   │   `recover` sudo      ┌───────────────┐
+  │   │   SA module   │---│---------------------->|  wasmd module |
+  │   └───────────────┘   │                       └───────────────┘
+  └───────────────────────┘
+              ↓
+            done
+```
+- **SA Module**
+    - The `SA module` checks if the requested account is of type `SmartAccount`, if not, rejects it.
+    - if `recover` call success, module will update new **PubKey** for account then save account to `auth` module.
+
+</br>
 
 **Required**
 - valid parameters.
 - Account with *address* must exists on-chain and has type **SmartAccount**.
-- Smart account enables recovery function by implementing `recover` method in **sudo** entry point.
+- Account enables recovery function by implementing `recover` method in **sudo** entry point of linked smart contract.
 
 </br> 
 
 ## Smart account Tx 
 When build transaction with smart account, user must includes `Validate message` into tx. This message has type **MsgExecuteContract** and will use to trigger smart contract logic that applies to this account.
 
-`Validate message` call to `after_execute` method of contract that associated with smart account. It's value is information of all other messages included in tx. Firstly, the module uses this message data to execute a contract's query before the tx is passed to the mempool. The query calls the `validate` method for basic validation tx, if it fails, the tx will be denied to enter the mempool and the user will not incur gas charges for it. Finnaly, after all messages included in tx are executed, `Validate message` will be executed to determine whether tx was successful or not.
+`Validate message` call to `after_execute` method of contract that linked with smart account. It's value is information of all other messages included in tx. Firstly, the module uses this message data to execute a contract's query before the tx is passed to the mempool. The query calls the `validate` method for basic validation tx, if it fails, the tx will be denied to enter the mempool and the user will not incur gas charges for it. Finnaly, after all messages included in tx are executed, `Validate message` will be executed to determine whether tx was successful or not.
+
+</br>
+
+To illustrate this in a graph:
+
+```plain
+  ┌──────────tx──────────┐
+  │  ┌────────────────┐  │
+  │  │      msg 0     │  │
+  │  └────────────────┘  │
+  │  ┌────────────────┐  │
+  │  │      msg 1     │  │
+  │  └────────────────┘  │
+  |     .............    |
+  │  ┌────────────────┐  │
+  │  │  msg validate  │  │
+  │  └────────────────┘  │
+  └──────────────────────┘
+```
+
+
+```plain
+             tx
+              ↓
+  ┌───── Antehandler ─────┐
+  │   ┌───────────────┐   │
+  │   │  decorator 0  │   │
+  │   └───────────────┘   │
+  │   ┌───────────────┐   │
+  │   │ SA SetPubKey  │   │
+  │   └───────────────┘   │
+  │   ┌───────────────┐   │ `validate` query     ┌───────────────┐
+  │   │ SA decorator  │---│--------------------->|  wasmd module |
+  │   └───────────────┘   │                      └───────────────┘
+  │   ┌───────────────┐   │
+  │   │  decorator 2  │   │
+  │   └───────────────┘   │
+  └───────────────────────┘
+              ↓
+      ┌────────────────┐
+      │      msg 0     │
+      └────────────────┘
+      ┌────────────────┐
+      │      msg 1     │
+      └────────────────┘
+          ...........
+      ┌────────────────┐
+      │  msg validate  │ -> MsgExecuteContract `after_execute`
+      └────────────────┘
+              ↓
+  ┌───────  module ───────┐
+  │   ┌───────────────┐   │
+  │   │    module 1   │   │
+  │   └───────────────┘   │
+  │   ┌───────────────┐   │
+  │   │    module 2   │   │
+  │   └───────────────┘   │
+  └───────────────────────┘
+              ↓
+            done
+```
+- **Antehandler**
+    - tx will be identified as signed by smart account. If true, it will be redirected to `SA SetPubKey` and `SA decorator`
+    - `smart account` tx will go through the `SA SetPubKey` decorator instead of the `auth SetPubKey` decorator. This will avoid the check for similarity of **Account Address** and **PubKey**. 
+    
+</br>
 
 **Required**
 - Signer is account with type **SmartAccount**
 - `Validate message` must be the last message in tx.
-- `Validate message` must has type **MsgExecutedContract** and call to `after_execute` method of smart contract associated with signer
+- `Validate message` must has type **MsgExecutedContract** and call to `after_execute` method of smart contract that linked with account
 - `Validate Message` data must be compatible with all other tx messages
 
 </br> 
@@ -147,7 +292,7 @@ Parameters are updatable by the module's authority, typically set to the gov mod
 </br> 
 
 ## WASM
-To be considered as `smart account`, smart contract associated with account must implement execute and query methods, `after_execute` and `validate`:
+To be considered as `smart account`, smart contract linked with account must implement execute and query methods, `after_execute` and `validate`:
 ```Rust
 // execute method
 struct AfterExecute {
@@ -189,3 +334,4 @@ struct Recover {
 [2]: https://github.com/aura-nw/smart-account-sample/
 [3]: https://github.com/CosmWasm/wasmd/blob/main/x/wasm/keeper/msg_server.go#L79-L110
 [4]: https://aura-network.notion.site/Smart-Account-e69e51d6449b46dcb7c157a325dfb44f
+[5]: https://github.com/cosmos/cosmos-sdk/blob/main/x/auth/types/account.go

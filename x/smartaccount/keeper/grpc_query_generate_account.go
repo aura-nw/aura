@@ -21,7 +21,7 @@ func (k Keeper) GenerateAccount(goCtx context.Context, req *types.QueryGenerateA
 		return nil, err
 	}
 
-	contractAddress, err := types.Instantiate2Address(ctx, k.wasmKeeper, req.Owner, req.CodeID, req.InitMsg, pubKey.Bytes())
+	contractAddress, err := types.Instantiate2Address(ctx, k.wasmKeeper, req.CodeID, req.InitMsg, req.Salt, pubKey)
 	if err != nil {
 		return nil, err
 	}

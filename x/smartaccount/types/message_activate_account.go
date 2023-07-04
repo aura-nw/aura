@@ -41,11 +41,6 @@ func (msg *MsgActivateAccount) ValidateBasic() error {
 		return sdkerrors.Wrapf(ErrInvalidAddress, "invalid smart account address (%s)", err)
 	}
 
-	_, err = sdk.AccAddressFromBech32(msg.Owner)
-	if err != nil {
-		return sdkerrors.Wrapf(ErrInvalidAddress, "invalid owner address (%s)", err)
-	}
-
 	_, err = PubKeyDecode(msg.PubKey)
 	if err != nil {
 		return err

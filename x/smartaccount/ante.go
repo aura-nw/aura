@@ -173,10 +173,10 @@ func (decorator *SmartAccountDecorator) AnteHandle(
 	predicAddr, err := types.Instantiate2Address(
 		ctx,
 		decorator.WasmKeeper,
-		activateMsg.Owner,
 		activateMsg.CodeID,
+		activateMsg.Salt,
 		activateMsg.InitMsg,
-		pubKey.Bytes(),
+		pubKey,
 	)
 	if err != nil {
 		return ctx, err

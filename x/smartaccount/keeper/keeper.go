@@ -115,28 +115,15 @@ func (k Keeper) ActiveSmartAccount(
 	msg *types.MsgActivateAccount,
 	sAccount authtypes.AccountI,
 ) (cryptotypes.PubKey, error) {
-	owner, err := sdk.AccAddressFromBech32(msg.Owner)
-	if err != nil {
-		k.Logger(ctx).Error("active-sm", "owner-err", err.Error())
-		return nil, types.ErrInvalidAddress
-	}
 
 	pubKey, err := types.PubKeyDecode(msg.PubKey)
 	if err != nil {
 		return nil, err
 	}
 
-	// generate salt using owner, codeId, initMsg and pubkey
-	// make sure the contract that is initiated will have the address according to the pre-configured configuration
-	salt, err := types.GenerateSalt(
-		msg.Owner,
-		msg.CodeID,
-		msg.InitMsg,
-		pubKey.Bytes(),
-	)
-	if err != nil {
-		return nil, err
-	}
+	// we use pubkey.Address() as owner of this contract
+	// remember this account doesn't exist on chain yet if have not received any funds before
+	owner := sdk.AccAddress(pubKey.Address())
 
 	// instantiate smartcontract by code_id
 	address, _, err := k.contractKeeper.Instantiate2(
@@ -147,7 +134,7 @@ func (k Keeper) ActiveSmartAccount(
 		msg.InitMsg,           // message
 		fmt.Sprintf("%s/%d", types.ModuleName, k.GetAndIncrementNextAccountID(ctx)), // label
 		sdk.NewCoins(), // empty funds
-		salt,           // salt
+		msg.Salt,       // salt
 		true,
 	)
 	if err != nil {

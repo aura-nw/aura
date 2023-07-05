@@ -38,20 +38,20 @@ message MsgActivateAccount {
   // AccountAddress is the actor who signs the message
   string account_address = 1 [(gogoproto.customname) = "AccountAddress"];
   
-  // Owner of smart account contract
-  string owner = 2;
-  
   // CodeID indicates which wasm binary code is to be used for this contract
   uint64 code_id = 3 [(gogoproto.customname) = "CodeID"];
-  
-  // Public key of smart account
-  google.protobuf.Any pub_key = 4 [(gogoproto.customname) = "PubKey"];
+   
+  // an arbitrary value provided by the sender. Size can be 1 to 64.
+  bytes salt = 2;
 
   // InitMsg is the JSON-encoded instantiate message for the contract
   bytes init_msg = 5 [
     (gogoproto.customname) = "InitMsg",
     (gogoproto.casttype) = "github.com/CosmWasm/wasmd/x/wasm/types.RawContractMessage"
   ];
+  
+  // Public key of smart account
+  google.protobuf.Any pub_key = 4 [(gogoproto.customname) = "PubKey"];
 }
 
 message MsgActivateAccountResponse {

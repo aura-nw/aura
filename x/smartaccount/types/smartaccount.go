@@ -1,61 +1,27 @@
 package types
 
 import (
-	"crypto/sha512"
-	"encoding/json"
 	"strconv"
 
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
-
-type InstantiateSalt struct {
-	Owner   string `json:"owner"`
-	CodeID  uint64 `json:"code_id"`
-	InitMsg []byte `json:"init_msg"`
-	PubKey  []byte `json:"pub_key"`
-}
-
-// generate salt for contract Instantiate2
-func GenerateSalt(owner string, codeId uint64, initMsg []byte, pubKey []byte) ([]byte, error) {
-	salt := InstantiateSalt{
-		Owner:   owner,
-		CodeID:  codeId,
-		InitMsg: initMsg,
-		PubKey:  pubKey,
-	}
-
-	salt_bytes, err := json.Marshal(salt)
-	if err != nil {
-		return nil, err
-	}
-
-	// instantiate2 salt max length is 64 bytes, so need hash here
-	salt_hashed := sha512.Sum512(salt_bytes)
-
-	return salt_hashed[:], nil
-}
 
 // generate predictable contract address
 func Instantiate2Address(
 	ctx sdk.Context,
 	wasmKeeper wasmkeeper.Keeper,
-	owner string,
 	codeId uint64,
 	initMsg []byte,
-	pubKey []byte,
+	salt []byte,
+	pubKey cryptotypes.PubKey,
 ) (sdk.AccAddress, error) {
 
-	ownerAcc, err := sdk.AccAddressFromBech32(owner)
-	if err != nil {
-		return nil, sdkerrors.Wrapf(ErrInvalidAddress, "invalid owner address (%s)", err)
-	}
-
-	salt, err := GenerateSalt(owner, codeId, initMsg, pubKey)
-	if err != nil {
-		return nil, err
-	}
+	// we use pubkey.Address() as owner of this contract
+	// remember this account doesn't exist on chain yet if have not received any funds before
+	ownerAcc := sdk.AccAddress(pubKey.Address())
 
 	codeInfo := wasmKeeper.GetCodeInfo(ctx, codeId)
 	if codeInfo == nil {

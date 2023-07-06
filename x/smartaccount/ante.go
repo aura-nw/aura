@@ -202,21 +202,21 @@ func (d *SmartAccountTxDecorator) AnteHandle(
 	}
 
 	// validate tx
-	valMsg, valMsgData, err := validateSmartAccountTx(tx, signerAcc)
+	execMsg, execMsgData, err := validateSmartAccountTx(tx, signerAcc)
 	if err != nil {
 		return ctx, nil
 	}
 
-	// create message for SA contract query
-	validateMessage, err := GenerateValidateQueryMessage(valMsg, valMsgData)
+	// create message for SA contract pre-exeucte
+	validateMessage, err := GeneratePreExecuteMessage(execMsg, execMsgData)
 	if err != nil {
 		return ctx, err
 	}
 
 	params := d.SaKeeper.GetParams(ctx)
 
-	// query SA contract for validating transaction with limit gas
-	err = querySmartWithGasLimit(ctx, d.SaKeeper.WasmKeeper, signerAcc.GetAddress(), validateMessage, params.MaxGasQuery)
+	// execute SA contract for pre-execute transaction with limit gas
+	err = executeWithGasLimit(ctx, d.SaKeeper.ContractKeeper, signerAcc.GetAddress(), validateMessage, params.MaxGasExecute)
 	if err != nil {
 		return ctx, err
 	}
@@ -228,42 +228,48 @@ func (d *SmartAccountTxDecorator) AnteHandle(
 func validateSmartAccountTx(tx sdk.Tx, signerAcc *types.SmartAccount) (*wasmtypes.MsgExecuteContract, []types.MsgData, error) {
 	msgs := tx.GetMsgs()
 
-	// validate message must be the last message and must be MsgExecuteContract
-	var valMsg *wasmtypes.MsgExecuteContract
+	// after-execute message must be the last message and must be MsgExecuteContract
+	var afterExecMsg *wasmtypes.MsgExecuteContract
 	if msg, err := msgs[len(msgs)-1].(*wasmtypes.MsgExecuteContract); err {
-		valMsg = msg
+		afterExecMsg = msg
 	} else {
-		return nil, nil, sdkerrors.Wrap(types.ErrInvalidMsg, "validate message must be type MsgExecuteContract")
+		return nil, nil, sdkerrors.Wrap(types.ErrInvalidMsg, "after-execute message must be type MsgExecuteContract")
 	}
 
 	// get smartaccount address
 	saAddress := signerAcc.GetAddress().String()
 
 	// the message must be sent from the signer's address which is also the smart contract address
-	if valMsg.Sender != saAddress || valMsg.Contract != saAddress {
+	if afterExecMsg.Sender != saAddress || afterExecMsg.Contract != saAddress {
 		return nil, nil, sdkerrors.Wrap(types.ErrInvalidMsg, "sender address and contract address must be the same")
 	}
 
 	// parse messages in tx to list of string
-	valMsgData, err := types.ParseMessagesString(msgs[:len(msgs)-1])
+	execMsgData, err := types.ParseMessagesString(msgs[:len(msgs)-1])
 	if err != nil {
 		return nil, nil, err
 	}
 
-	return valMsg, valMsgData, nil
+	return afterExecMsg, execMsgData, nil
 }
 
-// Call a contract's query smart with a gas limit
+// Call a contract's execute with a gas limit
 // referenced from Osmosis' protorev posthandler:
 // https://github.com/osmosis-labs/osmosis/blob/98025f185ab2ee1b060511ed22679112abcc08fa/x/protorev/keeper/posthandler.go#L42-L43
-func querySmartWithGasLimit(
-	ctx sdk.Context, wasmKeeper wasmkeeper.Keeper,
+func executeWithGasLimit(
+	ctx sdk.Context, contractKeeper *wasmkeeper.PermissionedKeeper,
 	contractAddr sdk.AccAddress, msg []byte, maxGas sdk.Gas,
 ) error {
 	cacheCtx, write := ctx.CacheContext()
 	cacheCtx = cacheCtx.WithGasMeter(sdk.NewGasMeter(maxGas))
 
-	if _, err := wasmKeeper.QuerySmart(cacheCtx, contractAddr, msg); err != nil {
+	if _, err := contractKeeper.Execute(
+		cacheCtx,
+		contractAddr, // contract address
+		contractAddr, // signer, the smart account has the same address as the contract linked with it
+		msg,
+		sdk.NewCoins(), // empty funds
+	); err != nil {
 		return err
 	}
 
@@ -273,7 +279,7 @@ func querySmartWithGasLimit(
 	return nil
 }
 
-func GenerateValidateQueryMessage(msg *wasmtypes.MsgExecuteContract, msgs []types.MsgData) ([]byte, error) {
+func GeneratePreExecuteMessage(msg *wasmtypes.MsgExecuteContract, msgs []types.MsgData) ([]byte, error) {
 	var accMsg types.AccountMsg
 	umErr := json.Unmarshal(msg.GetMsg(), &accMsg)
 	if umErr != nil {
@@ -297,8 +303,8 @@ func GenerateValidateQueryMessage(msg *wasmtypes.MsgExecuteContract, msgs []type
 		return nil, sdkerrors.Wrap(types.ErrInvalidMsg, "after-execute message data not compatible with tx.messages")
 	}
 
-	validateMessage, err := json.Marshal(&types.AccountMsg{
-		ValidateTx: &types.ValidateTx{
+	executeMessage, err := json.Marshal(&types.AccountMsg{
+		PreExecuteTx: &types.PreExecuteTx{
 			Msgs: msgs,
 		},
 	})
@@ -306,7 +312,7 @@ func GenerateValidateQueryMessage(msg *wasmtypes.MsgExecuteContract, msgs []type
 		return nil, err
 	}
 
-	return validateMessage, nil
+	return executeMessage, nil
 }
 
 // ------------------------- SetPubKey Decorator ------------------------- \\

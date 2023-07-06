@@ -24,9 +24,9 @@ type (
 		storeKey       sdk.StoreKey
 		memKey         sdk.StoreKey
 		paramstore     paramtypes.Subspace
-		wasmKeeper     wasmkeeper.Keeper
-		contractKeeper *wasmkeeper.PermissionedKeeper
-		accountKeeper  types.AccountKeeper
+		WasmKeeper     wasmkeeper.Keeper
+		ContractKeeper *wasmkeeper.PermissionedKeeper
+		AccountKeeper  types.AccountKeeper
 	}
 )
 
@@ -49,9 +49,9 @@ func NewKeeper(
 		storeKey:       storeKey,
 		memKey:         memKey,
 		paramstore:     ps,
-		wasmKeeper:     wp,
-		contractKeeper: contractKeeper,
-		accountKeeper:  ak,
+		WasmKeeper:     wp,
+		ContractKeeper: contractKeeper,
+		AccountKeeper:  ak,
 	}
 }
 
@@ -105,7 +105,7 @@ func (k Keeper) PrepareBeforeActive(ctx sdk.Context, sAccount authtypes.AccountI
 		return err
 	}
 
-	k.accountKeeper.SetAccount(ctx, sAccount)
+	k.AccountKeeper.SetAccount(ctx, sAccount)
 
 	return nil
 }
@@ -126,7 +126,7 @@ func (k Keeper) ActiveSmartAccount(
 	owner := sdk.AccAddress(pubKey.Address())
 
 	// instantiate smartcontract by code_id
-	address, _, err := k.contractKeeper.Instantiate2(
+	address, _, err := k.ContractKeeper.Instantiate2(
 		ctx,
 		msg.CodeID,
 		owner,                 // owner
@@ -192,7 +192,7 @@ func (k Keeper) ValidateRecoverSA(ctx sdk.Context, msg *types.MsgRecover) (autht
 	}
 
 	// only allow accounts with type SmartAccount to be restored pubkey
-	smartAccount := k.accountKeeper.GetAccount(ctx, saAddr)
+	smartAccount := k.AccountKeeper.GetAccount(ctx, saAddr)
 	if _, ok := smartAccount.(*types.SmartAccount); !ok {
 		return nil, types.ErrAccountNotFoundForAddress
 	}
@@ -222,7 +222,7 @@ func (k Keeper) CallSMValidate(ctx sdk.Context, msg *types.MsgRecover, saAddr sd
 	}
 
 	// check recover logic in smart contract
-	_, err = k.contractKeeper.Sudo(ctx, saAddr, sudoMsgBytes)
+	_, err = k.ContractKeeper.Sudo(ctx, saAddr, sudoMsgBytes)
 	if err != nil {
 		return err
 	}
@@ -235,7 +235,7 @@ func (k Keeper) UpdateAccountPubKey(ctx sdk.Context, acc authtypes.AccountI, pub
 		return err
 	}
 
-	k.accountKeeper.SetAccount(ctx, acc)
+	k.AccountKeeper.SetAccount(ctx, acc)
 
 	return nil
 }
@@ -261,7 +261,7 @@ func (k Keeper) isWhitelistCodeID(ctx sdk.Context, codeID uint64) bool {
 // Inactive smart-account must be base account with empty public key or smart account
 // and has not been used for any instantiated contracts
 func (k Keeper) IsInactiveAccount(ctx sdk.Context, acc sdk.AccAddress) (authtypes.AccountI, error) {
-	sAccount := k.accountKeeper.GetAccount(ctx, acc)
+	sAccount := k.AccountKeeper.GetAccount(ctx, acc)
 
 	// check if account has type base or smart
 	_, isBaseAccount := sAccount.(*authtypes.BaseAccount)
@@ -276,7 +276,7 @@ func (k Keeper) IsInactiveAccount(ctx sdk.Context, acc sdk.AccAddress) (authtype
 	}
 
 	// check if contract with account not been instantiated
-	if k.wasmKeeper.HasContractInfo(ctx, acc) {
+	if k.WasmKeeper.HasContractInfo(ctx, acc) {
 		return nil, sdkerrors.Wrap(types.ErrAccountAlreadyExists, acc.String())
 	}
 

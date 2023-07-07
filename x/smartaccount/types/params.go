@@ -12,7 +12,7 @@ const DefaultMaxGas = 2_000_000
 // Parameter store keys
 var (
 	WhitelistCodeID = []byte("WhitelistCodeID")
-	MaxGasQuery     = []byte("MaxGasQuery")
+	MaxGasExecute   = []byte("MaxGasExecute")
 )
 
 var _ paramtypes.ParamSet = (*Params)(nil)
@@ -26,7 +26,7 @@ func ParamKeyTable() paramtypes.KeyTable {
 func NewParams(whitelist []*CodeID, limitGas uint64) Params {
 	return Params{
 		WhitelistCodeID: whitelist,
-		MaxGasQuery:     limitGas,
+		MaxGasExecute:   limitGas,
 	}
 }
 
@@ -44,7 +44,7 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 		// using gov proposal for updates
 		paramtypes.NewParamSetPair(WhitelistCodeID, &p.WhitelistCodeID, validateWhitelistCodeID),
 		// max_gas_query limits the amount of gas that the validation query can use
-		paramtypes.NewParamSetPair(MaxGasQuery, &p.MaxGasQuery, validateMaxGasQuery),
+		paramtypes.NewParamSetPair(MaxGasExecute, &p.MaxGasExecute, validateMaxGasExecute),
 	}
 }
 
@@ -67,14 +67,14 @@ func validateWhitelistCodeID(i interface{}) error {
 	return nil
 }
 
-func validateMaxGasQuery(i interface{}) error {
+func validateMaxGasExecute(i interface{}) error {
 	v, ok := i.(uint64)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}
 
 	if v <= 0 {
-		return fmt.Errorf("zero max gas query")
+		return fmt.Errorf("zero max gas execute")
 	}
 
 	return nil
@@ -88,8 +88,8 @@ func (p Params) Validate() error {
 		return err
 	}
 
-	// validate max gas query
-	err = validateMaxGasQuery(p.MaxGasQuery)
+	// validate max gas execute
+	err = validateMaxGasExecute(p.MaxGasExecute)
 	if err != nil {
 		return err
 	}

@@ -70,13 +70,13 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 		ante.NewConsumeGasForTxSizeDecorator(options.AccountKeeper),
 		ante.NewDeductFeeDecorator(options.AccountKeeper, options.BankKeeper, options.FeegrantKeeper),
 		// SetPubKeyDecorator must be called before all signature verification decorators
-		smartaccount.NewSetPubKeyDecorator(options.AccountKeeper, options.WasmKeeper, options.SmartAccountKeeper),
+		smartaccount.NewSetPubKeyDecorator(options.SmartAccountKeeper),
 		ante.NewValidateSigCountDecorator(options.AccountKeeper),
 		ante.NewSigGasConsumeDecorator(options.AccountKeeper, sigGasConsumer),
 		ante.NewSigVerificationDecorator(options.AccountKeeper, options.SignModeHandler),
 
 		// new ante for account abstraction
-		smartaccount.NewSmartAccountDecorator(options.WasmKeeper, options.AccountKeeper, options.SmartAccountKeeper),
+		smartaccount.NewSmartAccountDecorator(options.SmartAccountKeeper),
 		ante.NewIncrementSequenceDecorator(options.AccountKeeper),
 		ibcante.NewAnteDecorator(options.IBCKeeper),
 	}

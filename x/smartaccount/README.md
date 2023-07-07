@@ -208,7 +208,7 @@ To illustrate this in a graph:
 ## Smart account Tx 
 When build transaction with smart account, user must includes `Validate message` into tx. This message has type **MsgExecuteContract** and will use to trigger smart contract logic that applies to this account.
 
-`Validate message` call to `after_execute` method of contract that linked with smart account. It's value is information of all other messages included in tx. Firstly, the module uses this message data to execute a contract's query before the tx is passed to the mempool. The query calls the `validate` method for basic validation tx, if it fails, the tx will be denied to enter the mempool and the user will not incur gas charges for it. Finnaly, after all messages included in tx are executed, `Validate message` will be executed to determine whether tx was successful or not.
+`Validate message` call to `after_execute` method of contract that linked with smart account. It's value is information of all other messages included in tx. Firstly, the module uses this message data to execute a contract's before the tx is passed to the mempool. The execute calls the `pre_execute` method for pre-validation tx, if it fails, the tx will be denied to enter the mempool and the user will not incur gas charges for it. Finnaly, after all messages included in tx are executed, `Validate message` will be executed to determine whether tx was successful or not.
 
 </br>
 
@@ -240,9 +240,9 @@ To illustrate this in a graph:
   │   ┌───────────────┐   │
   │   │ SA SetPubKey  │   │
   │   └───────────────┘   │
-  │   ┌───────────────┐   │ `validate` query     ┌───────────────┐
-  │   │ SA decorator  │---│--------------------->|  wasmd module |
-  │   └───────────────┘   │                      └───────────────┘
+  │   ┌───────────────┐   │   `pre_execute` execute   ┌───────────────┐
+  │   │ SA decorator  │---│-------------------------->|  wasmd module |
+  │   └───────────────┘   │                           └───────────────┘
   │   ┌───────────────┐   │
   │   │  decorator 2  │   │
   │   └───────────────┘   │
@@ -286,21 +286,21 @@ To illustrate this in a graph:
 
 ## Params
 Parameters are updatable by the module's authority, typically set to the gov module account.
-- `max_gas_query`: limit how much gas can bo consumed by the `validate` method
+- `max_gas_execute`: limit how much gas can be consumed by the `pre_execute` method
 - `whitelist_code_id`: determine which **code_id** can be instantiated as a `smart account`
 
 </br> 
 
 ## WASM
-To be considered as `smart account`, smart contract linked with account must implement execute and query methods, `after_execute` and `validate`:
+To be considered as `smart account`, smart contract linked with account must implement execute methods, `after_execute` and `pre_execute`:
 ```Rust
 // execute method
 struct AfterExecute {
     pub msgs: Vec<MsgData>
 }
 
-// query method
-struct Validate { 
+// execute method
+struct PreExecute { 
     pub msgs: Vec<MsgData>
 }
 ```
@@ -316,7 +316,7 @@ struct Validate {
         //  }
     }
     ```
-- `validate` method must not consumes exceed `max_gas_query` gas 
+- `pre_execute` method must not consumes exceed `max_gas_execute` gas 
 
 Optional sudo method recover that activate the smart account recovery function
 ```Rust

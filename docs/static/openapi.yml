@@ -315,10 +315,12 @@ paths:
                       initialized as smart account
 
                       using gov proposal for updates
-                  max_gas_query:
+                  max_gas_execute:
                     type: string
                     format: uint64
-                    title: max_gas_query
+                    title: >-
+                      limit how much gas can be consumed by the `pre_execute`
+                      method
             description: >-
               QueryParamsResponse is response type for the Query/Params RPC
               method.
@@ -32956,10 +32958,10 @@ definitions:
           account
 
           using gov proposal for updates
-      max_gas_query:
+      max_gas_execute:
         type: string
         format: uint64
-        title: max_gas_query
+        title: limit how much gas can be consumed by the `pre_execute` method
     description: Params defines the parameters for the module.
   auranw.aura.smartaccount.QueryGenerateAccountResponse:
     type: object
@@ -32990,10 +32992,10 @@ definitions:
               smart account
 
               using gov proposal for updates
-          max_gas_query:
+          max_gas_execute:
             type: string
             format: uint64
-            title: max_gas_query
+            title: limit how much gas can be consumed by the `pre_execute` method
     description: QueryParamsResponse is response type for the Query/Params RPC method.
   cosmos.auth.v1beta1.Params:
     type: object

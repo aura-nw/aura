@@ -7,7 +7,7 @@ import (
 )
 
 type AccountMsg struct {
-	ValidateTx     *ValidateTx     `json:"validate,omitempty"`
+	PreExecuteTx   *PreExecuteTx   `json:"pre_execute,omitempty"`
 	AfterExecuteTx *AfterExecuteTx `json:"after_execute,omitempty"`
 	RecoverTx      *RecoverTx      `json:"recover,omitempty"`
 }
@@ -18,7 +18,7 @@ type RecoverTx struct {
 	Credentials []byte `json:"credentials"`
 }
 
-type ValidateTx struct {
+type PreExecuteTx struct {
 	Msgs []MsgData `json:"msgs"`
 }
 

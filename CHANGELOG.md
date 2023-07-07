@@ -37,6 +37,12 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 ## Unreleased
 
+## [v0.6.1] - 2023-07-07
+
+### Improvements
+- Add config swagger
+- Change before check tx of smart account from query to execution
+
 ## [v0.6.0] - 2023-06-30
 
 ### Features

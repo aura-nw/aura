@@ -20,7 +20,10 @@ func CreateUpgradeHandler(
 
 		// update smartaccount params
 		smartaccountParams := samoduletypes.DefaultParams()
-		saKeeper.SetParams(ctx, smartaccountParams)
+		err := saKeeper.SetParams(ctx, smartaccountParams)
+		if err != nil {
+			return nil, err
+		}
 
 		return mm.RunMigrations(ctx, configurator, vm)
 	}

@@ -55,7 +55,7 @@ genesis:
     smartaccount:
       params:
         whitelist_code_id: []
-        max_gas_query: 2000000
+        max_gas_execute: 2000000
       smart_account_id: 0
 
 

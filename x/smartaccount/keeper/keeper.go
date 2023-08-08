@@ -244,18 +244,8 @@ func (k Keeper) UpdateAccountPubKey(ctx sdk.Context, acc authtypes.AccountI, pub
 // otherwise return false
 func (k Keeper) isWhitelistCodeID(ctx sdk.Context, codeID uint64) bool {
 	params := k.GetParams(ctx)
-	if params.WhitelistCodeID == nil {
-		return false
-	}
 
-	// code_id must be in whitelist and has activated status
-	for _, codeIDAllowed := range params.WhitelistCodeID {
-		if codeID == codeIDAllowed.CodeID && codeIDAllowed.Status {
-			return true
-		}
-	}
-
-	return false
+	return params.IsAllowedCodeID(codeID)
 }
 
 // Inactive smart-account must be base account with empty public key or smart account

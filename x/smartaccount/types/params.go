@@ -97,6 +97,21 @@ func (p Params) Validate() error {
 	return nil
 }
 
+func (p Params) IsAllowedCodeID(codeID uint64) bool {
+	if p.WhitelistCodeID == nil {
+		return false
+	}
+
+	// code_id must be in whitelist and has activated status
+	for _, codeIDAllowed := range p.WhitelistCodeID {
+		if codeID == codeIDAllowed.CodeID && codeIDAllowed.Status {
+			return true
+		}
+	}
+
+	return false
+}
+
 // String implements the Stringer interface.
 func (p Params) String() string {
 	out, _ := yaml.Marshal(p)

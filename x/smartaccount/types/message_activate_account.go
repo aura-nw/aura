@@ -41,6 +41,10 @@ func (msg *MsgActivateAccount) ValidateBasic() error {
 		return sdkerrors.Wrapf(ErrInvalidAddress, "invalid smart account address (%s)", err)
 	}
 
+	if len(msg.Salt) > 64 {
+		return sdkerrors.ErrInvalidRequest.Wrap("length of salt too long")
+	}
+
 	_, err = PubKeyDecode(msg.PubKey)
 	if err != nil {
 		return err

@@ -382,7 +382,7 @@ func (d *SetPubKeyDecorator) AnteHandle(
 		// Also emit the following events, so that txs can be indexed by these
 		var events sdk.Events
 		events = append(events, sdk.NewEvent(types.EventTypeSmartAccountTx,
-			sdk.NewAttribute(sdk.AttributeKeyAccountSequence, fmt.Sprintf("%s/%d", signerAcc, sig.Sequence)),
+			sdk.NewAttribute(sdk.AttributeKeyAccountSequence, fmt.Sprintf("%s/%d", signerAcc.GetAddress(), sig.Sequence)),
 		))
 
 		// maybe need add more event here

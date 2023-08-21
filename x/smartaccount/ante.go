@@ -202,9 +202,9 @@ func (d *SmartAccountTxDecorator) AnteHandle(
 	}
 
 	// validate tx
-	execMsg, execMsgData, err := validateSmartAccountTx(tx, signerAcc)
+	execMsg, execMsgData, err := ValidateSmartAccountTx(tx, signerAcc)
 	if err != nil {
-		return ctx, nil
+		return ctx, err
 	}
 
 	// create message for SA contract pre-exeucte
@@ -225,7 +225,7 @@ func (d *SmartAccountTxDecorator) AnteHandle(
 }
 
 // validate smart-account tx
-func validateSmartAccountTx(tx sdk.Tx, signerAcc *types.SmartAccount) (*wasmtypes.MsgExecuteContract, []types.MsgData, error) {
+func ValidateSmartAccountTx(tx sdk.Tx, signerAcc *types.SmartAccount) (*wasmtypes.MsgExecuteContract, []types.MsgData, error) {
 	msgs := tx.GetMsgs()
 
 	// after-execute message must be the last message and must be MsgExecuteContract

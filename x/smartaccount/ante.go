@@ -151,7 +151,9 @@ func (d *SmartAccountDecorator) AnteHandle(
 	if !ctx.IsCheckTx() && !ctx.IsReCheckTx() && !simulate {
 		// get smart contract account by address
 		sAccount := d.SaKeeper.AccountKeeper.GetAccount(ctx, signer)
-		if _, ok := sAccount.(*authtypes.BaseAccount); !ok {
+		_, isBase := sAccount.(*authtypes.BaseAccount)
+		_, isSa := sAccount.(*types.SmartAccount)
+		if !isBase && !isSa {
 			return ctx, sdkerrors.Wrap(types.ErrAccountNotFoundForAddress, signer.String())
 		}
 

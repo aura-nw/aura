@@ -218,7 +218,7 @@ func (d *SmartAccountTxDecorator) AnteHandle(
 	params := d.SaKeeper.GetParams(ctx)
 
 	// execute SA contract for pre-execute transaction with limit gas
-	err = executeWithGasLimit(ctx, d.SaKeeper.ContractKeeper, signerAcc.GetAddress(), validateMessage, params.MaxGasExecute)
+	err = sudoWithGasLimit(ctx, d.SaKeeper.ContractKeeper, signerAcc.GetAddress(), validateMessage, params.MaxGasExecute)
 	if err != nil {
 		return ctx, err
 	}
@@ -255,22 +255,20 @@ func ValidateSmartAccountTx(tx sdk.Tx, signerAcc *types.SmartAccount) (*wasmtype
 	return afterExecMsg, execMsgData, nil
 }
 
-// Call a contract's execute with a gas limit
+// Call a contract's sudo with a gas limit
 // referenced from Osmosis' protorev posthandler:
 // https://github.com/osmosis-labs/osmosis/blob/98025f185ab2ee1b060511ed22679112abcc08fa/x/protorev/keeper/posthandler.go#L42-L43
-func executeWithGasLimit(
+func sudoWithGasLimit(
 	ctx sdk.Context, contractKeeper *wasmkeeper.PermissionedKeeper,
 	contractAddr sdk.AccAddress, msg []byte, maxGas sdk.Gas,
 ) error {
 	cacheCtx, write := ctx.CacheContext()
 	cacheCtx = cacheCtx.WithGasMeter(sdk.NewGasMeter(maxGas))
 
-	if _, err := contractKeeper.Execute(
+	if _, err := contractKeeper.Sudo(
 		cacheCtx,
 		contractAddr, // contract address
-		contractAddr, // signer, the smart account has the same address as the contract linked with it
 		msg,
-		sdk.NewCoins(), // empty funds
 	); err != nil {
 		return err
 	}

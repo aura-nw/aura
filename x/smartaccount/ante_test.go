@@ -31,7 +31,8 @@ func TestIsSmartAccountTx(t *testing.T) {
 
 	acc2Mock, err := makeMockAccount(keybase, "test2")
 	acc2 := types.NewSmartAccountFromAccount(acc2Mock)
-	acc2.SetPubKey(acc2Mock.GetPubKey())
+	err = acc2.SetPubKey(acc2Mock.GetPubKey())
+	require.NoError(t, err)
 	app.AccountKeeper.SetAccount(ctx, acc2)
 	require.NoError(t, err)
 
@@ -215,8 +216,9 @@ func TestValidateSmartAccountTx(t *testing.T) {
 	)
 
 	acc1Mock, err := makeMockAccount(keybase, "test1")
+	require.NoError(t, err)
 	acc1 := types.NewSmartAccountFromAccount(acc1Mock)
-	acc1.SetPubKey(acc1Mock.GetPubKey())
+	err = acc1.SetPubKey(acc1Mock.GetPubKey())
 	require.NoError(t, err)
 	app.AccountKeeper.SetAccount(ctx, acc1)
 
@@ -301,8 +303,9 @@ func TestGeneratePreExecuteMessage(t *testing.T) {
 	)
 
 	acc1Mock, err := makeMockAccount(keybase, "test1")
+	require.NoError(t, err)
 	acc1 := types.NewSmartAccountFromAccount(acc1Mock)
-	acc1.SetPubKey(acc1Mock.GetPubKey())
+	err = acc1.SetPubKey(acc1Mock.GetPubKey())
 	require.NoError(t, err)
 	app.AccountKeeper.SetAccount(ctx, acc1)
 

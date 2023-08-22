@@ -79,6 +79,9 @@ func GenerateInActivateAccount(
 	dSalt []byte,
 	dMsg []byte,
 ) (*authtypes.BaseAccount, *codectypes.Any, error) {
+
+	sdk.GetConfig().SetBech32PrefixForAccount(AccountAddressPrefix, "")
+
 	/* ======== store wasm ======== */
 	user, err := sdk.AccAddressFromBech32(UserAddr)
 	if err != nil {

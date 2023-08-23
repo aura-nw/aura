@@ -18,7 +18,7 @@ import (
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 )
 
-func TestIsSmartAccountTx(t *testing.T) {
+func TestGetSmartAccountTxSigner(t *testing.T) {
 	var (
 		app     = tests.Setup(false)
 		ctx     = app.NewContext(false, tmproto.Header{})
@@ -104,17 +104,22 @@ func TestIsSmartAccountTx(t *testing.T) {
 		sigTx, err := prepareTx(ctx, keybase, tc.msgs, tc.signers, mockChainID, true)
 		require.NoError(t, err)
 
-		is, _, _, err := smartaccount.IsSmartAccountTx(ctx, sigTx, app.AccountKeeper)
+		signerAcc, err := smartaccount.GetSmartAccountTxSigner(ctx, sigTx, app.SaKeeper)
 		if tc.err {
 			require.Error(t, err)
 		} else {
 			require.NoError(t, err)
 		}
-		require.Equal(t, tc.expIs, is)
+
+		if tc.expIs {
+			require.NotEqual(t, (*types.SmartAccount)(nil), signerAcc)
+		} else {
+			require.Equal(t, (*types.SmartAccount)(nil), signerAcc)
+		}
 	}
 }
 
-func TestIsActivateAccountMessage(t *testing.T) {
+func TestGetValidActivateAccountMessage(t *testing.T) {
 	var (
 		app     = tests.Setup(false)
 		ctx     = app.NewContext(false, tmproto.Header{})
@@ -199,17 +204,22 @@ func TestIsActivateAccountMessage(t *testing.T) {
 		sigTx, err := prepareTx(ctx, keybase, tc.msgs, tc.signers, mockChainID, true)
 		require.NoError(t, err)
 
-		is, _, err := smartaccount.IsActivateAccountMessage(sigTx)
+		aaMsg, err := smartaccount.GetValidActivateAccountMessage(sigTx)
 		if tc.err {
 			require.Error(t, err)
 		} else {
 			require.NoError(t, err)
 		}
-		require.Equal(t, tc.expIs, is)
+
+		if tc.expIs {
+			require.NotEqual(t, (*types.MsgActivateAccount)(nil), aaMsg)
+		} else {
+			require.Equal(t, (*types.MsgActivateAccount)(nil), aaMsg)
+		}
 	}
 }
 
-func TestValidateSmartAccountTx(t *testing.T) {
+func TestValidateAndGetAfterExecMessage(t *testing.T) {
 	var (
 		app     = tests.Setup(false)
 		ctx     = app.NewContext(false, tmproto.Header{})
@@ -287,7 +297,7 @@ func TestValidateSmartAccountTx(t *testing.T) {
 		sigTx, err := prepareTx(ctx, keybase, tc.msgs, tc.signers, mockChainID, true)
 		require.NoError(t, err)
 
-		_, _, err = smartaccount.ValidateSmartAccountTx(sigTx, acc1)
+		_, err = smartaccount.ValidateAndGetAfterExecMessage(sigTx.GetMsgs(), acc1)
 		if tc.err {
 			require.Error(t, err)
 		} else {
@@ -370,7 +380,13 @@ func TestGeneratePreExecuteMessage(t *testing.T) {
 		sigTx, err := prepareTx(ctx, keybase, tc.msgs, tc.signers, mockChainID, true)
 		require.NoError(t, err)
 
-		afterExecMsg, execMsgData, err := smartaccount.ValidateSmartAccountTx(sigTx, acc1)
+		msgs := sigTx.GetMsgs()
+
+		afterExecMsg, err := smartaccount.ValidateAndGetAfterExecMessage(msgs, acc1)
+		require.NoError(t, err)
+
+		// parse messages in tx to list of string
+		execMsgData, err := types.ParseMessagesString(msgs[:len(msgs)-1])
 		require.NoError(t, err)
 
 		_, err = smartaccount.GeneratePreExecuteMessage(afterExecMsg, execMsgData)

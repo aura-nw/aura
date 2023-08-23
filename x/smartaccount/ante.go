@@ -11,47 +11,41 @@ import (
 	"github.com/aura-nw/aura/x/smartaccount/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	txsigning "github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 )
 
-func IsSmartAccountTx(ctx sdk.Context, tx sdk.Tx, accountKeeper authante.AccountKeeper) (bool, *types.SmartAccount, *txsigning.SignatureV2, error) {
+func GetSmartAccountTxSigner(ctx sdk.Context, tx sdk.Tx, saKeeper sakeeper.Keeper) (*types.SmartAccount, error) {
 	sigTx, ok := tx.(authsigning.SigVerifiableTx)
 	if !ok {
-		return false, nil, nil, sdkerrors.Wrap(types.ErrInvalidTx, "not a SigVerifiableTx")
+		return nil, sdkerrors.Wrap(types.ErrInvalidTx, "not a SigVerifiableTx")
 	}
 
 	sigs, err := sigTx.GetSignaturesV2()
 	if err != nil {
-		return false, nil, nil, err
+		return nil, err
 	}
 
 	signerAddrs := sigTx.GetSigners()
 
-	// do not allow multi signer
+	// signer of smartaccount tx must stand alone
 	if len(signerAddrs) != 1 || len(sigs) != 1 {
-		return false, nil, nil, nil
+		return nil, nil
 	}
 
-	signerAcc, err := authante.GetSignerAcc(ctx, accountKeeper, signerAddrs[0])
+	saAcc, err := saKeeper.GetSmartAccountByAddress(ctx, signerAddrs[0])
 	if err != nil {
-		return false, nil, nil, err
+		return nil, err
 	}
 
-	saAcc, ok := signerAcc.(*types.SmartAccount)
-	if !ok {
-		return false, nil, nil, nil
-	}
-
-	return true, saAcc, &sigs[0], nil
+	return saAcc, nil
 }
 
-func IsActivateAccountMessage(tx sdk.Tx) (bool, *types.MsgActivateAccount, error) {
+func GetValidActivateAccountMessage(tx sdk.Tx) (*types.MsgActivateAccount, error) {
 	sigTx, ok := tx.(authsigning.SigVerifiableTx)
 	if !ok {
-		return false, nil, sdkerrors.Wrap(types.ErrInvalidTx, "not a SigVerifiableTx")
+		return nil, sdkerrors.Wrap(types.ErrInvalidTx, "not a SigVerifiableTx")
 	}
 
 	msgs := sigTx.GetMsgs()
@@ -60,31 +54,31 @@ func IsActivateAccountMessage(tx sdk.Tx) (bool, *types.MsgActivateAccount, error
 		// smart account activation message must stand alone
 		for _, msg := range msgs {
 			if _, ok := msg.(*types.MsgActivateAccount); ok {
-				return false, nil, sdkerrors.Wrap(types.ErrInvalidTx, "smart account activation message must stand alone")
+				return nil, sdkerrors.Wrap(types.ErrInvalidTx, "smart account activation message must stand alone")
 			}
 		}
 
-		return false, nil, nil
+		return nil, nil
 	}
 
 	activateMsg, ok := msgs[0].(*types.MsgActivateAccount)
 	if !ok {
-		return false, nil, nil
+		return nil, nil
 	}
 
 	sigs, err := sigTx.GetSignaturesV2()
 	if err != nil {
-		return false, nil, err
+		return nil, err
 	}
 
 	signer := sigTx.GetSigners()
 
 	// do not allow multi signer and signature
 	if len(signer) != 1 || len(sigs) != 1 {
-		return false, nil, sdkerrors.Wrap(types.ErrInvalidTx, "smart-account activation tx does not allow multiple signers")
+		return nil, sdkerrors.Wrap(types.ErrInvalidTx, "smart-account activation tx does not allow multiple signers")
 	}
 
-	return true, activateMsg, nil
+	return activateMsg, nil
 }
 
 // ------------------------- SmartAccount Decorator ------------------------- \\
@@ -107,13 +101,13 @@ func (d *SmartAccountDecorator) AnteHandle(
 	next sdk.AnteHandler,
 ) (newCtx sdk.Context, err error) {
 
-	isActivateAccount, activateMsg, err := IsActivateAccountMessage(tx)
+	activateMsg, err := GetValidActivateAccountMessage(tx)
 	if err != nil {
 		return ctx, err
 	}
 
 	// if is not activate account message, next to SmartAccountTxDecorator
-	if !isActivateAccount {
+	if activateMsg == nil {
 		satd := NewSmartAccountTxDecorator(d.SaKeeper)
 		return satd.AnteHandle(ctx, tx, simulate, next)
 	}
@@ -187,13 +181,13 @@ func (d *SmartAccountTxDecorator) AnteHandle(
 	next sdk.AnteHandler,
 ) (newCtx sdk.Context, err error) {
 
-	isSmartAccountTx, signerAcc, _, err := IsSmartAccountTx(ctx, tx, d.SaKeeper.AccountKeeper)
+	signerAcc, err := GetSmartAccountTxSigner(ctx, tx, d.SaKeeper)
 	if err != nil {
 		return ctx, err
 	}
 
 	// if is not smartaccount tx type
-	if !isSmartAccountTx {
+	if signerAcc == nil {
 		// do some thing
 		return next(ctx, tx, simulate)
 	}
@@ -203,8 +197,15 @@ func (d *SmartAccountTxDecorator) AnteHandle(
 		return ctx, sdkerrors.Wrap(types.ErrNotSupported, "Simulation of SmartAccount txs isn't supported yet")
 	}
 
-	// validate tx
-	execMsg, execMsgData, err := ValidateSmartAccountTx(tx, signerAcc)
+	msgs := tx.GetMsgs()
+
+	execMsg, err := ValidateAndGetAfterExecMessage(msgs, signerAcc)
+	if err != nil {
+		return ctx, err
+	}
+
+	// parse messages in tx to list of string
+	execMsgData, err := types.ParseMessagesString(msgs[:len(msgs)-1])
 	if err != nil {
 		return ctx, err
 	}
@@ -226,16 +227,13 @@ func (d *SmartAccountTxDecorator) AnteHandle(
 	return next(ctx, tx, simulate)
 }
 
-// validate smart-account tx
-func ValidateSmartAccountTx(tx sdk.Tx, signerAcc *types.SmartAccount) (*wasmtypes.MsgExecuteContract, []types.MsgData, error) {
-	msgs := tx.GetMsgs()
-
+func ValidateAndGetAfterExecMessage(msgs []sdk.Msg, signerAcc *types.SmartAccount) (*wasmtypes.MsgExecuteContract, error) {
 	// after-execute message must be the last message and must be MsgExecuteContract
 	var afterExecMsg *wasmtypes.MsgExecuteContract
 	if msg, err := msgs[len(msgs)-1].(*wasmtypes.MsgExecuteContract); err {
 		afterExecMsg = msg
 	} else {
-		return nil, nil, sdkerrors.Wrap(types.ErrInvalidMsg, "after-execute message must be type MsgExecuteContract")
+		return nil, sdkerrors.Wrap(types.ErrInvalidMsg, "after-execute message must be type MsgExecuteContract")
 	}
 
 	// get smartaccount address
@@ -243,16 +241,10 @@ func ValidateSmartAccountTx(tx sdk.Tx, signerAcc *types.SmartAccount) (*wasmtype
 
 	// the message must be sent from the signer's address which is also the smart contract address
 	if afterExecMsg.Sender != saAddress || afterExecMsg.Contract != saAddress {
-		return nil, nil, sdkerrors.Wrap(types.ErrInvalidMsg, "sender address and contract address must be the same")
+		return nil, sdkerrors.Wrap(types.ErrInvalidMsg, "sender address and contract address must be the same")
 	}
 
-	// parse messages in tx to list of string
-	execMsgData, err := types.ParseMessagesString(msgs[:len(msgs)-1])
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return afterExecMsg, execMsgData, nil
+	return afterExecMsg, nil
 }
 
 // Call a contract's execute with a gas limit
@@ -336,13 +328,13 @@ func (d *SetPubKeyDecorator) AnteHandle(
 	next sdk.AnteHandler,
 ) (newCtx sdk.Context, err error) {
 
-	isActivateAccountMsg, activateMsg, err := IsActivateAccountMessage(tx)
+	activateMsg, err := GetValidActivateAccountMessage(tx)
 	if err != nil {
 		return ctx, err
 	}
 
 	// if is smart account activation message
-	if isActivateAccountMsg {
+	if activateMsg != nil {
 		// get message signer
 		signer := activateMsg.GetSigners()[0]
 
@@ -368,14 +360,14 @@ func (d *SetPubKeyDecorator) AnteHandle(
 		return next(ctx, tx, simulate)
 	}
 
-	isSmartAccountTx, signerAcc, sig, err := IsSmartAccountTx(ctx, tx, d.saKeeper.AccountKeeper)
+	signerAcc, err := GetSmartAccountTxSigner(ctx, tx, d.saKeeper)
 	if err != nil {
 		return ctx, err
 	}
 
 	// if is smart account tx skip authante NewSetPubKeyDecorator
 	// need this to avoid pubkey and address equal check of above decorator
-	if isSmartAccountTx {
+	if signerAcc != nil {
 		// if this is smart account tx, check if pubkey is set
 		if signerAcc.GetPubKey() == nil {
 			return ctx, sdkerrors.Wrap(types.ErrNilPubkey, signerAcc.String())
@@ -384,7 +376,7 @@ func (d *SetPubKeyDecorator) AnteHandle(
 		// Also emit the following events, so that txs can be indexed by these
 		var events sdk.Events
 		events = append(events, sdk.NewEvent(types.EventTypeSmartAccountTx,
-			sdk.NewAttribute(sdk.AttributeKeyAccountSequence, fmt.Sprintf("%s/%d", signerAcc.GetAddress(), sig.Sequence)),
+			sdk.NewAttribute(sdk.AttributeKeyAccountSequence, fmt.Sprintf("%s/%d", signerAcc.GetAddress(), signerAcc.GetSequence())),
 		))
 
 		// maybe need add more event here

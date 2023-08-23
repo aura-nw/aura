@@ -151,7 +151,9 @@ func (d *SmartAccountDecorator) AnteHandle(
 	if !ctx.IsCheckTx() && !ctx.IsReCheckTx() && !simulate {
 		// get smart contract account by address
 		sAccount := d.SaKeeper.AccountKeeper.GetAccount(ctx, signer)
-		if _, ok := sAccount.(*authtypes.BaseAccount); !ok {
+		_, isBase := sAccount.(*authtypes.BaseAccount)
+		_, isSa := sAccount.(*types.SmartAccount)
+		if !isBase && !isSa {
 			return ctx, sdkerrors.Wrap(types.ErrAccountNotFoundForAddress, signer.String())
 		}
 
@@ -202,9 +204,9 @@ func (d *SmartAccountTxDecorator) AnteHandle(
 	}
 
 	// validate tx
-	execMsg, execMsgData, err := validateSmartAccountTx(tx, signerAcc)
+	execMsg, execMsgData, err := ValidateSmartAccountTx(tx, signerAcc)
 	if err != nil {
-		return ctx, nil
+		return ctx, err
 	}
 
 	// create message for SA contract pre-exeucte
@@ -225,7 +227,7 @@ func (d *SmartAccountTxDecorator) AnteHandle(
 }
 
 // validate smart-account tx
-func validateSmartAccountTx(tx sdk.Tx, signerAcc *types.SmartAccount) (*wasmtypes.MsgExecuteContract, []types.MsgData, error) {
+func ValidateSmartAccountTx(tx sdk.Tx, signerAcc *types.SmartAccount) (*wasmtypes.MsgExecuteContract, []types.MsgData, error) {
 	msgs := tx.GetMsgs()
 
 	// after-execute message must be the last message and must be MsgExecuteContract

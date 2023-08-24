@@ -647,7 +647,7 @@ func TestHandleSmartAccountTx(t *testing.T) {
 		sigTx, err := prepareTx(ctx, keybase, tc.msgs, tc.signers, mockChainID, true)
 		require.NoError(t, err)
 
-		_, err = smartaccount.HandleSmartAccountTx(ctx, app.SaKeeper, sigTx, tc.simulate)
+		err = smartaccount.HandleSmartAccountTx(ctx, app.SaKeeper, sigTx, tc.simulate)
 
 		if tc.err {
 			require.Error(t, err)

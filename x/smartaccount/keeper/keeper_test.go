@@ -327,7 +327,7 @@ func TestCallSMValidate(t *testing.T) {
 
 func TestIsInactiveAccount(t *testing.T) {
 	testSAAddress1 := "cosmos13t4996czrgft9gw43epuwauccrldu5whx6uprjdmvsmuf7ylg8yqcxgzk3"
-	testBAAddress1 := "cosmos13t4996czrgft9gw43epuwauccrldu5whx6uprjdmvsmuf7ylg8yqcxgzk3"
+	testBAAddress1 := "cosmos1kzlrmxw3h2n4uzuv73m33cfw7xt7qjf3hlqx33ulc02e9dhxu46qgfxg9l"
 	testBAAddress2 := "cosmos10uxaa5gkxpeungu2c9qswx035v6t3r24w6v2r6dxd858rq2mzknqj8ru28"
 
 	ctx, app := helper.SetupGenesisTest()
@@ -410,6 +410,61 @@ func TestIsInactiveAccount(t *testing.T) {
 			require.Error(t, err)
 		} else {
 			require.NoError(t, err)
+		}
+	}
+}
+
+func TestGetSmartAccountByAddress(t *testing.T) {
+	testAddress1 := "cosmos13t4996czrgft9gw43epuwauccrldu5whx6uprjdmvsmuf7ylg8yqcxgzk3"
+	testAddress2 := "cosmos1kzlrmxw3h2n4uzuv73m33cfw7xt7qjf3hlqx33ulc02e9dhxu46qgfxg9l"
+	testAddress3 := "cosmos10uxaa5gkxpeungu2c9qswx035v6t3r24w6v2r6dxd858rq2mzknqj8ru28"
+
+	ctx, app := helper.SetupGenesisTest()
+
+	err := helper.AddNewSmartAccount(app, ctx, testAddress1, nil, 0)
+	require.NoError(t, err)
+
+	err = helper.AddNewBaseAccount(app, ctx, testAddress2, nil, 0)
+	require.NoError(t, err)
+
+	for _, tc := range []struct {
+		desc           string
+		AccountAddress string
+		err            bool
+		exist          bool
+	}{
+		{
+			desc:           "get smartaccount sucessfully",
+			AccountAddress: testAddress1,
+			err:            false,
+			exist:          true,
+		},
+		{
+			desc:           "is baseaccount, got nil",
+			AccountAddress: testAddress2,
+			err:            false,
+		},
+		{
+			desc:           "error, account with address not found",
+			AccountAddress: testAddress3,
+			err:            true,
+		},
+	} {
+		acc, err := sdk.AccAddressFromBech32(tc.AccountAddress)
+		require.NoError(t, err)
+
+		saAcc, err := app.SaKeeper.GetSmartAccountByAddress(ctx, acc)
+
+		if tc.err {
+			require.Error(t, err)
+		} else {
+			require.NoError(t, err)
+		}
+
+		if tc.exist {
+			require.NotEqual(t, (*types.SmartAccount)(nil), saAcc)
+		} else {
+			require.Equal(t, (*types.SmartAccount)(nil), saAcc)
 		}
 	}
 }

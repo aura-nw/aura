@@ -525,7 +525,7 @@ func TestSetPubKeyDecorator(t *testing.T) {
 	}
 }
 
-func TestSmartAccountTxDecorator(t *testing.T) {
+func TestHandleSmartAccountTx(t *testing.T) {
 	var (
 		ctx, app = helper.SetupGenesisTest()
 		keybase  = keyring.NewInMemory()
@@ -647,8 +647,7 @@ func TestSmartAccountTxDecorator(t *testing.T) {
 		sigTx, err := prepareTx(ctx, keybase, tc.msgs, tc.signers, mockChainID, true)
 		require.NoError(t, err)
 
-		satd := smartaccount.NewSmartAccountTxDecorator(app.SaKeeper)
-		_, err = satd.AnteHandle(ctx, sigTx, tc.simulate, DefaultAnteHandler())
+		_, err = smartaccount.HandleSmartAccountTx(ctx, app.SaKeeper, sigTx, tc.simulate)
 
 		if tc.err {
 			require.Error(t, err)
@@ -683,19 +682,6 @@ func TestSmartAccountDecorator(t *testing.T) {
 	require.NoError(t, err)
 	err = acc1Signer.SetPubKey(dPubKey1)
 	require.NoError(t, err)
-
-	/* msg := &types.MsgActivateAccount{
-		AccountAddress: acc1.GetAddress().String(),
-		CodeID:         helper.DefaultCodeID,
-		Salt:           helper.DefaultSalt,
-		InitMsg:        helper.DefaultMsg,
-		PubKey:         pubKey1,
-	}
-
-	msgServer := keeper.NewMsgServerImpl(app.SaKeeper)
-	// activate account
-	_, err = msgServer.ActivateAccount(sdk.WrapSDKContext(ctx), msg)
-	require.NoError(t, err) */
 
 	acc2, err := makeMockAccount(keybase, "test2")
 	require.NoError(t, err)

@@ -14,11 +14,12 @@ import (
 	helper "github.com/aura-nw/aura/tests/smartaccount"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 )
 
-func TestIsSmartAccountTx(t *testing.T) {
+func TestGetSmartAccountTxSigner(t *testing.T) {
 	var (
 		app     = tests.Setup(false)
 		ctx     = app.NewContext(false, tmproto.Header{})
@@ -104,17 +105,22 @@ func TestIsSmartAccountTx(t *testing.T) {
 		sigTx, err := prepareTx(ctx, keybase, tc.msgs, tc.signers, mockChainID, true)
 		require.NoError(t, err)
 
-		is, _, _, err := smartaccount.IsSmartAccountTx(ctx, sigTx, app.AccountKeeper)
+		signerAcc, err := smartaccount.GetSmartAccountTxSigner(ctx, sigTx, app.SaKeeper)
 		if tc.err {
 			require.Error(t, err)
 		} else {
 			require.NoError(t, err)
 		}
-		require.Equal(t, tc.expIs, is)
+
+		if tc.expIs {
+			require.NotEqual(t, (*types.SmartAccount)(nil), signerAcc)
+		} else {
+			require.Equal(t, (*types.SmartAccount)(nil), signerAcc)
+		}
 	}
 }
 
-func TestIsActivateAccountMessage(t *testing.T) {
+func TestGetValidActivateAccountMessage(t *testing.T) {
 	var (
 		app     = tests.Setup(false)
 		ctx     = app.NewContext(false, tmproto.Header{})
@@ -199,185 +205,17 @@ func TestIsActivateAccountMessage(t *testing.T) {
 		sigTx, err := prepareTx(ctx, keybase, tc.msgs, tc.signers, mockChainID, true)
 		require.NoError(t, err)
 
-		is, _, err := smartaccount.IsActivateAccountMessage(sigTx)
+		aaMsg, err := smartaccount.GetValidActivateAccountMessage(sigTx)
 		if tc.err {
 			require.Error(t, err)
 		} else {
 			require.NoError(t, err)
 		}
-		require.Equal(t, tc.expIs, is)
-	}
-}
 
-func TestValidateSmartAccountTx(t *testing.T) {
-	var (
-		app     = tests.Setup(false)
-		ctx     = app.NewContext(false, tmproto.Header{})
-		keybase = keyring.NewInMemory()
-	)
-
-	acc1Mock, err := makeMockAccount(keybase, "test1")
-	require.NoError(t, err)
-	acc1 := types.NewSmartAccountFromAccount(acc1Mock)
-	err = acc1.SetPubKey(acc1Mock.GetPubKey())
-	require.NoError(t, err)
-	app.AccountKeeper.SetAccount(ctx, acc1)
-
-	acc2, err := makeMockAccount(keybase, "test2")
-	require.NoError(t, err)
-	app.AccountKeeper.SetAccount(ctx, acc2)
-
-	signer1 := Signer{
-		keyName:        "test1",
-		acc:            acc1,
-		overrideAccNum: nil,
-		overrideSeq:    nil,
-	}
-
-	for _, tc := range []struct {
-		desc    string
-		msgs    []sdk.Msg
-		signers []Signer
-		err     bool
-	}{
-		{
-			desc: "tx is not from smartaccount",
-			msgs: []sdk.Msg{
-				&types.MsgActivateAccount{
-					AccountAddress: signer1.acc.GetAddress().String(),
-				},
-				banktypes.NewMsgSend(acc1.GetAddress(), acc2.GetAddress(), sdk.NewCoins()),
-			},
-			signers: []Signer{signer1},
-			err:     true,
-		},
-		{
-			desc: "tx has after-execute message but not call to linked contract",
-			msgs: []sdk.Msg{
-				banktypes.NewMsgSend(acc1.GetAddress(), acc2.GetAddress(), sdk.NewCoins()),
-				&wasmtypes.MsgExecuteContract{
-					Sender:   acc1.GetAddress().String(),
-					Contract: acc2.GetAddress().String(),
-				},
-			},
-			signers: []Signer{signer1},
-			err:     true,
-		},
-		{
-			desc: "tx dont has after-execute message",
-			msgs: []sdk.Msg{
-				banktypes.NewMsgSend(acc1.GetAddress(), acc2.GetAddress(), sdk.NewCoins()),
-			},
-			signers: []Signer{signer1},
-			err:     true,
-		},
-		{
-			desc: "valid smartaccount tx",
-			msgs: []sdk.Msg{
-				banktypes.NewMsgSend(acc1.GetAddress(), acc2.GetAddress(), sdk.NewCoins()),
-				&wasmtypes.MsgExecuteContract{
-					Sender:   acc1.GetAddress().String(),
-					Contract: acc1.GetAddress().String(),
-				},
-			},
-			signers: []Signer{signer1},
-			err:     false,
-		},
-	} {
-		sigTx, err := prepareTx(ctx, keybase, tc.msgs, tc.signers, mockChainID, true)
-		require.NoError(t, err)
-
-		_, _, err = smartaccount.ValidateSmartAccountTx(sigTx, acc1)
-		if tc.err {
-			require.Error(t, err)
+		if tc.expIs {
+			require.NotEqual(t, (*types.MsgActivateAccount)(nil), aaMsg)
 		} else {
-			require.NoError(t, err)
-		}
-	}
-}
-
-func TestGeneratePreExecuteMessage(t *testing.T) {
-	var (
-		app     = tests.Setup(false)
-		ctx     = app.NewContext(false, tmproto.Header{})
-		keybase = keyring.NewInMemory()
-	)
-
-	acc1Mock, err := makeMockAccount(keybase, "test1")
-	require.NoError(t, err)
-	acc1 := types.NewSmartAccountFromAccount(acc1Mock)
-	err = acc1.SetPubKey(acc1Mock.GetPubKey())
-	require.NoError(t, err)
-	app.AccountKeeper.SetAccount(ctx, acc1)
-
-	acc2, err := makeMockAccount(keybase, "test2")
-	require.NoError(t, err)
-	app.AccountKeeper.SetAccount(ctx, acc2)
-
-	signer1 := Signer{
-		keyName:        "test1",
-		acc:            acc1,
-		overrideAccNum: nil,
-		overrideSeq:    nil,
-	}
-
-	for _, tc := range []struct {
-		desc    string
-		msgs    []sdk.Msg
-		signers []Signer
-		err     bool
-	}{
-		{
-			desc: "valid smartaccount tx",
-			msgs: []sdk.Msg{
-				banktypes.NewMsgSend(acc1.GetAddress(), acc2.GetAddress(), sdk.NewCoins()),
-				&wasmtypes.MsgExecuteContract{
-					Sender:   acc1.GetAddress().String(),
-					Contract: acc1.GetAddress().String(),
-					Msg:      []byte("{\"after_execute\":{\"msgs\":[{\"type_url\":\"/cosmos.bank.v1beta1.MsgSend\",\"value\":\"{\\\"from_address\\\":\\\"" + acc1.GetAddress().String() + "\\\",\\\"to_address\\\":\\\"" + acc2.GetAddress().String() + "\\\",\\\"amount\\\":[]}\"}]}}"),
-				},
-			},
-			signers: []Signer{signer1},
-			err:     false,
-		},
-		{
-			desc: "invalid smartaccount tx, not after execute message",
-			msgs: []sdk.Msg{
-				banktypes.NewMsgSend(acc1.GetAddress(), acc2.GetAddress(), sdk.NewCoins()),
-				&wasmtypes.MsgExecuteContract{
-					Sender:   acc1.GetAddress().String(),
-					Contract: acc1.GetAddress().String(),
-					Msg:      []byte("{\"pre_execute\":{\"msgs\":[{\"type_url\":\"/cosmos.bank.v1beta1.MsgSend\",\"value\":\"{\\\"from_address\\\":\\\"" + acc1.GetAddress().String() + "\\\",\\\"to_address\\\":\\\"" + acc2.GetAddress().String() + "\\\",\\\"amount\\\":[]}\"}]}}"),
-				},
-			},
-			signers: []Signer{signer1},
-			err:     true,
-		},
-		{
-			desc: "invalid smartaccount tx, after execute message data not compatible with tx messages",
-			msgs: []sdk.Msg{
-				banktypes.NewMsgSend(acc1.GetAddress(), acc2.GetAddress(), sdk.NewCoins()),
-				&wasmtypes.MsgExecuteContract{
-					Sender:   acc1.GetAddress().String(),
-					Contract: acc1.GetAddress().String(),
-					Msg:      []byte("{\"after_execute\":{\"msgs\":[]}}"),
-				},
-			},
-			signers: []Signer{signer1},
-			err:     true,
-		},
-	} {
-		sigTx, err := prepareTx(ctx, keybase, tc.msgs, tc.signers, mockChainID, true)
-		require.NoError(t, err)
-
-		afterExecMsg, execMsgData, err := smartaccount.ValidateSmartAccountTx(sigTx, acc1)
-		require.NoError(t, err)
-
-		_, err = smartaccount.GeneratePreExecuteMessage(afterExecMsg, execMsgData)
-		if tc.err {
-			require.Error(t, err)
-		} else {
-			require.NoError(t, err)
+			require.Equal(t, (*types.MsgActivateAccount)(nil), aaMsg)
 		}
 	}
 }
@@ -509,7 +347,7 @@ func TestSetPubKeyDecorator(t *testing.T) {
 	}
 }
 
-func TestSmartAccountTxDecorator(t *testing.T) {
+func TestSmartAccountDecoratorForTx(t *testing.T) {
 	var (
 		ctx, app = helper.SetupGenesisTest()
 		keybase  = keyring.NewInMemory()
@@ -607,6 +445,31 @@ func TestSmartAccountTxDecorator(t *testing.T) {
 			err:      true,
 		},
 		{
+			desc: "error, tx has after-execute message but not call to linked contract",
+			msgs: []sdk.Msg{
+				banktypes.NewMsgSend(acc1.GetAddress(), acc2.GetAddress(), sdk.NewCoins()),
+				&wasmtypes.MsgExecuteContract{
+					Sender:   acc1.GetAddress().String(),
+					Contract: acc2.GetAddress().String(),
+				},
+			},
+			signers: []Signer{signer1},
+			err:     true,
+		},
+		{
+			desc: "invalid smartaccount tx, after execute message data not compatible with tx messages",
+			msgs: []sdk.Msg{
+				banktypes.NewMsgSend(acc1.GetAddress(), acc2.GetAddress(), sdk.NewCoins()),
+				&wasmtypes.MsgExecuteContract{
+					Sender:   acc1.GetAddress().String(),
+					Contract: acc1.GetAddress().String(),
+					Msg:      []byte("{\"after_execute\":{\"msgs\":[]}}"),
+				},
+			},
+			signers: []Signer{signer1},
+			err:     true,
+		},
+		{
 			desc: "error, not SmartAccount tx, validateMessage not found",
 			msgs: []sdk.Msg{
 				banktypes.NewMsgSend(acc1.GetAddress(), acc2.GetAddress(), sdk.NewCoins()),
@@ -631,7 +494,7 @@ func TestSmartAccountTxDecorator(t *testing.T) {
 		sigTx, err := prepareTx(ctx, keybase, tc.msgs, tc.signers, mockChainID, true)
 		require.NoError(t, err)
 
-		satd := smartaccount.NewSmartAccountTxDecorator(app.SaKeeper)
+		satd := smartaccount.NewSmartAccountDecorator(app.SaKeeper)
 		_, err = satd.AnteHandle(ctx, sigTx, tc.simulate, DefaultAnteHandler())
 
 		if tc.err {
@@ -642,7 +505,10 @@ func TestSmartAccountTxDecorator(t *testing.T) {
 	}
 }
 
-func TestSmartAccountDecorator(t *testing.T) {
+func TestSmartAccountDecoratorForActivation(t *testing.T) {
+
+	/* =================== test activate account message flow =================== */
+
 	var (
 		ctx, app = helper.SetupGenesisTest()
 		keybase  = keyring.NewInMemory()
@@ -668,20 +534,29 @@ func TestSmartAccountDecorator(t *testing.T) {
 	err = acc1Signer.SetPubKey(dPubKey1)
 	require.NoError(t, err)
 
-	/* msg := &types.MsgActivateAccount{
-		AccountAddress: acc1.GetAddress().String(),
-		CodeID:         helper.DefaultCodeID,
-		Salt:           helper.DefaultSalt,
-		InitMsg:        helper.DefaultMsg,
-		PubKey:         pubKey1,
-	}
-
-	msgServer := keeper.NewMsgServerImpl(app.SaKeeper)
-	// activate account
-	_, err = msgServer.ActivateAccount(sdk.WrapSDKContext(ctx), msg)
-	require.NoError(t, err) */
-
 	acc2, err := makeMockAccount(keybase, "test2")
+	require.NoError(t, err)
+
+	// setup module account
+	acc3, pubKey3, err := helper.GenerateInActivateAccount(
+		app,
+		ctx,
+		helper.WasmPath1+"base.wasm",
+		helper.DefaultPubKey,
+		2,
+		[]byte("account3"),
+		helper.DefaultMsg,
+	)
+	require.NoError(t, err)
+	dPubKey3, err := types.PubKeyDecode(pubKey3)
+	require.NoError(t, err)
+
+	acc3Signer, err := makeMockAccount(keybase, "test3")
+	require.NoError(t, err)
+	err = acc3Signer.SetPubKey(dPubKey3)
+	require.NoError(t, err)
+	moduleAcc3 := authtypes.NewModuleAccount(acc3, "test", "hello")
+	app.AccountKeeper.SetAccount(ctx, moduleAcc3)
 	require.NoError(t, err)
 
 	signer1 := Signer{
@@ -691,14 +566,12 @@ func TestSmartAccountDecorator(t *testing.T) {
 		overrideSeq:    nil,
 	}
 
-	signer2 := Signer{
-		keyName:        "test2",
-		acc:            acc2,
+	signer3 := Signer{
+		keyName:        "test3",
+		acc:            acc3Signer,
 		overrideAccNum: nil,
 		overrideSeq:    nil,
 	}
-
-	_ = signer2
 
 	for _, tc := range []struct {
 		desc     string
@@ -733,6 +606,20 @@ func TestSmartAccountDecorator(t *testing.T) {
 			},
 			signers: []Signer{signer1},
 			err:     false,
+		},
+		{
+			desc: "error, is ActivateAccount message but invalid signer",
+			msgs: []sdk.Msg{
+				&types.MsgActivateAccount{
+					AccountAddress: acc3.GetAddress().String(),
+					CodeID:         2,
+					Salt:           []byte("account3"),
+					InitMsg:        helper.DefaultMsg,
+					PubKey:         pubKey1,
+				},
+			},
+			signers: []Signer{signer3},
+			err:     true,
 		},
 		{
 			desc: "error, smartaccount address not the same as predicted",

@@ -8,6 +8,7 @@ import (
 
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/tendermint/tendermint/libs/log"
 
@@ -271,4 +272,18 @@ func (k Keeper) IsInactiveAccount(ctx sdk.Context, acc sdk.AccAddress) (authtype
 	}
 
 	return sAccount, nil
+}
+
+func (k Keeper) GetSmartAccountByAddress(ctx sdk.Context, address sdk.AccAddress) (*types.SmartAccount, error) {
+	signerAcc, err := authante.GetSignerAcc(ctx, k.AccountKeeper, address)
+	if err != nil {
+		return nil, err
+	}
+
+	saAcc, ok := signerAcc.(*types.SmartAccount)
+	if !ok {
+		return nil, nil
+	}
+
+	return saAcc, nil
 }

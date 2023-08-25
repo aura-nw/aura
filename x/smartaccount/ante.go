@@ -102,12 +102,12 @@ func (d *SmartAccountDecorator) AnteHandle(
 	}
 
 	if activateMsg == nil {
-		err = HandleSmartAccountTx(ctx, d.SaKeeper, sigTx, simulate)
+		err = handleSmartAccountTx(ctx, d.SaKeeper, sigTx, simulate)
 		if err != nil {
 			return ctx, err
 		}
 	} else {
-		err = HandleSmartAccountActivate(ctx, d.SaKeeper, activateMsg, simulate)
+		err = handleSmartAccountActivate(ctx, d.SaKeeper, activateMsg, simulate)
 		if err != nil {
 			return ctx, err
 		}
@@ -116,7 +116,7 @@ func (d *SmartAccountDecorator) AnteHandle(
 	return next(ctx, tx, simulate)
 }
 
-func HandleSmartAccountTx(
+func handleSmartAccountTx(
 	ctx sdk.Context,
 	saKeeper sakeeper.Keeper,
 	sigTx authsigning.SigVerifiableTx,
@@ -141,7 +141,7 @@ func HandleSmartAccountTx(
 
 	msgs := sigTx.GetMsgs()
 
-	execMsg, err := ValidateAndGetAfterExecMessage(msgs, signerAcc)
+	execMsg, err := validateAndGetAfterExecMessage(msgs, signerAcc)
 	if err != nil {
 		return err
 	}
@@ -153,7 +153,7 @@ func HandleSmartAccountTx(
 	}
 
 	// create message for SA contract pre-exeucte
-	validateMessage, err := GeneratePreExecuteMessage(execMsg, execMsgData)
+	validateMessage, err := generatePreExecuteMessage(execMsg, execMsgData)
 	if err != nil {
 		return err
 	}
@@ -169,7 +169,7 @@ func HandleSmartAccountTx(
 	return nil
 }
 
-func HandleSmartAccountActivate(
+func handleSmartAccountActivate(
 	ctx sdk.Context,
 	saKeeper sakeeper.Keeper,
 	activateMsg *types.MsgActivateAccount,
@@ -224,7 +224,7 @@ func HandleSmartAccountActivate(
 	return nil
 }
 
-func ValidateAndGetAfterExecMessage(msgs []sdk.Msg, signerAcc *types.SmartAccount) (*wasmtypes.MsgExecuteContract, error) {
+func validateAndGetAfterExecMessage(msgs []sdk.Msg, signerAcc *types.SmartAccount) (*wasmtypes.MsgExecuteContract, error) {
 	// after-execute message must be the last message and must be MsgExecuteContract
 	var afterExecMsg *wasmtypes.MsgExecuteContract
 	if msg, err := msgs[len(msgs)-1].(*wasmtypes.MsgExecuteContract); err {
@@ -270,7 +270,7 @@ func executeWithGasLimit(
 	return nil
 }
 
-func GeneratePreExecuteMessage(msg *wasmtypes.MsgExecuteContract, msgs []types.MsgData) ([]byte, error) {
+func generatePreExecuteMessage(msg *wasmtypes.MsgExecuteContract, msgs []types.MsgData) ([]byte, error) {
 	var accMsg types.AccountMsg
 	umErr := json.Unmarshal(msg.GetMsg(), &accMsg)
 	if umErr != nil {

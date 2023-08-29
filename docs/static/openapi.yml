@@ -315,6 +315,11 @@ paths:
                       initialized as smart account
 
                       using gov proposal for updates
+                  disable_msgs_list:
+                    type: array
+                    items:
+                      type: string
+                    title: list of diable messages for smartaccount
                   max_gas_execute:
                     type: string
                     format: uint64
@@ -32958,6 +32963,11 @@ definitions:
           account
 
           using gov proposal for updates
+      disable_msgs_list:
+        type: array
+        items:
+          type: string
+        title: list of diable messages for smartaccount
       max_gas_execute:
         type: string
         format: uint64
@@ -32992,6 +33002,11 @@ definitions:
               smart account
 
               using gov proposal for updates
+          disable_msgs_list:
+            type: array
+            items:
+              type: string
+            title: list of diable messages for smartaccount
           max_gas_execute:
             type: string
             format: uint64

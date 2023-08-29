@@ -22,4 +22,5 @@ var (
 	ErrInvalidCredentials        = sdkerrors.Register(ModuleName, 12, "invalid credentials")
 	ErrInvalidCodeID             = sdkerrors.Register(ModuleName, 13, "invalid code id")
 	ErrNotSupported              = sdkerrors.Register(ModuleName, 14, "not supported")
+	ErrNotAllowedMsg             = sdkerrors.Register(ModuleName, 15, "not allowed message")
 )

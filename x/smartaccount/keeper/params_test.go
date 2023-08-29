@@ -24,7 +24,7 @@ func TestParams(t *testing.T) {
 			err: true,
 		},
 		{
-			desc: "create new params successfully",
+			desc: "error, duplicate msg",
 			params: types.NewParams(
 				[]*types.CodeID{{CodeID: 1, Status: true}},
 				[]string{"/cosmwasm.wasm.v1.MsgExecuteContract", "/cosmwasm.wasm.v1.MsgExecuteContract"}, // duplicate msg
@@ -45,7 +45,7 @@ func TestParams(t *testing.T) {
 			desc: "create new params successfully",
 			params: types.NewParams(
 				[]*types.CodeID{{CodeID: 1, Status: true}},
-				[]string{},
+				[]string{"/cosmwasm.wasm.v1.MsgExecuteContract"},
 				types.DefaultMaxGas,
 			),
 			err: false,

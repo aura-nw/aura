@@ -18,6 +18,16 @@ func TestParams(t *testing.T) {
 			desc: "error, duplicate codeID in whitlist",
 			params: types.NewParams(
 				[]*types.CodeID{{CodeID: 1, Status: true}, {CodeID: 1, Status: false}}, // duplicate codeID
+				[]string{},
+				types.DefaultMaxGas,
+			),
+			err: true,
+		},
+		{
+			desc: "error, duplicate msg",
+			params: types.NewParams(
+				[]*types.CodeID{{CodeID: 1, Status: true}},
+				[]string{"/cosmwasm.wasm.v1.MsgExecuteContract", "/cosmwasm.wasm.v1.MsgExecuteContract"}, // duplicate msg
 				types.DefaultMaxGas,
 			),
 			err: true,
@@ -26,6 +36,7 @@ func TestParams(t *testing.T) {
 			desc: "error, max_gas_execute with zero value",
 			params: types.NewParams(
 				[]*types.CodeID{{CodeID: 1, Status: true}},
+				[]string{},
 				uint64(0), // zero max gas execute
 			),
 			err: true,
@@ -34,6 +45,7 @@ func TestParams(t *testing.T) {
 			desc: "create new params successfully",
 			params: types.NewParams(
 				[]*types.CodeID{{CodeID: 1, Status: true}},
+				[]string{"/cosmwasm.wasm.v1.MsgExecuteContract"},
 				types.DefaultMaxGas,
 			),
 			err: false,

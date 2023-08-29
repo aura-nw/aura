@@ -287,3 +287,27 @@ func (k Keeper) GetSmartAccountByAddress(ctx sdk.Context, address sdk.AccAddress
 
 	return saAcc, nil
 }
+
+// IsAllowed returns true when msg URL is not found in the DisableList for given context, else false.
+func (k Keeper) CheckAllowedMsgs(ctx sdk.Context, msgs []sdk.Msg) error {
+	params := k.GetParams(ctx)
+
+	if params.DisableMsgsList == nil {
+		return nil
+	}
+
+	disableMap := make(map[string]bool)
+	for _, url := range params.DisableMsgsList {
+		disableMap[url] = true
+	}
+
+	for _, msg := range msgs {
+		url := sdk.MsgTypeURL(msg)
+
+		if _, ok := disableMap[url]; ok {
+			return sdkerrors.Wrap(types.ErrNotAllowedMsg, url)
+		}
+	}
+
+	return nil
+}

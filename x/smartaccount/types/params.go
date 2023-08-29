@@ -12,6 +12,7 @@ const DefaultMaxGas = 2_000_000
 // Parameter store keys
 var (
 	WhitelistCodeID = []byte("WhitelistCodeID")
+	DisableMsgsList = []byte("DisableMsgsList")
 	MaxGasExecute   = []byte("MaxGasExecute")
 )
 
@@ -23,18 +24,20 @@ func ParamKeyTable() paramtypes.KeyTable {
 }
 
 // NewParams creates a new Params instance
-func NewParams(whitelist []*CodeID, limitGas uint64) Params {
+func NewParams(whitelist []*CodeID, disableList []string, limitGas uint64) Params {
 	return Params{
 		WhitelistCodeID: whitelist,
+		DisableMsgsList: disableList,
 		MaxGasExecute:   limitGas,
 	}
 }
 
 // DefaultParams returns a default set of parameters
 func DefaultParams() Params {
-	empty := make([]*CodeID, 0)
+	emptyWhitelistCodeID := make([]*CodeID, 0)
+	emptyDisableMsgs := make([]string, 0)
 
-	return NewParams(empty, DefaultMaxGas)
+	return NewParams(emptyWhitelistCodeID, emptyDisableMsgs, DefaultMaxGas)
 }
 
 // ParamSetPairs get the params.ParamSet
@@ -43,6 +46,8 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 		// code_id whitelist indicates which contract can be initialized as smart account
 		// using gov proposal for updates
 		paramtypes.NewParamSetPair(WhitelistCodeID, &p.WhitelistCodeID, validateWhitelistCodeID),
+		// list of diable messages for smartaccount
+		paramtypes.NewParamSetPair(DisableMsgsList, &p.DisableMsgsList, validateDisableMsgsList),
 		// max_gas_query limits the amount of gas that the validation query can use
 		paramtypes.NewParamSetPair(MaxGasExecute, &p.MaxGasExecute, validateMaxGasExecute),
 	}
@@ -80,10 +85,35 @@ func validateMaxGasExecute(i interface{}) error {
 	return nil
 }
 
+func validateDisableMsgsList(i interface{}) error {
+	v, ok := i.([]string)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	// not allowed duplicate code_id in whitelist
+	visited := make(map[string]bool, 0)
+	for _, url := range v {
+		if visited[url] {
+			return fmt.Errorf("duplicate messages %s in disable_msgs_list", url)
+		} else {
+			visited[url] = true
+		}
+	}
+
+	return nil
+}
+
 // Validate validates the set of params
 func (p Params) Validate() error {
 	// validate whitelist_code_id param
 	err := validateWhitelistCodeID(p.WhitelistCodeID)
+	if err != nil {
+		return err
+	}
+
+	//validate disable_msgs_list param
+	err = validateDisableMsgsList(p.DisableMsgsList)
 	if err != nil {
 		return err
 	}

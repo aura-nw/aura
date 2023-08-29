@@ -25,6 +25,9 @@ message Params {
 	// using gov proposal for updates
   repeated CodeID whitelist_code_id = 1 [(gogoproto.customname) = "WhitelistCodeID"];
 
+  // list of diable messages for smartaccount 
+  repeated string disable_msgs_list = 2 [(gogoproto.customname) = "DisableMsgsList"];
+
   // limit how much gas can be consumed by the `pre_execute` method
-  uint64 max_gas_execute = 2 [(gogoproto.customname) = "MaxGasExecute"];
+  uint64 max_gas_execute = 3 [(gogoproto.customname) = "MaxGasExecute"];
 }

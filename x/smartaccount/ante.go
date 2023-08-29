@@ -141,6 +141,13 @@ func handleSmartAccountTx(
 
 	msgs := sigTx.GetMsgs()
 
+	// check if tx messages is allowed for smartaccount
+	// except after_execute message which is the last one
+	err = saKeeper.CheckAllowedMsgs(ctx, msgs[:len(msgs)-1])
+	if err != nil {
+		return err
+	}
+
 	execMsg, err := validateAndGetAfterExecMessage(msgs, signerAcc)
 	if err != nil {
 		return err

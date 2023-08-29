@@ -55,6 +55,7 @@ genesis:
     smartaccount:
       params:
         whitelist_code_id: []
+        disable_msgs_list: ["/cosmwasm.wasm.v1.MsgUpdateAdmin","/cosmwasm.wasm.v1.MsgClearAdmin"]
         max_gas_execute: 2000000
       smart_account_id: 0
 

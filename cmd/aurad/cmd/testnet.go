@@ -1,7 +1,7 @@
 package cmd
 
 // DONTCOVER
-
+/*
 import (
 	"bufio"
 	"encoding/json"
@@ -413,3 +413,4 @@ func writeFile(name string, dir string, contents []byte) error {
 
 	return nil
 }
+*/

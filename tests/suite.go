@@ -4,9 +4,9 @@ import (
 	"time"
 
 	"github.com/aura-nw/aura/app"
+	tmtypes "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
-	tmtypes "github.com/tendermint/tendermint/proto/tendermint/types"
 )
 
 type KeeperTestHelper struct {

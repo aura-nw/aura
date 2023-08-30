@@ -1,6 +1,6 @@
 package cmd
 
-import (
+/* import (
 	"bufio"
 	"encoding/json"
 	"errors"
@@ -261,3 +261,4 @@ func caculateVestingPeriods(vestingTime int64, periodLength int64, vestingAmtStr
 		return periods
 	}
 }
+*/

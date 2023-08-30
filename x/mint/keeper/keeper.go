@@ -1,11 +1,12 @@
 package keeper
 
 import (
+	"cosmossdk.io/math"
 	custommint "github.com/aura-nw/aura/x/mint/types"
 	"github.com/cosmos/cosmos-sdk/codec"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	mintkeeper "github.com/cosmos/cosmos-sdk/x/mint/keeper"
-	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 )
 
 // Keeper of the mint store
@@ -19,12 +20,12 @@ type Keeper struct {
 
 // NewKeeper creates a new mint Keeper instance
 func NewKeeper(
-	cdc codec.BinaryCodec, key sdk.StoreKey, paramSpace paramtypes.Subspace,
+	cdc codec.BinaryCodec, key storetypes.StoreKey,
 	sk custommint.StakingKeeper, ak custommint.AccountKeeper, bk custommint.BankKeeper,
-	auraKeeper custommint.AuraKeeper, feeCollectorName string,
+	auraKeeper custommint.AuraKeeper, feeCollectorName string, authority string,
 ) Keeper {
 	return Keeper{
-		Keeper:        mintkeeper.NewKeeper(cdc, key, paramSpace, sk, ak, bk, feeCollectorName),
+		Keeper:        mintkeeper.NewKeeper(cdc, key, sk, ak, bk, feeCollectorName, authority),
 		bankKeeper:    bk,
 		stakingKeeper: sk,
 		auraKeeper:    auraKeeper,
@@ -69,10 +70,11 @@ func (k Keeper) CustomStakingTokenSupply(ctx sdk.Context, excludeAmount sdk.Int)
 
 // CustomBondedRatio implements an alias call to the underlying staking keeper's
 // CustomBondedRatio to be used in BeginBlocker.
-func (k Keeper) CustomBondedRatio(ctx sdk.Context, excludeAmount sdk.Int) sdk.Dec {
+func (k Keeper) CustomBondedRatio(ctx sdk.Context, excludeAmount math.Int) sdk.Dec {
 	stakeSupply := k.CustomStakingTokenSupply(ctx, excludeAmount)
 	if stakeSupply.IsPositive() {
-		return k.stakingKeeper.TotalBondedTokens(ctx).ToDec().QuoInt(stakeSupply)
+		totalBonded := k.stakingKeeper.TotalBondedTokens(ctx)
+		return math.LegacyNewDecFromInt(totalBonded).QuoInt(stakeSupply)
 	}
 
 	return sdk.ZeroDec()

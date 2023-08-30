@@ -3,11 +3,11 @@ package types
 import (
 	"errors"
 
+	errorsmod "cosmossdk.io/errors"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 )
 
@@ -125,7 +125,7 @@ func PubKeyDecode(pubKey *codectypes.Any) (cryptotypes.PubKey, error) {
 	if ok {
 		return pk, nil
 	} else {
-		return nil, sdkerrors.Wrapf(ErrInvalidPubKey, "expecting PubKey, got: %T", pkAny)
+		return nil, errorsmod.Wrapf(ErrInvalidPubKey, "expecting PubKey, got: %T", pkAny)
 	}
 }
 

@@ -1,6 +1,7 @@
 package types
 
 import (
+	errorsmod "cosmossdk.io/errors"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -38,7 +39,7 @@ func (msg *MsgActivateAccount) GetSignBytes() []byte {
 func (msg *MsgActivateAccount) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.AccountAddress)
 	if err != nil {
-		return sdkerrors.Wrapf(ErrInvalidAddress, "invalid smart account address (%s)", err)
+		return errorsmod.Wrapf(ErrInvalidAddress, "invalid smart account address (%s)", err)
 	}
 
 	if len(msg.Salt) > 64 {

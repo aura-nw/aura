@@ -3,10 +3,10 @@ package types
 import (
 	"encoding/base64"
 
+	errorsmod "cosmossdk.io/errors"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 const TypeMsgRecover = "recover"
@@ -40,12 +40,12 @@ func (msg *MsgRecover) GetSignBytes() []byte {
 func (msg *MsgRecover) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
-		return sdkerrors.Wrapf(ErrInvalidAddress, "invalid creator address (%s)", err)
+		return errorsmod.Wrapf(ErrInvalidAddress, "invalid creator address (%s)", err)
 	}
 
 	_, err = sdk.AccAddressFromBech32(msg.Address)
 	if err != nil {
-		return sdkerrors.Wrapf(ErrInvalidAddress, "invalid smart account address (%s)", err)
+		return errorsmod.Wrapf(ErrInvalidAddress, "invalid smart account address (%s)", err)
 	}
 
 	_, err = PubKeyDecode(msg.PubKey)
@@ -55,7 +55,7 @@ func (msg *MsgRecover) ValidateBasic() error {
 
 	_, err = base64.StdEncoding.DecodeString(msg.Credentials)
 	if err != nil {
-		return sdkerrors.Wrapf(ErrInvalidCredentials, err.Error())
+		return errorsmod.Wrapf(ErrInvalidCredentials, err.Error())
 	}
 
 	return nil

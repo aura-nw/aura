@@ -2,11 +2,12 @@ package mint
 
 import (
 	custommint "github.com/aura-nw/aura/x/mint/keeper"
+	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/mint"
+	"github.com/cosmos/cosmos-sdk/x/mint/exported"
 	"github.com/cosmos/cosmos-sdk/x/mint/types"
-	abci "github.com/tendermint/tendermint/abci/types"
 )
 
 // AppModule implements an application module for the mint module.
@@ -18,9 +19,15 @@ type AppModule struct {
 }
 
 // NewAppModule creates a new AppModule object
-func NewAppModule(cdc codec.Codec, keeper custommint.Keeper, ak types.AccountKeeper) AppModule {
+func NewAppModule(
+	cdc codec.Codec,
+	keeper custommint.Keeper,
+	ak types.AccountKeeper,
+	ic types.InflationCalculationFn,
+	ss exported.Subspace,
+) AppModule {
 	return AppModule{
-		AppModule:  mint.NewAppModule(cdc, keeper.Keeper, ak),
+		AppModule:  mint.NewAppModule(cdc, keeper.Keeper, ak, ic, ss),
 		keeper:     keeper,
 		authKeeper: ak,
 	}

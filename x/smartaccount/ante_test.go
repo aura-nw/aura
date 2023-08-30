@@ -12,18 +12,18 @@ import (
 	"github.com/aura-nw/aura/x/smartaccount/types"
 
 	helper "github.com/aura-nw/aura/tests/smartaccount"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 )
 
 func TestGetSmartAccountTxSigner(t *testing.T) {
 	var (
 		app     = tests.Setup(false)
 		ctx     = app.NewContext(false, tmproto.Header{})
-		keybase = keyring.NewInMemory()
+		keybase = keyring.NewInMemory(app.AppCodec())
 	)
 
 	acc1, err := makeMockAccount(keybase, "test1")
@@ -124,7 +124,7 @@ func TestGetValidActivateAccountMessage(t *testing.T) {
 	var (
 		app     = tests.Setup(false)
 		ctx     = app.NewContext(false, tmproto.Header{})
-		keybase = keyring.NewInMemory()
+		keybase = keyring.NewInMemory(app.AppCodec())
 	)
 
 	acc1, err := makeMockAccount(keybase, "test1")
@@ -224,7 +224,7 @@ func TestSetPubKeyDecorator(t *testing.T) {
 	var (
 		app     = tests.Setup(false)
 		ctx     = app.NewContext(false, tmproto.Header{})
-		keybase = keyring.NewInMemory()
+		keybase = keyring.NewInMemory(app.AppCodec())
 	)
 
 	acc, pubKey, err := helper.GenerateInActivateAccount(
@@ -350,7 +350,7 @@ func TestSetPubKeyDecorator(t *testing.T) {
 func TestSmartAccountDecoratorForTx(t *testing.T) {
 	var (
 		ctx, app = helper.SetupGenesisTest()
-		keybase  = keyring.NewInMemory()
+		keybase  = keyring.NewInMemory(app.AppCodec())
 	)
 
 	// base smartaccount
@@ -511,7 +511,7 @@ func TestSmartAccountDecoratorForActivation(t *testing.T) {
 
 	var (
 		ctx, app = helper.SetupGenesisTest()
-		keybase  = keyring.NewInMemory()
+		keybase  = keyring.NewInMemory(app.AppCodec())
 	)
 
 	// base smartaccount

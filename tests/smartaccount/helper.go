@@ -10,11 +10,11 @@ import (
 	"github.com/aura-nw/aura/tests"
 	"github.com/aura-nw/aura/x/smartaccount"
 	"github.com/aura-nw/aura/x/smartaccount/types"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 )
 
 var (
@@ -117,8 +117,7 @@ func GenerateInActivateAccount(
 	if err != nil {
 		return nil, nil, err
 	}
-
-	newAcc := authtypes.NewBaseAccount(newAccAddr, nil, app.AccountKeeper.GetNextAccountNumber(ctx), 0)
+	newAcc := authtypes.NewBaseAccount(newAccAddr, nil, app.AccountKeeper.NextAccountNumber(ctx), 0)
 
 	app.AccountKeeper.SetAccount(ctx, newAcc)
 
@@ -162,6 +161,6 @@ func NewBaseAccount(app *app.App, ctx sdk.Context, addr string, pubKey cryptotyp
 		return nil, err
 	}
 
-	newAcc := authtypes.NewBaseAccount(newAccAddr, pubKey, app.AccountKeeper.GetNextAccountNumber(ctx), sequence)
+	newAcc := authtypes.NewBaseAccount(newAccAddr, pubKey, app.AccountKeeper.NextAccountNumber(ctx), sequence)
 	return newAcc, nil
 }

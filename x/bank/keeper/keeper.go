@@ -3,9 +3,9 @@ package keeper
 import (
 	"github.com/aura-nw/aura/x/bank/types"
 	"github.com/cosmos/cosmos-sdk/codec"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/bank/keeper"
-	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 )
 
 type BaseKeeper struct {
@@ -16,14 +16,14 @@ type BaseKeeper struct {
 
 func NewBaseKeeper(
 	cdc codec.BinaryCodec,
-	storeKey sdk.StoreKey,
+	storeKey storetypes.StoreKey,
 	ak types.AccountKeeper,
-	paramSpace paramtypes.Subspace,
 	blockedAddrs map[string]bool,
+	authority string,
 	auraKeeper types.AuraKeeper,
 ) BaseKeeper {
 	return BaseKeeper{
-		BaseKeeper: keeper.NewBaseKeeper(cdc, storeKey, ak, paramSpace, blockedAddrs),
+		BaseKeeper: keeper.NewBaseKeeper(cdc, storeKey, ak, blockedAddrs, authority),
 		auraKeeper: auraKeeper,
 	}
 }

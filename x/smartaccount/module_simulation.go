@@ -6,7 +6,6 @@ import (
 	smartaccountsimulation "github.com/aura-nw/aura/x/smartaccount/simulation"
 	"github.com/aura-nw/aura/x/smartaccount/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
-	simappparams "github.com/cosmos/cosmos-sdk/simapp/params"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
@@ -16,13 +15,12 @@ import (
 // avoid unused import issue
 var (
 	_ = smartaccountsimulation.FindAccount
-	_ = simappparams.StakePerAccount
 	_ = simulation.MsgEntryKind
 	_ = baseapp.Paramspace
 )
 
 const (
-	opWeightMsgRecover= "op_weight_msg_recover"
+	opWeightMsgRecover = "op_weight_msg_recover"
 	// TODO: Determine the simulation weight value
 	defaultWeightMsgRecover int = 100
 
@@ -51,11 +49,12 @@ func (AppModule) ProposalContents(_ module.SimulationState) []simtypes.WeightedP
 	return nil
 }
 
-// RandomizedParams creates randomized  param changes for the simulator
+// Need review
+/* // RandomizedParams creates randomized  param changes for the simulator
 func (am AppModule) RandomizedParams(_ *rand.Rand) []simtypes.ParamChange {
 
 	return []simtypes.ParamChange{}
-}
+} */
 
 // RegisterStoreDecoder registers a decoder
 func (am AppModule) RegisterStoreDecoder(_ sdk.StoreDecoderRegistry) {}

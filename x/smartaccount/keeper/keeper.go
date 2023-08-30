@@ -6,11 +6,13 @@ import (
 	"fmt"
 	"strconv"
 
+	errorsmod "cosmossdk.io/errors"
+	"github.com/cometbft/cometbft/libs/log"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	"github.com/tendermint/tendermint/libs/log"
+
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/aura-nw/aura/x/smartaccount/types"
@@ -22,8 +24,8 @@ import (
 type (
 	Keeper struct {
 		cdc            codec.BinaryCodec
-		storeKey       sdk.StoreKey
-		memKey         sdk.StoreKey
+		storeKey       storetypes.StoreKey
+		memKey         storetypes.StoreKey
 		paramstore     paramtypes.Subspace
 		WasmKeeper     wasmkeeper.Keeper
 		ContractKeeper *wasmkeeper.PermissionedKeeper
@@ -34,7 +36,7 @@ type (
 func NewKeeper(
 	cdc codec.BinaryCodec,
 	storeKey,
-	memKey sdk.StoreKey,
+	memKey storetypes.StoreKey,
 	ps paramtypes.Subspace,
 	wp wasmkeeper.Keeper,
 	contractKeeper *wasmkeeper.PermissionedKeeper,
@@ -258,17 +260,17 @@ func (k Keeper) IsInactiveAccount(ctx sdk.Context, acc sdk.AccAddress) (authtype
 	_, isBaseAccount := sAccount.(*authtypes.BaseAccount)
 	_, isSmartAccount := sAccount.(*types.SmartAccount)
 	if !isBaseAccount && !isSmartAccount {
-		return nil, sdkerrors.Wrap(types.ErrAccountNotFoundForAddress, acc.String())
+		return nil, errorsmod.Wrap(types.ErrAccountNotFoundForAddress, acc.String())
 	}
 
 	// check if base account already has public key
 	if sAccount.GetPubKey() != nil && isBaseAccount {
-		return nil, sdkerrors.Wrap(types.ErrAccountAlreadyExists, acc.String())
+		return nil, errorsmod.Wrap(types.ErrAccountAlreadyExists, acc.String())
 	}
 
 	// check if contract with account not been instantiated
 	if k.WasmKeeper.HasContractInfo(ctx, acc) {
-		return nil, sdkerrors.Wrap(types.ErrAccountAlreadyExists, acc.String())
+		return nil, errorsmod.Wrap(types.ErrAccountAlreadyExists, acc.String())
 	}
 
 	return sAccount, nil
@@ -305,7 +307,7 @@ func (k Keeper) CheckAllowedMsgs(ctx sdk.Context, msgs []sdk.Msg) error {
 		url := sdk.MsgTypeURL(msg)
 
 		if _, ok := disableMap[url]; ok {
-			return sdkerrors.Wrap(types.ErrNotAllowedMsg, url)
+			return errorsmod.Wrap(types.ErrNotAllowedMsg, url)
 		}
 	}
 

@@ -1,5 +1,5 @@
 syntax = "proto3";
-package auranw.aura.smartaccount;
+package aura.smartaccount;
 
 import "gogoproto/gogo.proto";
 

@@ -1,8 +1,8 @@
 syntax = "proto3";
-package auranw.aura.smartaccount;
+package aura.smartaccount;
 
 import "gogoproto/gogo.proto";
-import "smartaccount/params.proto";
+import "aura/smartaccount/params.proto";
 // this line is used by starport scaffolding # genesis/proto/import
 
 option go_package = "github.com/aura-nw/aura/x/smartaccount/types";

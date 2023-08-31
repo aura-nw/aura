@@ -1,5 +1,5 @@
 syntax = "proto3";
-package auranw.aura.aura;
+package aura.aura;
 
 // this line is used by starport scaffolding # proto/tx/import
 

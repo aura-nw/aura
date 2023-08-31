@@ -1,9 +1,9 @@
 syntax = "proto3";
-package auranw.aura.smartaccount;
+package aura.smartaccount;
 
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
-import "smartaccount/params.proto";
+import "aura/smartaccount/params.proto";
 import "google/protobuf/any.proto";
 // this line is used by starport scaffolding # 1
 

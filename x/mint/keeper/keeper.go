@@ -32,7 +32,7 @@ func NewKeeper(
 	}
 }
 
-func (k Keeper) GetSupply(ctx sdk.Context, denom string) sdk.Int {
+func (k Keeper) GetSupply(ctx sdk.Context, denom string) math.Int {
 	return k.bankKeeper.GetSupply(ctx, denom).Amount
 }
 
@@ -64,13 +64,14 @@ func (k Keeper) GetExcludeCirculatingAmount(ctx sdk.Context, denom string) sdk.C
 
 // CustomStakingTokenSupply implements an alias call to the underlying staking keeper's
 // CustomStakingTokenSupply to be used in BeginBlocker.
-func (k Keeper) CustomStakingTokenSupply(ctx sdk.Context, excludeAmount sdk.Int) sdk.Int {
+func (k Keeper) CustomStakingTokenSupply(ctx sdk.Context, excludeAmount math.Int) math.Int {
 	return k.stakingKeeper.StakingTokenSupply(ctx).Sub(excludeAmount)
 }
 
 // CustomBondedRatio implements an alias call to the underlying staking keeper's
 // CustomBondedRatio to be used in BeginBlocker.
-func (k Keeper) CustomBondedRatio(ctx sdk.Context, excludeAmount math.Int) sdk.Dec {
+func (k Keeper) CustomBondedRatio(ctx sdk.Context, excludeAmount math.Int) math.LegacyDec {
+
 	stakeSupply := k.CustomStakingTokenSupply(ctx, excludeAmount)
 	if stakeSupply.IsPositive() {
 		totalBonded := k.stakingKeeper.TotalBondedTokens(ctx)

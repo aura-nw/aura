@@ -27,7 +27,7 @@ func TestPubkeyToAny(t *testing.T) {
 		},
 	} {
 
-		_, err := types.PubKeyToAny(app.MakeEncodingConfig().Codec, []byte(tc.raw))
+		_, err := types.PubKeyToAny(app.MakeEncodingConfig().Marshaler, []byte(tc.raw))
 		if tc.err {
 			require.Error(t, err)
 		} else {
@@ -48,7 +48,7 @@ func TestPubKeyDecode(t *testing.T) {
 	require.Error(t, err)
 
 	raw := "{\"@type\":\"/cosmos.crypto.secp256k1.PubKey\",\"key\":\"A/2t0ru/iZ4HoiX0DkTuMy9rC2mMeXmiN6luM3pa+IvT\"}"
-	any, err := types.PubKeyToAny(app.MakeEncodingConfig().Codec, []byte(raw))
+	any, err := types.PubKeyToAny(app.MakeEncodingConfig().Marshaler, []byte(raw))
 	require.NoError(t, err)
 	dPubKey, err := types.PubKeyDecode(any)
 	require.NoError(t, err)

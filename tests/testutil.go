@@ -42,7 +42,7 @@ var defaultGenesisBz []byte
 func getDefaultGenesisStateBytes() []byte {
 	if len(defaultGenesisBz) == 0 {
 		encConfig := app.MakeEncodingConfig()
-		genesisState := app.NewDefaultGenesisState(encConfig.Codec)
+		genesisState := app.NewDefaultGenesisState(encConfig.Marshaler)
 		stateBytes, err := json.MarshalIndent(genesisState, "", " ")
 		if err != nil {
 			panic(err)
@@ -62,6 +62,7 @@ func Setup(isCheckTx bool) *app.App {
 		map[int64]bool{},
 		app.DefaultNodeHome,
 		0,
+		app.MakeEncodingConfig(),
 		EmptyAppOptions{})
 
 	if !isCheckTx {

@@ -13,11 +13,11 @@ option go_package = "github.com/aura-nw/aura/x/smartaccount/types";
 service Query {
   // Parameters queries the parameters of the module.
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
-    option (google.api.http).get = "/aura-nw/aura/smartaccount/params";
+    option (google.api.http).get = "/aura/smartaccount/params";
   }
   // Queries a list of GenerateAccount items.
 	rpc GenerateAccount(QueryGenerateAccountRequest) returns (QueryGenerateAccountResponse) {
-		option (google.api.http).get = "/aura-nw/aura/smartaccount/generate_account";
+		option (google.api.http).get = "/aura/smartaccount/generate_account";
 	}
 
 // this line is used by starport scaffolding # 2

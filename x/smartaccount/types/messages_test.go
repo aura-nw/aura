@@ -11,7 +11,7 @@ import (
 )
 
 func TestActivateAccountValidateBasic(t *testing.T) {
-	pubKey, err := types.PubKeyToAny(app.MakeEncodingConfig().Codec, helper.DefaultPubKey)
+	pubKey, err := types.PubKeyToAny(app.MakeEncodingConfig().Marshaler, helper.DefaultPubKey)
 	require.NoError(t, err)
 
 	for _, tc := range []struct {
@@ -90,7 +90,7 @@ func TestActivateAccountValidateBasic(t *testing.T) {
 }
 
 func TestRecoverValidateBasic(t *testing.T) {
-	pubKey, err := types.PubKeyToAny(app.MakeEncodingConfig().Codec, helper.DefaultPubKey)
+	pubKey, err := types.PubKeyToAny(app.MakeEncodingConfig().Marshaler, helper.DefaultPubKey)
 	require.NoError(t, err)
 
 	for _, tc := range []struct {

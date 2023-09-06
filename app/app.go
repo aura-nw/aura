@@ -126,6 +126,10 @@ import (
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 
+	ibc_hooks "github.com/cosmos/ibc-apps/modules/ibc-hooks/v7"
+	ibchookskeeper "github.com/cosmos/ibc-apps/modules/ibc-hooks/v7/keeper"
+	ibchookstypes "github.com/cosmos/ibc-apps/modules/ibc-hooks/v7/types"
+
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/prometheus/client_golang/prometheus"
 
@@ -234,6 +238,7 @@ var (
 		auramodule.AppModuleBasic{},
 		samodule.AppModuleBasic{},
 		wasm.AppModuleBasic{},
+		ibc_hooks.AppModuleBasic{},
 		// this line is used by starport scaffolding # stargate/app/moduleBasic
 	)
 
@@ -297,6 +302,7 @@ type App struct {
 	ParamsKeeper          paramskeeper.Keeper
 	ConsensusParamsKeeper consensusparamkeeper.Keeper
 	IBCKeeper             *ibckeeper.Keeper // IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
+	IBCHooksKeeper        *ibchookskeeper.Keeper
 	EvidenceKeeper        evidencekeeper.Keeper
 	TransferKeeper        ibctransferkeeper.Keeper
 	FeeGrantKeeper        feegrantkeeper.Keeper
@@ -312,6 +318,11 @@ type App struct {
 	AuraKeeper auramodulekeeper.Keeper
 
 	SaKeeper samodulekeeper.Keeper
+
+	// Middleware wrapper
+	Ics20WasmHooks   *ibc_hooks.WasmHooks
+	HooksICS4Wrapper ibc_hooks.ICS4Middleware
+
 	// this line is used by starport scaffolding # stargate/app/keeperDeclaration
 
 	// the module manager
@@ -354,6 +365,7 @@ func New(
 		samoduletypes.StoreKey,
 		authzkeeper.StoreKey,
 		wasmtypes.StoreKey,
+		ibchookstypes.StoreKey,
 		// this line is used by starport scaffolding # stargate/app/storeKey
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
@@ -452,20 +464,38 @@ func New(
 		AddRoute(upgradetypes.RouterKey, upgrade.NewSoftwareUpgradeProposalHandler(app.UpgradeKeeper)).
 		AddRoute(ibcclienttypes.RouterKey, ibcclient.NewClientProposalHandler(app.IBCKeeper.ClientKeeper))
 
+	// Configure the hooks keeper
+	hooksKeeper := ibchookskeeper.NewKeeper(
+		app.keys[ibchookstypes.StoreKey],
+	)
+	app.IBCHooksKeeper = &hooksKeeper
+
+	auraPrefix := sdk.GetConfig().GetBech32AccountAddrPrefix()
+	wasmHooks := ibc_hooks.NewWasmHooks(app.IBCHooksKeeper, &app.WasmKeeper, auraPrefix) // The contract keeper needs to be set later
+	app.Ics20WasmHooks = &wasmHooks
+	app.HooksICS4Wrapper = ibc_hooks.NewICS4Middleware(
+		app.IBCKeeper.ChannelKeeper,
+		app.Ics20WasmHooks,
+	)
+
 	// Create Transfer Keepers
 	app.TransferKeeper = ibctransferkeeper.NewKeeper(
 		appCodec,
 		keys[ibctransfertypes.StoreKey],
 		app.GetSubspace(ibctransfertypes.ModuleName),
-		app.IBCKeeper.ChannelKeeper,
+		// The ICS4Wrapper is replaced by the ICS4Wrapper middleware instead of the channel
+		app.HooksICS4Wrapper,
 		app.IBCKeeper.ChannelKeeper,
 		&app.IBCKeeper.PortKeeper,
 		app.AccountKeeper,
 		app.BankKeeper,
 		scopedTransferKeeper,
 	)
-	transferModule := transfer.NewAppModule(app.TransferKeeper)
 	transferIBCModule := transfer.NewIBCModule(app.TransferKeeper)
+	middlewareTransferModule := ibc_hooks.NewIBCMiddleware(
+		transferIBCModule,
+		&app.HooksICS4Wrapper,
+	)
 
 	// Create evidence Keeper for to register the IBC light client misbehaviour evidence route
 	evidenceKeeper := evidencekeeper.NewKeeper(
@@ -479,7 +509,7 @@ func New(
 
 	// Create static IBC router, add transfer route, then set and seal it
 	ibcRouter := ibcporttypes.NewRouter()
-	ibcRouter.AddRoute(ibctransfertypes.ModuleName, transferIBCModule)
+	ibcRouter.AddRoute(ibctransfertypes.ModuleName, middlewareTransferModule)
 
 	// ------ CosmWasm setup ------
 	wasmDir := filepath.Join(homePath, "wasm")
@@ -526,6 +556,9 @@ func New(
 
 	// sa module
 	saModule := samodule.NewAppModule(appCodec, app.SaKeeper, app.ContractKeeper, app.AccountKeeper)
+
+	// Pass the contract keeper to ICS4Wrappers for ibc middlewares
+	app.Ics20WasmHooks.ContractKeeper = &app.WasmKeeper
 
 	// The gov proposal types can be individually enabled
 	enabledProposals := GetEnabledProposals()
@@ -576,7 +609,9 @@ func New(
 		evidence.NewAppModule(app.EvidenceKeeper),
 		ibc.NewAppModule(app.IBCKeeper),
 		params.NewAppModule(app.ParamsKeeper),
-		transferModule,
+		transfer.NewAppModule(app.TransferKeeper),
+		// IBC modules
+		ibc_hooks.NewAppModule(app.AccountKeeper),
 		auraModule,
 		saModule,
 		wasm.NewAppModule(appCodec, &app.WasmKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.MsgServiceRouter(), app.GetSubspace(wasmtypes.ModuleName)),
@@ -611,6 +646,7 @@ func New(
 		auramoduletypes.ModuleName,
 		wasmtypes.ModuleName,
 		samoduletypes.ModuleName,
+		ibchookstypes.ModuleName,
 	)
 
 	app.mm.SetOrderEndBlockers(
@@ -637,6 +673,7 @@ func New(
 		auramoduletypes.ModuleName,
 		wasmtypes.ModuleName,
 		samoduletypes.ModuleName,
+		ibchookstypes.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -667,6 +704,7 @@ func New(
 		upgradetypes.ModuleName,
 		wasmtypes.ModuleName,
 		samoduletypes.ModuleName,
+		ibchookstypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/initGenesis
 	)
 
@@ -693,6 +731,7 @@ func New(
 		wasmtypes.ModuleName,
 		samoduletypes.ModuleName,
 		crisistypes.ModuleName,
+		ibchookstypes.ModuleName,
 	)
 
 	app.mm.RegisterInvariants(app.CrisisKeeper)

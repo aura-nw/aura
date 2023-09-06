@@ -138,8 +138,8 @@ import (
 	v0_4_2 "github.com/aura-nw/aura/app/upgrades/v0.4.2"
 	v0_4_4 "github.com/aura-nw/aura/app/upgrades/v0.4.4"
 
-	customvesting "github.com/aura-nw/aura/x/auth/vesting"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+	authvesting "github.com/cosmos/cosmos-sdk/x/auth/vesting"
 	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	ibcclienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 )
@@ -230,7 +230,7 @@ var (
 		upgrade.AppModuleBasic{},
 		evidence.AppModuleBasic{},
 		transfer.AppModuleBasic{},
-		customvesting.AppModuleBasic{},
+		authvesting.AppModuleBasic{},
 		auramodule.AppModuleBasic{},
 		samodule.AppModuleBasic{},
 		wasm.AppModuleBasic{},
@@ -560,7 +560,7 @@ func New(
 			encodingConfig.TxConfig,
 		),
 		auth.NewAppModule(appCodec, app.AccountKeeper, nil, app.GetSubspace(authtypes.ModuleName)),
-		customvesting.NewAppModule(app.AccountKeeper, app.BankKeeper),
+		authvesting.NewAppModule(app.AccountKeeper, app.BankKeeper),
 		custombank.NewAppModule(appCodec, app.BankKeeper, app.AccountKeeper, app.GetSubspace(banktypes.ModuleName)),
 		capability.NewAppModule(appCodec, *app.CapabilityKeeper, false),
 		customfeegrantmodule.NewAppModule(appCodec, app.AccountKeeper, app.BankKeeper, app.FeeGrantKeeper, app.interfaceRegistry),

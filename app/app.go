@@ -130,6 +130,8 @@ import (
 	ibchookskeeper "github.com/cosmos/ibc-apps/modules/ibc-hooks/v7/keeper"
 	ibchookstypes "github.com/cosmos/ibc-apps/modules/ibc-hooks/v7/types"
 
+	ibctm "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
+
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/prometheus/client_golang/prometheus"
 
@@ -231,6 +233,8 @@ var (
 		authzmodule.AppModuleBasic{},
 		consensus.AppModuleBasic{},
 		ibc.AppModuleBasic{},
+		// https://github.com/cosmos/ibc-go/blob/main/docs/migrations/v6-to-v7.md?plain=1#L46-L67
+		ibctm.AppModuleBasic{},
 		upgrade.AppModuleBasic{},
 		evidence.AppModuleBasic{},
 		transfer.AppModuleBasic{},

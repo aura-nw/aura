@@ -2,7 +2,7 @@ package v601
 
 import (
 	samodulekeeper "github.com/aura-nw/aura/x/smartaccount/keeper"
-	samoduletypes "github.com/aura-nw/aura/x/smartaccount/types"
+	samoduletypes "github.com/aura-nw/aura/x/smartaccount/types/v1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"

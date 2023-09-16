@@ -3,7 +3,8 @@ package keeper
 import (
 	"context"
 
-	"github.com/aura-nw/aura/x/smartaccount/types"
+	types "github.com/aura-nw/aura/x/smartaccount/types"
+	typesv1 "github.com/aura-nw/aura/x/smartaccount/types/v1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -11,17 +12,17 @@ type msgServer struct {
 	Keeper Keeper
 }
 
-var _ types.MsgServer = msgServer{}
+var _ typesv1.MsgServer = msgServer{}
 
 // NewMsgServerImpl returns an implementation of the MsgServer interface
 // for the provided Keeper.
-func NewMsgServerImpl(keeper Keeper) types.MsgServer {
+func NewMsgServerImpl(keeper Keeper) typesv1.MsgServer {
 	return &msgServer{
 		Keeper: keeper,
 	}
 }
 
-func (k msgServer) ActivateAccount(goCtx context.Context, msg *types.MsgActivateAccount) (*types.MsgActivateAccountResponse, error) {
+func (k msgServer) ActivateAccount(goCtx context.Context, msg *typesv1.MsgActivateAccount) (*typesv1.MsgActivateAccountResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// validate smart account
@@ -49,12 +50,12 @@ func (k msgServer) ActivateAccount(goCtx context.Context, msg *types.MsgActivate
 		return nil, err
 	}
 
-	return &types.MsgActivateAccountResponse{
+	return &typesv1.MsgActivateAccountResponse{
 		Address: sAccount.String(),
 	}, nil
 }
 
-func (k msgServer) Recover(goCtx context.Context, msg *types.MsgRecover) (*types.MsgRecoverResponse, error) {
+func (k msgServer) Recover(goCtx context.Context, msg *typesv1.MsgRecover) (*typesv1.MsgRecoverResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	smartAccount, err := k.Keeper.ValidateRecoverSA(ctx, msg)
@@ -63,7 +64,7 @@ func (k msgServer) Recover(goCtx context.Context, msg *types.MsgRecover) (*types
 	}
 
 	// public key
-	pubKey, err := types.PubKeyDecode(msg.PubKey)
+	pubKey, err := typesv1.PubKeyDecode(msg.PubKey)
 	if err != nil {
 		return nil, err
 	}
@@ -94,5 +95,5 @@ func (k msgServer) Recover(goCtx context.Context, msg *types.MsgRecover) (*types
 		),
 	)
 
-	return &types.MsgRecoverResponse{}, nil
+	return &typesv1.MsgRecoverResponse{}, nil
 }

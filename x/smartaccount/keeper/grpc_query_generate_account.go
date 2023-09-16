@@ -4,19 +4,20 @@ import (
 	"context"
 
 	"github.com/aura-nw/aura/x/smartaccount/types"
+	typesv1 "github.com/aura-nw/aura/x/smartaccount/types/v1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
-func (k Keeper) GenerateAccount(goCtx context.Context, req *types.QueryGenerateAccountRequest) (*types.QueryGenerateAccountResponse, error) {
+func (k Keeper) GenerateAccount(goCtx context.Context, req *typesv1.QueryGenerateAccountRequest) (*typesv1.QueryGenerateAccountResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	pubKey, err := types.PubKeyDecode(req.PubKey)
+	pubKey, err := typesv1.PubKeyDecode(req.PubKey)
 	if err != nil {
 		return nil, err
 	}
@@ -26,7 +27,7 @@ func (k Keeper) GenerateAccount(goCtx context.Context, req *types.QueryGenerateA
 		return nil, err
 	}
 
-	return &types.QueryGenerateAccountResponse{
+	return &typesv1.QueryGenerateAccountResponse{
 		Address: contractAddress.String(),
 	}, nil
 }

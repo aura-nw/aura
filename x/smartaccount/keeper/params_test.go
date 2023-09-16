@@ -4,38 +4,38 @@ import (
 	"testing"
 
 	helper "github.com/aura-nw/aura/tests/smartaccount"
-	"github.com/aura-nw/aura/x/smartaccount/types"
+	typesv1 "github.com/aura-nw/aura/x/smartaccount/types/v1"
 	"github.com/stretchr/testify/require"
 )
 
 func TestParams(t *testing.T) {
 	for _, tc := range []struct {
 		desc   string
-		params types.Params
+		params typesv1.Params
 		err    bool
 	}{
 		{
 			desc: "error, duplicate codeID in whitlist",
-			params: types.NewParams(
-				[]*types.CodeID{{CodeID: 1, Status: true}, {CodeID: 1, Status: false}}, // duplicate codeID
+			params: typesv1.NewParams(
+				[]*typesv1.CodeID{{CodeID: 1, Status: true}, {CodeID: 1, Status: false}}, // duplicate codeID
 				[]string{},
-				types.DefaultMaxGas,
+				typesv1.DefaultMaxGas,
 			),
 			err: true,
 		},
 		{
 			desc: "error, duplicate msg",
-			params: types.NewParams(
-				[]*types.CodeID{{CodeID: 1, Status: true}},
+			params: typesv1.NewParams(
+				[]*typesv1.CodeID{{CodeID: 1, Status: true}},
 				[]string{"/cosmwasm.wasm.v1.MsgExecuteContract", "/cosmwasm.wasm.v1.MsgExecuteContract"}, // duplicate msg
-				types.DefaultMaxGas,
+				typesv1.DefaultMaxGas,
 			),
 			err: true,
 		},
 		{
 			desc: "error, max_gas_execute with zero value",
-			params: types.NewParams(
-				[]*types.CodeID{{CodeID: 1, Status: true}},
+			params: typesv1.NewParams(
+				[]*typesv1.CodeID{{CodeID: 1, Status: true}},
 				[]string{},
 				uint64(0), // zero max gas execute
 			),
@@ -43,10 +43,10 @@ func TestParams(t *testing.T) {
 		},
 		{
 			desc: "create new params successfully",
-			params: types.NewParams(
-				[]*types.CodeID{{CodeID: 1, Status: true}},
+			params: typesv1.NewParams(
+				[]*typesv1.CodeID{{CodeID: 1, Status: true}},
 				[]string{"/cosmwasm.wasm.v1.MsgExecuteContract"},
-				types.DefaultMaxGas,
+				typesv1.DefaultMaxGas,
 			),
 			err: false,
 		},

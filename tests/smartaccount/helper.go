@@ -9,7 +9,7 @@ import (
 	"github.com/aura-nw/aura/app"
 	"github.com/aura-nw/aura/tests"
 	"github.com/aura-nw/aura/x/smartaccount"
-	"github.com/aura-nw/aura/x/smartaccount/types"
+	typesv1 "github.com/aura-nw/aura/x/smartaccount/types/v1"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
@@ -19,9 +19,9 @@ import (
 
 var (
 	UserAddr     = "cosmos1lg0g3jpu8luawwezcknamz0l003swknjyw9uch"
-	GenesisState = &types.GenesisState{
-		Params:         types.NewParams([]*types.CodeID{{CodeID: 1, Status: true}}, []string{"/cosmwasm.wasm.v1.MsgExecuteContract"}, types.DefaultMaxGas),
-		SmartAccountId: types.DefaultSmartAccountId,
+	GenesisState = &typesv1.GenesisState{
+		Params:         typesv1.NewParams([]*typesv1.CodeID{{CodeID: 1, Status: true}}, []string{"/cosmwasm.wasm.v1.MsgExecuteContract"}, typesv1.DefaultMaxGas),
+		SmartAccountId: typesv1.DefaultSmartAccountId,
 	}
 )
 
@@ -96,12 +96,12 @@ func GenerateInActivateAccount(
 	queryServer := app.SaKeeper
 
 	/* ======== create inactivate smart account ======== */
-	pubKey, err := types.PubKeyToAny(app.AppCodec(), dPubKey)
+	pubKey, err := typesv1.PubKeyToAny(app.AppCodec(), dPubKey)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	queryMsg := &types.QueryGenerateAccountRequest{
+	queryMsg := &typesv1.QueryGenerateAccountRequest{
 		CodeID:  dCodeID,
 		PubKey:  pubKey,
 		Salt:    dSalt,
@@ -144,7 +144,7 @@ func AddNewSmartAccount(app *app.App, ctx sdk.Context, addr string, pubKey crypt
 	}
 
 	// create new smart account type
-	smartAccount := types.NewSmartAccountFromAccount(newAcc)
+	smartAccount := typesv1.NewSmartAccountFromAccount(newAcc)
 
 	err = smartAccount.SetPubKey(pubKey)
 	if err != nil {

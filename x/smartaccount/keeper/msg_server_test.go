@@ -9,7 +9,7 @@ import (
 
 	helper "github.com/aura-nw/aura/tests/smartaccount"
 	"github.com/aura-nw/aura/x/smartaccount/keeper"
-	"github.com/aura-nw/aura/x/smartaccount/types"
+	typesv1 "github.com/aura-nw/aura/x/smartaccount/types/v1"
 )
 
 // ------------------------------ ActivateAccount ------------------------------
@@ -60,7 +60,7 @@ func TestActivateAccount(t *testing.T) {
 			accAddr = tc.accountAddress
 		}
 
-		msg := &types.MsgActivateAccount{
+		msg := &typesv1.MsgActivateAccount{
 			AccountAddress: accAddr,
 			CodeID:         tc.codeID,
 			Salt:           helper.DefaultSalt,
@@ -83,7 +83,7 @@ func TestActivateAccount(t *testing.T) {
 
 			saAccount := app.AccountKeeper.GetAccount(ctx, saAccAddr)
 
-			_, ok := saAccount.(*types.SmartAccount)
+			_, ok := saAccount.(*typesv1.SmartAccount)
 			require.Equal(t, true, ok)
 		}
 	}
@@ -133,7 +133,7 @@ func TestRecoverAccount(t *testing.T) {
 		msgServer := keeper.NewMsgServerImpl(app.SaKeeper)
 
 		/* ======== activate smart account ======== */
-		msg := &types.MsgActivateAccount{
+		msg := &typesv1.MsgActivateAccount{
 			AccountAddress: newAcc.Address,
 			CodeID:         helper.DefaultCodeID,
 			Salt:           helper.DefaultSalt,
@@ -152,10 +152,10 @@ func TestRecoverAccount(t *testing.T) {
 			accAddr = tc.accountAddress
 		}
 
-		rPubKey, err := types.PubKeyToAny(app.AppCodec(), helper.DefaultRPubKery)
+		rPubKey, err := typesv1.PubKeyToAny(app.AppCodec(), helper.DefaultRPubKery)
 		require.NoError(t, err)
 
-		recoverMsg := &types.MsgRecover{
+		recoverMsg := &typesv1.MsgRecover{
 			Creator:     helper.UserAddr,
 			Address:     accAddr,
 			PubKey:      rPubKey,
@@ -169,17 +169,17 @@ func TestRecoverAccount(t *testing.T) {
 
 		saAccount := app.AccountKeeper.GetAccount(ctx, saAccAddr)
 
-		_, ok := saAccount.(*types.SmartAccount)
+		_, ok := saAccount.(*typesv1.SmartAccount)
 		require.Equal(t, true, ok)
 
 		if tc.err {
-			dPubKey, err := types.PubKeyDecode(pubKey)
+			dPubKey, err := typesv1.PubKeyDecode(pubKey)
 			require.NoError(t, err)
 
 			require.Equal(t, saAccount.GetPubKey(), dPubKey)
 			require.Error(t, rErr)
 		} else {
-			rPubKey, err := types.PubKeyDecode(rPubKey)
+			rPubKey, err := typesv1.PubKeyDecode(rPubKey)
 			require.NoError(t, err)
 
 			require.Equal(t, saAccount.GetPubKey(), rPubKey)

@@ -3,7 +3,7 @@ package cli
 import (
 	"strconv"
 
-	"github.com/aura-nw/aura/x/smartaccount/types"
+	typesv1 "github.com/aura-nw/aura/x/smartaccount/types/v1"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
@@ -28,19 +28,19 @@ func CmdGenerateAccount() *cobra.Command {
 				return err
 			}
 
-			pubKey, err := types.PubKeyToAny(clientCtx.Codec, []byte(args[3]))
+			pubKey, err := typesv1.PubKeyToAny(clientCtx.Codec, []byte(args[3]))
 			if err != nil {
 				return err
 			}
 
-			params := &types.QueryGenerateAccountRequest{
+			params := &typesv1.QueryGenerateAccountRequest{
 				CodeID:  codeID,
 				Salt:    []byte(args[1]),
 				InitMsg: []byte(args[2]),
 				PubKey:  pubKey,
 			}
 
-			queryClient := types.NewQueryClient(clientCtx)
+			queryClient := typesv1.NewQueryClient(clientCtx)
 
 			res, err := queryClient.GenerateAccount(cmd.Context(), params)
 			if err != nil {

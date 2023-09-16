@@ -6,7 +6,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	helper "github.com/aura-nw/aura/tests/smartaccount"
-	"github.com/aura-nw/aura/x/smartaccount/types"
+	typesv1 "github.com/aura-nw/aura/x/smartaccount/types/v1"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/stretchr/testify/require"
 )
@@ -18,13 +18,13 @@ func TestQueryParams(t *testing.T) {
 
 	for _, tc := range []struct {
 		desc string
-		msg  *types.QueryParamsRequest
-		res  types.Params
+		msg  *typesv1.QueryParamsRequest
+		res  typesv1.Params
 		err  bool
 	}{
 		{
 			desc: "query params successfully",
-			msg:  &types.QueryParamsRequest{},
+			msg:  &typesv1.QueryParamsRequest{},
 			res:  helper.GenesisState.Params,
 			err:  false,
 		},
@@ -56,12 +56,12 @@ func TestQueryGenerateAccount(t *testing.T) {
 
 	queryServer := app.SaKeeper
 
-	pubKey, err := types.PubKeyToAny(app.AppCodec(), helper.DefaultPubKey)
+	pubKey, err := typesv1.PubKeyToAny(app.AppCodec(), helper.DefaultPubKey)
 	require.NoError(t, err)
 
 	for _, tc := range []struct {
 		desc string
-		msg  *types.QueryGenerateAccountRequest
+		msg  *typesv1.QueryGenerateAccountRequest
 		err  bool
 	}{
 		{
@@ -71,12 +71,12 @@ func TestQueryGenerateAccount(t *testing.T) {
 		},
 		{
 			desc: "error, empty message when query",
-			msg:  &types.QueryGenerateAccountRequest{}, // empty message
+			msg:  &typesv1.QueryGenerateAccountRequest{}, // empty message
 			err:  true,
 		},
 		{
 			desc: "error, invalid public key value",
-			msg: &types.QueryGenerateAccountRequest{
+			msg: &typesv1.QueryGenerateAccountRequest{
 				// invlid pubkey
 				PubKey: &codectypes.Any{
 					TypeUrl: "/cosmos.crypto.secp256k1.PubKey",
@@ -87,7 +87,7 @@ func TestQueryGenerateAccount(t *testing.T) {
 		},
 		{
 			desc: "error, codeID not exist on chain",
-			msg: &types.QueryGenerateAccountRequest{
+			msg: &typesv1.QueryGenerateAccountRequest{
 				CodeID:  uint64(2), // code_id not exist
 				PubKey:  pubKey,
 				Salt:    helper.DefaultSalt,
@@ -97,7 +97,7 @@ func TestQueryGenerateAccount(t *testing.T) {
 		},
 		{
 			desc: "query generate account successfully",
-			msg: &types.QueryGenerateAccountRequest{
+			msg: &typesv1.QueryGenerateAccountRequest{
 				CodeID:  helper.DefaultCodeID,
 				PubKey:  pubKey,
 				Salt:    helper.DefaultSalt,

@@ -5,6 +5,7 @@ import (
 
 	smartaccountsimulation "github.com/aura-nw/aura/x/smartaccount/simulation"
 	"github.com/aura-nw/aura/x/smartaccount/types"
+	typesv1 "github.com/aura-nw/aura/x/smartaccount/types/v1"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
@@ -37,8 +38,8 @@ func (AppModule) GenerateGenesisState(simState *module.SimulationState) {
 	for i, acc := range simState.Accounts {
 		accs[i] = acc.Address.String()
 	}
-	smartaccountGenesis := types.GenesisState{
-		Params: types.DefaultParams(),
+	smartaccountGenesis := typesv1.GenesisState{
+		Params: typesv1.DefaultParams(),
 		// this line is used by starport scaffolding # simapp/module/genesisState
 	}
 	simState.GenState[types.ModuleName] = simState.Cdc.MustMarshalJSON(&smartaccountGenesis)

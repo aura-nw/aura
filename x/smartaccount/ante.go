@@ -10,13 +10,14 @@ import (
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sakeeper "github.com/aura-nw/aura/x/smartaccount/keeper"
 	"github.com/aura-nw/aura/x/smartaccount/types"
+	typesv1 "github.com/aura-nw/aura/x/smartaccount/types/v1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 )
 
-func GetSmartAccountTxSigner(ctx sdk.Context, sigTx authsigning.SigVerifiableTx, saKeeper sakeeper.Keeper) (*types.SmartAccount, error) {
+func GetSmartAccountTxSigner(ctx sdk.Context, sigTx authsigning.SigVerifiableTx, saKeeper sakeeper.Keeper) (*typesv1.SmartAccount, error) {
 	sigs, err := sigTx.GetSignaturesV2()
 	if err != nil {
 		return nil, err
@@ -37,13 +38,13 @@ func GetSmartAccountTxSigner(ctx sdk.Context, sigTx authsigning.SigVerifiableTx,
 	return saAcc, nil
 }
 
-func GetValidActivateAccountMessage(sigTx authsigning.SigVerifiableTx) (*types.MsgActivateAccount, error) {
+func GetValidActivateAccountMessage(sigTx authsigning.SigVerifiableTx) (*typesv1.MsgActivateAccount, error) {
 	msgs := sigTx.GetMsgs()
 
 	if len(msgs) != 1 {
 		// smart account activation message must stand alone
 		for _, msg := range msgs {
-			if _, ok := msg.(*types.MsgActivateAccount); ok {
+			if _, ok := msg.(*typesv1.MsgActivateAccount); ok {
 				return nil, errorsmod.Wrap(types.ErrInvalidTx, "smart account activation message must stand alone")
 			}
 		}
@@ -51,7 +52,7 @@ func GetValidActivateAccountMessage(sigTx authsigning.SigVerifiableTx) (*types.M
 		return nil, nil
 	}
 
-	activateMsg, ok := msgs[0].(*types.MsgActivateAccount)
+	activateMsg, ok := msgs[0].(*typesv1.MsgActivateAccount)
 	if !ok {
 		return nil, nil
 	}
@@ -179,7 +180,7 @@ func handleSmartAccountTx(
 func handleSmartAccountActivate(
 	ctx sdk.Context,
 	saKeeper sakeeper.Keeper,
-	activateMsg *types.MsgActivateAccount,
+	activateMsg *typesv1.MsgActivateAccount,
 	simulate bool,
 ) error {
 	// in ReCheckTx mode, below check may not be necessary
@@ -188,7 +189,7 @@ func handleSmartAccountActivate(
 	signer := activateMsg.GetSigners()[0]
 
 	// decode string to pubkey
-	pubKey, err := types.PubKeyDecode(activateMsg.PubKey)
+	pubKey, err := typesv1.PubKeyDecode(activateMsg.PubKey)
 	if err != nil {
 		return err
 	}
@@ -216,7 +217,7 @@ func handleSmartAccountActivate(
 		// get smart contract account by address
 		sAccount := saKeeper.AccountKeeper.GetAccount(ctx, signer)
 		_, isBase := sAccount.(*authtypes.BaseAccount)
-		_, isSa := sAccount.(*types.SmartAccount)
+		_, isSa := sAccount.(*typesv1.SmartAccount)
 		if !isBase && !isSa {
 			return errorsmod.Wrap(types.ErrAccountNotFoundForAddress, signer.String())
 		}
@@ -231,7 +232,7 @@ func handleSmartAccountActivate(
 	return nil
 }
 
-func validateAndGetAfterExecMessage(msgs []sdk.Msg, signerAcc *types.SmartAccount) (*wasmtypes.MsgExecuteContract, error) {
+func validateAndGetAfterExecMessage(msgs []sdk.Msg, signerAcc *typesv1.SmartAccount) (*wasmtypes.MsgExecuteContract, error) {
 	// after-execute message must be the last message and must be MsgExecuteContract
 	var afterExecMsg *wasmtypes.MsgExecuteContract
 	if msg, err := msgs[len(msgs)-1].(*wasmtypes.MsgExecuteContract); err {
@@ -354,7 +355,7 @@ func (d *SetPubKeyDecorator) AnteHandle(
 		}
 
 		// decode any to pubkey
-		pubKey, err := types.PubKeyDecode(activateMsg.PubKey)
+		pubKey, err := typesv1.PubKeyDecode(activateMsg.PubKey)
 		if err != nil {
 			return ctx, err
 		}

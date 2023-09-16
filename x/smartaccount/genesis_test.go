@@ -8,11 +8,11 @@ import (
 
 	helper "github.com/aura-nw/aura/tests/smartaccount"
 	"github.com/aura-nw/aura/x/smartaccount"
-	"github.com/aura-nw/aura/x/smartaccount/types"
+	typesv1 "github.com/aura-nw/aura/x/smartaccount/types/v1"
 )
 
 var (
-	mockNextAccountID = types.DefaultSmartAccountId
+	mockNextAccountID = typesv1.DefaultSmartAccountId
 )
 
 func TestInitGenesis(t *testing.T) {

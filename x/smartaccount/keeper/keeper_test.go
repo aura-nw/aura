@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	helper "github.com/aura-nw/aura/tests/smartaccount"
-	"github.com/aura-nw/aura/x/smartaccount/types"
+	typesv1 "github.com/aura-nw/aura/x/smartaccount/types/v1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 )
@@ -15,10 +15,10 @@ func TestIncrementNextAccountID(t *testing.T) {
 	keeper := app.SaKeeper
 
 	accID := keeper.GetAndIncrementNextAccountID(ctx)
-	require.Equal(t, types.DefaultSmartAccountId, accID)
+	require.Equal(t, typesv1.DefaultSmartAccountId, accID)
 
 	newAccID := keeper.GetNextAccountID(ctx)
-	require.Equal(t, types.DefaultSmartAccountId+1, newAccID)
+	require.Equal(t, typesv1.DefaultSmartAccountId+1, newAccID)
 }
 
 func TestValidateActivateSA(t *testing.T) {
@@ -26,7 +26,7 @@ func TestValidateActivateSA(t *testing.T) {
 
 	keeper := app.SaKeeper
 
-	pubKey, err := types.PubKeyToAny(app.AppCodec(), helper.DefaultPubKey)
+	pubKey, err := typesv1.PubKeyToAny(app.AppCodec(), helper.DefaultPubKey)
 	require.NoError(t, err)
 
 	// add new base account to chain
@@ -59,7 +59,7 @@ func TestValidateActivateSA(t *testing.T) {
 		},
 	} {
 
-		msg := &types.MsgActivateAccount{
+		msg := &typesv1.MsgActivateAccount{
 			AccountAddress: tc.accountAddress,
 			CodeID:         tc.codeID,
 			Salt:           helper.DefaultSalt,
@@ -146,7 +146,7 @@ func TestActiveSmartAccount(t *testing.T) {
 			accAddr = tc.AccountAddress
 		}
 
-		msg := &types.MsgActivateAccount{
+		msg := &typesv1.MsgActivateAccount{
 			AccountAddress: accAddr,
 			CodeID:         tc.codeID,
 			Salt:           helper.DefaultSalt,
@@ -179,10 +179,10 @@ func TestHandleAfterActive(t *testing.T) {
 	require.Equal(t, nil, acc.GetPubKey())
 
 	// prepare pubkey
-	pubKey, err := types.PubKeyToAny(app.AppCodec(), helper.DefaultPubKey)
+	pubKey, err := typesv1.PubKeyToAny(app.AppCodec(), helper.DefaultPubKey)
 	require.NoError(t, err)
 
-	dPubKey, err := types.PubKeyDecode(pubKey)
+	dPubKey, err := typesv1.PubKeyDecode(pubKey)
 	require.NoError(t, err)
 
 	// PrepareBeforeActive et sequence of account to zero
@@ -231,10 +231,10 @@ func TestValidateRecoverSA(t *testing.T) {
 			err:            false,
 		},
 	} {
-		pubKey, err := types.PubKeyToAny(app.AppCodec(), helper.DefaultPubKey)
+		pubKey, err := typesv1.PubKeyToAny(app.AppCodec(), helper.DefaultPubKey)
 		require.NoError(t, err)
 
-		msg := &types.MsgRecover{
+		msg := &typesv1.MsgRecover{
 			Creator:     helper.UserAddr,
 			Address:     tc.AccountAddress,
 			PubKey:      pubKey,
@@ -258,12 +258,12 @@ func TestCallSMValidate(t *testing.T) {
 	keeper := app.SaKeeper
 
 	// prepare pubkey
-	pubKey, err := types.PubKeyToAny(app.AppCodec(), helper.DefaultPubKey)
+	pubKey, err := typesv1.PubKeyToAny(app.AppCodec(), helper.DefaultPubKey)
 	require.NoError(t, err)
 
-	rPubKey, err := types.PubKeyToAny(app.AppCodec(), helper.DefaultRPubKery)
+	rPubKey, err := typesv1.PubKeyToAny(app.AppCodec(), helper.DefaultRPubKery)
 	require.NoError(t, err)
-	dRPubKey, err := types.PubKeyDecode(rPubKey)
+	dRPubKey, err := typesv1.PubKeyDecode(rPubKey)
 	require.NoError(t, err)
 
 	acc, _, err := helper.GenerateInActivateAccount(
@@ -277,7 +277,7 @@ func TestCallSMValidate(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	msg := &types.MsgActivateAccount{
+	msg := &typesv1.MsgActivateAccount{
 		AccountAddress: acc.GetAddress().String(),
 		CodeID:         helper.DefaultCodeID,
 		Salt:           helper.DefaultSalt,
@@ -309,7 +309,7 @@ func TestCallSMValidate(t *testing.T) {
 		},
 	} {
 
-		msg := &types.MsgRecover{
+		msg := &typesv1.MsgRecover{
 			Creator:     helper.UserAddr,
 			Address:     acc.GetAddress().String(),
 			PubKey:      rPubKey,
@@ -335,10 +335,10 @@ func TestIsInactiveAccount(t *testing.T) {
 	keeper := app.SaKeeper
 
 	// prepare pubkey
-	pubKey, err := types.PubKeyToAny(app.AppCodec(), helper.DefaultPubKey)
+	pubKey, err := typesv1.PubKeyToAny(app.AppCodec(), helper.DefaultPubKey)
 	require.NoError(t, err)
 
-	dPubKey, err := types.PubKeyDecode(pubKey)
+	dPubKey, err := typesv1.PubKeyDecode(pubKey)
 	require.NoError(t, err)
 
 	err = helper.AddNewSmartAccount(app, ctx, testSAAddress1, dPubKey, 0)
@@ -361,7 +361,7 @@ func TestIsInactiveAccount(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	msg := &types.MsgActivateAccount{
+	msg := &typesv1.MsgActivateAccount{
 		AccountAddress: acc.GetAddress().String(),
 		CodeID:         helper.DefaultCodeID,
 		Salt:           helper.DefaultSalt,
@@ -462,9 +462,9 @@ func TestGetSmartAccountByAddress(t *testing.T) {
 		}
 
 		if tc.exist {
-			require.NotEqual(t, (*types.SmartAccount)(nil), saAcc)
+			require.NotEqual(t, (*typesv1.SmartAccount)(nil), saAcc)
 		} else {
-			require.Equal(t, (*types.SmartAccount)(nil), saAcc)
+			require.Equal(t, (*typesv1.SmartAccount)(nil), saAcc)
 		}
 	}
 }

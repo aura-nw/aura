@@ -15,7 +15,8 @@ import (
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-	"github.com/aura-nw/aura/x/smartaccount/types"
+	types "github.com/aura-nw/aura/x/smartaccount/types"
+	typesv1 "github.com/aura-nw/aura/x/smartaccount/types/v1"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
@@ -44,7 +45,7 @@ func NewKeeper(
 ) Keeper {
 	// set KeyTable if it has not already been set
 	if !ps.HasKeyTable() {
-		ps = ps.WithKeyTable(types.ParamKeyTable())
+		ps = ps.WithKeyTable(typesv1.ParamKeyTable())
 	}
 
 	return Keeper{
@@ -83,7 +84,7 @@ func (k Keeper) SetNextAccountID(ctx sdk.Context, id uint64) {
 	store.Set(types.KeyPrefix(types.AccountIDKey), sdk.Uint64ToBigEndian(id))
 }
 
-func (k Keeper) ValidateActiveSA(ctx sdk.Context, msg *types.MsgActivateAccount) (authtypes.AccountI, error) {
+func (k Keeper) ValidateActiveSA(ctx sdk.Context, msg *typesv1.MsgActivateAccount) (authtypes.AccountI, error) {
 	// validate code id use to init smart account
 	if !k.isWhitelistCodeID(ctx, msg.CodeID) {
 		k.Logger(ctx).Error("active-sm", "code-id", msg.CodeID)
@@ -115,11 +116,11 @@ func (k Keeper) PrepareBeforeActive(ctx sdk.Context, sAccount authtypes.AccountI
 
 func (k Keeper) ActiveSmartAccount(
 	ctx sdk.Context,
-	msg *types.MsgActivateAccount,
+	msg *typesv1.MsgActivateAccount,
 	sAccount authtypes.AccountI,
 ) (cryptotypes.PubKey, error) {
 
-	pubKey, err := types.PubKeyDecode(msg.PubKey)
+	pubKey, err := typesv1.PubKeyDecode(msg.PubKey)
 	if err != nil {
 		return nil, err
 	}
@@ -180,14 +181,14 @@ func (k Keeper) HandleAfterActive(ctx sdk.Context, sAccount authtypes.AccountI, 
 	}
 
 	// create new smart account type
-	smartAccount := types.NewSmartAccountFromAccount(sAccount)
+	smartAccount := typesv1.NewSmartAccountFromAccount(sAccount)
 
 	// set smart account pubkey
 	return k.UpdateAccountPubKey(ctx, smartAccount, pubKey)
 }
 
 // ValidateRecoverSA check input before recover smart account
-func (k Keeper) ValidateRecoverSA(ctx sdk.Context, msg *types.MsgRecover) (authtypes.AccountI, error) {
+func (k Keeper) ValidateRecoverSA(ctx sdk.Context, msg *typesv1.MsgRecover) (authtypes.AccountI, error) {
 	saAddr, err := sdk.AccAddressFromBech32(msg.Address)
 	if err != nil {
 		k.Logger(ctx).Error("recover-sa", "decode-err", err.Error())
@@ -196,7 +197,7 @@ func (k Keeper) ValidateRecoverSA(ctx sdk.Context, msg *types.MsgRecover) (autht
 
 	// only allow accounts with type SmartAccount to be restored pubkey
 	smartAccount := k.AccountKeeper.GetAccount(ctx, saAddr)
-	if _, ok := smartAccount.(*types.SmartAccount); !ok {
+	if _, ok := smartAccount.(*typesv1.SmartAccount); !ok {
 		return nil, types.ErrAccountNotFoundForAddress
 	}
 
@@ -204,7 +205,7 @@ func (k Keeper) ValidateRecoverSA(ctx sdk.Context, msg *types.MsgRecover) (autht
 }
 
 // CallSMValidate to check logic recover from smart account
-func (k Keeper) CallSMValidate(ctx sdk.Context, msg *types.MsgRecover, saAddr sdk.AccAddress, pubKey cryptotypes.PubKey) error {
+func (k Keeper) CallSMValidate(ctx sdk.Context, msg *typesv1.MsgRecover, saAddr sdk.AccAddress, pubKey cryptotypes.PubKey) error {
 	// credentials
 	credentials, err := base64.StdEncoding.DecodeString(msg.Credentials)
 	if err != nil {
@@ -258,7 +259,7 @@ func (k Keeper) IsInactiveAccount(ctx sdk.Context, acc sdk.AccAddress) (authtype
 
 	// check if account has type base or smart
 	_, isBaseAccount := sAccount.(*authtypes.BaseAccount)
-	_, isSmartAccount := sAccount.(*types.SmartAccount)
+	_, isSmartAccount := sAccount.(*typesv1.SmartAccount)
 	if !isBaseAccount && !isSmartAccount {
 		return nil, errorsmod.Wrap(types.ErrAccountNotFoundForAddress, acc.String())
 	}
@@ -276,13 +277,13 @@ func (k Keeper) IsInactiveAccount(ctx sdk.Context, acc sdk.AccAddress) (authtype
 	return sAccount, nil
 }
 
-func (k Keeper) GetSmartAccountByAddress(ctx sdk.Context, address sdk.AccAddress) (*types.SmartAccount, error) {
+func (k Keeper) GetSmartAccountByAddress(ctx sdk.Context, address sdk.AccAddress) (*typesv1.SmartAccount, error) {
 	signerAcc, err := authante.GetSignerAcc(ctx, k.AccountKeeper, address)
 	if err != nil {
 		return nil, err
 	}
 
-	saAcc, ok := signerAcc.(*types.SmartAccount)
+	saAcc, ok := signerAcc.(*typesv1.SmartAccount)
 	if !ok {
 		return nil, nil
 	}

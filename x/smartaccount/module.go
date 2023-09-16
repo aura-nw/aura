@@ -18,7 +18,7 @@ import (
 	"github.com/aura-nw/aura/x/smartaccount/client/cli"
 	"github.com/aura-nw/aura/x/smartaccount/keeper"
 	"github.com/aura-nw/aura/x/smartaccount/types"
-	typesauranw "github.com/aura-nw/aura/x/smartaccount/types/v1"
+	typesauranw "github.com/aura-nw/aura/x/smartaccount/types/auranw"
 	typesv1 "github.com/aura-nw/aura/x/smartaccount/types/v1"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"

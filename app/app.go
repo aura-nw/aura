@@ -13,6 +13,7 @@ import (
 	v501 "github.com/aura-nw/aura/app/upgrades/v0.5.1"
 	v600 "github.com/aura-nw/aura/app/upgrades/v0.6.0"
 	v601 "github.com/aura-nw/aura/app/upgrades/v0.6.1"
+	v700 "github.com/aura-nw/aura/app/upgrades/v0.7.0"
 
 	"github.com/aura-nw/aura/app/internal"
 
@@ -1069,6 +1070,17 @@ func (app *App) setupUpgradeHandlers() {
 		v601.CreateUpgradeHandler(app.mm, app.SaKeeper, app.configurator),
 	)
 
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v700.UpgradeName,
+		v700.CreateUpgradeHandler(
+			app.mm, app.configurator,
+			app.ParamsKeeper,
+			app.ConsensusParamsKeeper,
+			*app.IBCKeeper,
+			app.AccountKeeper,
+		),
+	)
+
 	// When a planned update height is reached, the old binary will panic
 	// writing on disk the height and name of the update that triggered it
 	// This will read that value, and execute the preparations for the upgrade.
@@ -1122,6 +1134,14 @@ func (app *App) setupUpgradeHandlers() {
 
 	case v601.UpgradeName:
 		// no store upgrades in v0.6.1
+
+	case v700.UpgradeName:
+		storeUpgrades = &storetypes.StoreUpgrades{
+			Added: []string{
+				consensusparamtypes.StoreKey,
+				crisistypes.StoreKey,
+			},
+		}
 	}
 
 	if storeUpgrades != nil {

@@ -8,6 +8,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	samodulekeeper "github.com/aura-nw/aura/x/smartaccount/keeper"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	consensusparamkeeper "github.com/cosmos/cosmos-sdk/x/consensus/keeper"
 	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
@@ -41,6 +42,7 @@ const UpgradeName = "v0.7.0"
 func CreateUpgradeHandler(
 	mm *module.Manager,
 	configurator module.Configurator,
+	saKeeper samodulekeeper.Keeper,
 	paramKeeper paramskeeper.Keeper,
 	consensusParamKeeper consensusparamkeeper.Keeper,
 	ibcKeeper ibckeeper.Keeper,
@@ -118,6 +120,13 @@ func CreateUpgradeHandler(
 
 		if iterErr != nil {
 			return nil, iterErr
+		}
+
+		// update smartaccount params
+		smartaccountParams := smartaccounttypesv1.DefaultParams()
+		err := saKeeper.SetParams(ctx, smartaccountParams)
+		if err != nil {
+			return nil, err
 		}
 
 		// Run migrations

@@ -1074,6 +1074,7 @@ func (app *App) setupUpgradeHandlers() {
 		v700.UpgradeName,
 		v700.CreateUpgradeHandler(
 			app.mm, app.configurator,
+			app.SaKeeper,
 			app.ParamsKeeper,
 			app.ConsensusParamsKeeper,
 			*app.IBCKeeper,

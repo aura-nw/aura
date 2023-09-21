@@ -51,7 +51,7 @@ func TestParams(t *testing.T) {
 			err: false,
 		},
 	} {
-		ctx, app := helper.SetupGenesisTest()
+		ctx, app := helper.SetupGenesisTest(t)
 
 		keeper := app.SaKeeper
 

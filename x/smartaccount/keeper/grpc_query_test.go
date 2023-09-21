@@ -12,7 +12,7 @@ import (
 )
 
 func TestQueryParams(t *testing.T) {
-	ctx, app := helper.SetupGenesisTest()
+	ctx, app := helper.SetupGenesisTest(t)
 
 	queryServer := app.SaKeeper
 
@@ -46,7 +46,7 @@ func TestQueryParams(t *testing.T) {
 }
 
 func TestQueryGenerateAccount(t *testing.T) {
-	ctx, app := helper.SetupGenesisTest()
+	ctx, app := helper.SetupGenesisTest(t)
 
 	creator := app.AccountKeeper.GetAllAccounts(ctx)[0]
 

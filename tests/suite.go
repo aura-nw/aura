@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"testing"
 	"time"
 
 	"github.com/aura-nw/aura/app"
@@ -16,7 +17,7 @@ type KeeperTestHelper struct {
 	Ctx sdk.Context
 }
 
-func (s *KeeperTestHelper) Setup() {
-	s.App = Setup(false)
+func (s *KeeperTestHelper) Setup(t *testing.T) {
+	s.App = Setup(t, false)
 	s.Ctx = s.App.BaseApp.NewContext(false, tmtypes.Header{Height: 1, ChainID: "aura-1", Time: time.Now().UTC()})
 }

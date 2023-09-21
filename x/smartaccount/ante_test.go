@@ -21,7 +21,7 @@ import (
 
 func TestGetSmartAccountTxSigner(t *testing.T) {
 	var (
-		app     = tests.Setup(false)
+		app     = tests.Setup(t, false)
 		ctx     = app.NewContext(false, tmproto.Header{})
 		keybase = keyring.NewInMemory(app.AppCodec())
 	)
@@ -122,7 +122,7 @@ func TestGetSmartAccountTxSigner(t *testing.T) {
 
 func TestGetValidActivateAccountMessage(t *testing.T) {
 	var (
-		app     = tests.Setup(false)
+		app     = tests.Setup(t, false)
 		ctx     = app.NewContext(false, tmproto.Header{})
 		keybase = keyring.NewInMemory(app.AppCodec())
 	)
@@ -222,7 +222,7 @@ func TestGetValidActivateAccountMessage(t *testing.T) {
 
 func TestSetPubKeyDecorator(t *testing.T) {
 	var (
-		app     = tests.Setup(false)
+		app     = tests.Setup(t, false)
 		ctx     = app.NewContext(false, tmproto.Header{})
 		keybase = keyring.NewInMemory(app.AppCodec())
 	)
@@ -349,7 +349,7 @@ func TestSetPubKeyDecorator(t *testing.T) {
 
 func TestSmartAccountDecoratorForTx(t *testing.T) {
 	var (
-		ctx, app = helper.SetupGenesisTest()
+		ctx, app = helper.SetupGenesisTest(t)
 		keybase  = keyring.NewInMemory(app.AppCodec())
 	)
 
@@ -510,7 +510,7 @@ func TestSmartAccountDecoratorForActivation(t *testing.T) {
 	/* =================== test activate account message flow =================== */
 
 	var (
-		ctx, app = helper.SetupGenesisTest()
+		ctx, app = helper.SetupGenesisTest(t)
 		keybase  = keyring.NewInMemory(app.AppCodec())
 	)
 

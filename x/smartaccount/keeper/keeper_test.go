@@ -10,7 +10,7 @@ import (
 )
 
 func TestIncrementNextAccountID(t *testing.T) {
-	ctx, app := helper.SetupGenesisTest()
+	ctx, app := helper.SetupGenesisTest(t)
 
 	keeper := app.SaKeeper
 
@@ -22,7 +22,7 @@ func TestIncrementNextAccountID(t *testing.T) {
 }
 
 func TestValidateActivateSA(t *testing.T) {
-	ctx, app := helper.SetupGenesisTest()
+	ctx, app := helper.SetupGenesisTest(t)
 
 	keeper := app.SaKeeper
 
@@ -79,7 +79,7 @@ func TestValidateActivateSA(t *testing.T) {
 }
 
 func TestPrepareBeforeActive(t *testing.T) {
-	ctx, app := helper.SetupGenesisTest()
+	ctx, app := helper.SetupGenesisTest(t)
 
 	keeper := app.SaKeeper
 
@@ -126,7 +126,7 @@ func TestActiveSmartAccount(t *testing.T) {
 			err:            false,
 		},
 	} {
-		ctx, app := helper.SetupGenesisTest()
+		ctx, app := helper.SetupGenesisTest(t)
 
 		keeper := app.SaKeeper
 
@@ -164,7 +164,7 @@ func TestActiveSmartAccount(t *testing.T) {
 }
 
 func TestHandleAfterActive(t *testing.T) {
-	ctx, app := helper.SetupGenesisTest()
+	ctx, app := helper.SetupGenesisTest(t)
 
 	keeper := app.SaKeeper
 
@@ -200,7 +200,7 @@ func TestValidateRecoverSA(t *testing.T) {
 	testSAAddress := "cosmos10uxaa5gkxpeungu2c9qswx035v6t3r24w6v2r6dxd858rq2mzknqj8ru28"
 	testBAAddress := "cosmos13t4996czrgft9gw43epuwauccrldu5whx6uprjdmvsmuf7ylg8yqcxgzk3"
 
-	ctx, app := helper.SetupGenesisTest()
+	ctx, app := helper.SetupGenesisTest(t)
 
 	keeper := app.SaKeeper
 
@@ -253,7 +253,7 @@ func TestValidateRecoverSA(t *testing.T) {
 func TestCallSMValidate(t *testing.T) {
 	customMsg := []byte("{\"recover_key\":\"024ab33b4f0808eba493ac4e3ead798c8339e2fd216b20ca110001fd094784c07f\"}")
 
-	ctx, app := helper.SetupGenesisTest()
+	ctx, app := helper.SetupGenesisTest(t)
 
 	keeper := app.SaKeeper
 
@@ -330,7 +330,7 @@ func TestIsInactiveAccount(t *testing.T) {
 	testBAAddress1 := "cosmos1kzlrmxw3h2n4uzuv73m33cfw7xt7qjf3hlqx33ulc02e9dhxu46qgfxg9l"
 	testBAAddress2 := "cosmos10uxaa5gkxpeungu2c9qswx035v6t3r24w6v2r6dxd858rq2mzknqj8ru28"
 
-	ctx, app := helper.SetupGenesisTest()
+	ctx, app := helper.SetupGenesisTest(t)
 
 	keeper := app.SaKeeper
 
@@ -419,7 +419,7 @@ func TestGetSmartAccountByAddress(t *testing.T) {
 	testAddress2 := "cosmos1kzlrmxw3h2n4uzuv73m33cfw7xt7qjf3hlqx33ulc02e9dhxu46qgfxg9l"
 	testAddress3 := "cosmos10uxaa5gkxpeungu2c9qswx035v6t3r24w6v2r6dxd858rq2mzknqj8ru28"
 
-	ctx, app := helper.SetupGenesisTest()
+	ctx, app := helper.SetupGenesisTest(t)
 
 	err := helper.AddNewSmartAccount(app, ctx, testAddress1, nil, 0)
 	require.NoError(t, err)

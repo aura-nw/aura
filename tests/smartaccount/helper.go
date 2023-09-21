@@ -3,6 +3,7 @@ package smartaccount
 import (
 	"fmt"
 	"os"
+	"testing"
 	"time"
 
 	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
@@ -38,8 +39,8 @@ var (
 	DefaultRPubKery = []byte("{\"@type\":\"/cosmos.crypto.secp256k1.PubKey\",\"key\":\"A/2t0ru/iZ4HoiX0DkTuMy9rC2mMeXmiN6luM3pa+IvT\"}")
 )
 
-func SetupGenesisTest() (sdk.Context, *app.App) {
-	app := tests.Setup(false)
+func SetupGenesisTest(t *testing.T) (sdk.Context, *app.App) {
+	app := tests.Setup(t, false)
 	ctx := app.NewContext(false, tmproto.Header{
 		Time: time.Now(),
 	})

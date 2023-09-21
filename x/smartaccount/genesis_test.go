@@ -16,7 +16,7 @@ var (
 )
 
 func TestInitGenesis(t *testing.T) {
-	ctx, app := helper.SetupGenesisTest()
+	ctx, app := helper.SetupGenesisTest(t)
 
 	params := app.SaKeeper.GetParams(ctx)
 	require.Equal(t, helper.GenesisState.Params, params)
@@ -26,7 +26,7 @@ func TestInitGenesis(t *testing.T) {
 }
 
 func TestExportGenesis(t *testing.T) {
-	ctx, app := helper.SetupGenesisTest()
+	ctx, app := helper.SetupGenesisTest(t)
 
 	if ctx.IsCheckTx() {
 		fmt.Println("go check tx")

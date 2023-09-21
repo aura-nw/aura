@@ -38,7 +38,7 @@ func TestActivateAccount(t *testing.T) {
 			err:            false,
 		},
 	} {
-		ctx, app := helper.SetupGenesisTest()
+		ctx, app := helper.SetupGenesisTest(t)
 
 		newAcc, pubKey, err := helper.GenerateInActivateAccount(
 			app,
@@ -117,7 +117,7 @@ func TestRecoverAccount(t *testing.T) {
 			err:            false,
 		},
 	} {
-		ctx, app := helper.SetupGenesisTest()
+		ctx, app := helper.SetupGenesisTest(t)
 
 		newAcc, pubKey, err := helper.GenerateInActivateAccount(
 			app,

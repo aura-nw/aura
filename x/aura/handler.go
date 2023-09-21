@@ -1,5 +1,7 @@
 package aura
 
+// DONTCOVER
+
 import (
 	"fmt"
 

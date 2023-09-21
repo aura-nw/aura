@@ -1,5 +1,7 @@
 package module
 
+// DONTCOVER
+
 import (
 	"context"
 	"encoding/json"

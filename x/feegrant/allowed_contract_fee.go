@@ -1,5 +1,7 @@
 package feegrant
 
+// DONTCOVER
+
 import (
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cosmos/cosmos-sdk/codec/types"

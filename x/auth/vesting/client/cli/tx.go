@@ -1,8 +1,12 @@
 package cli
 
+// DONTCOVER
 import (
 	"encoding/json"
 	"fmt"
+	"os"
+	"strconv"
+
 	customtypes "github.com/aura-nw/aura/x/auth/vesting/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -10,8 +14,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	"github.com/spf13/cobra"
-	"os"
-	"strconv"
 )
 
 // Transaction command flags

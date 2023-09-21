@@ -2,11 +2,11 @@ package keeper_test
 
 import (
 	"github.com/aura-nw/aura/tests"
+	testutil "github.com/aura-nw/aura/tests/mocks/mint"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	"testing"
 
 	"github.com/aura-nw/aura/x/mint/keeper"
-	minttestutil "github.com/aura-nw/aura/x/mint/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authTypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	mint "github.com/cosmos/cosmos-sdk/x/mint"
@@ -21,10 +21,10 @@ type KeeperTestSuite struct {
 	ctx sdk.Context
 
 	mintKeeper    keeper.Keeper
-	stakingKeeper *minttestutil.MockStakingKeeper
-	bankKeeper    *minttestutil.MockBankKeeper
-	accountKeeper *minttestutil.MockAccountKeeper
-	auraKeeper    *minttestutil.MockAuraKeeper
+	stakingKeeper *testutil.MockStakingKeeper
+	bankKeeper    *testutil.MockBankKeeper
+	accountKeeper *testutil.MockAccountKeeper
+	auraKeeper    *testutil.MockAuraKeeper
 	pk            paramskeeper.Keeper
 }
 
@@ -37,10 +37,10 @@ func (s *KeeperTestSuite) SetupTest() {
 
 	// gomock initializations
 	ctrl := gomock.NewController(s.T())
-	accountKeeper := minttestutil.NewMockAccountKeeper(ctrl)
-	bankKeeper := minttestutil.NewMockBankKeeper(ctrl)
-	stakingKeeper := minttestutil.NewMockStakingKeeper(ctrl)
-	auraKeeper := minttestutil.NewMockAuraKeeper(ctrl)
+	accountKeeper := testutil.NewMockAccountKeeper(ctrl)
+	bankKeeper := testutil.NewMockBankKeeper(ctrl)
+	stakingKeeper := testutil.NewMockStakingKeeper(ctrl)
+	auraKeeper := testutil.NewMockAuraKeeper(ctrl)
 	pk := tests.GetParamsKeeper()
 
 	accountKeeper.EXPECT().GetModuleAddress(minttypes.ModuleName).Return(sdk.AccAddress{})
@@ -89,4 +89,26 @@ func (s *KeeperTestSuite) TestCustomBondedRatio() {
 
 	s.Require().Equal(s.mintKeeper.CustomBondedRatio(s.ctx, excludeAmount), bonded.ToDec().QuoInt(customStaking))
 
+}
+
+func (s *KeeperTestSuite) TestGetExcludeCirculatingAmount() {
+	denom := "aura"
+	s.bankKeeper.EXPECT().GetExcludeCirculatingAmount(s.ctx, denom).Return(sdk.Coin{})
+	s.Require().NotNil(s.mintKeeper.GetExcludeCirculatingAmount(s.ctx, denom))
+}
+
+func (s *KeeperTestSuite) TestGetSupply() {
+	coin := sdk.Coin{
+		Denom:  "aura",
+		Amount: sdk.NewInt(1_000_000),
+	}
+	s.bankKeeper.EXPECT().GetSupply(s.ctx, coin.Denom).Return(coin)
+	s.Require().Equal(s.mintKeeper.GetSupply(s.ctx, coin.Denom), sdk.NewInt(1_000_000))
+}
+
+func (s *KeeperTestSuite) TestGetMaxSupply() {
+	maxSupllyStr := sdk.NewInt(1_000_000).String()
+
+	s.auraKeeper.EXPECT().GetMaxSupply(s.ctx).Return(maxSupllyStr)
+	s.Require().Equal(s.mintKeeper.GetMaxSupply(s.ctx), maxSupllyStr)
 }

@@ -1,5 +1,7 @@
 package types
 
+// DONTCOVER
+
 const (
 	// ModuleName defines the module name
 	ModuleName = "aura"

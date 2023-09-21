@@ -180,7 +180,7 @@ func (AppModule) GenerateGenesisState(simState *module.SimulationState) {
 
 // ProposalContents returns all the feegrant content functions used to
 // simulate governance proposals.
-func (AppModule) ProposalContents(simState module.SimulationState) []simtypes.WeightedProposalContent {
+func (AppModule) ProposalContents(simState module.SimulationState) []simtypes.WeightedProposalMsg {
 	return nil
 }
 

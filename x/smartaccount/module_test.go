@@ -30,9 +30,9 @@ func makeMockAccount(keybase keyring.Keyring, uid string) (authtypes.AccountI, e
 		return nil, err
 	}
 
-	pk := record.GetPubKey()
-	if pk == nil {
-		return nil, fmt.Errorf("pubkey error")
+	pk, err := record.GetPubKey()
+	if pk == nil || err != nil {
+		return nil, fmt.Errorf("pubkey error: %s", err.Error())
 	}
 
 	return authtypes.NewBaseAccount(pk.Address().Bytes(), pk, 0, 0), nil

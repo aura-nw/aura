@@ -37,6 +37,22 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 ## Unreleased
 
+## [v0.7.0] - 2023-09-22
+
+Upgrade sdk to v0.47.4
+
+### Changes
+- The custom auth/vesting is deprecated - use sdk auth/vesting instead
+- The ibc-middleware is deprecated - use sdk ibc-hooks instead
+- The Params module is deprecated, each module now handles its own parameters
+- Restructure proto, cmd
+- Add types version for smartaccount module
+- Upgrade testenv
+
+### Features
+- New PostHandler
+- Gov proposals can be handled through the deprecated Params module or directly to the target module
+
 ## [v0.6.1] - 2023-07-07
 
 ### Improvements

@@ -3,25 +3,26 @@ package smartaccount
 import (
 	"fmt"
 	"os"
+	"testing"
 	"time"
 
 	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
 	"github.com/aura-nw/aura/app"
 	"github.com/aura-nw/aura/tests"
 	"github.com/aura-nw/aura/x/smartaccount"
-	"github.com/aura-nw/aura/x/smartaccount/types"
+	typesv1 "github.com/aura-nw/aura/x/smartaccount/types/v1beta1"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 )
 
 var (
 	UserAddr     = "cosmos1lg0g3jpu8luawwezcknamz0l003swknjyw9uch"
-	GenesisState = &types.GenesisState{
-		Params:         types.NewParams([]*types.CodeID{{CodeID: 1, Status: true}}, []string{"/cosmwasm.wasm.v1.MsgExecuteContract"}, types.DefaultMaxGas),
-		SmartAccountId: types.DefaultSmartAccountId,
+	GenesisState = &typesv1.GenesisState{
+		Params:         typesv1.NewParams([]*typesv1.CodeID{{CodeID: 1, Status: true}}, []string{"/cosmwasm.wasm.v1.MsgExecuteContract"}, typesv1.DefaultMaxGas),
+		SmartAccountId: typesv1.DefaultSmartAccountId,
 	}
 )
 
@@ -38,8 +39,8 @@ var (
 	DefaultRPubKery = []byte("{\"@type\":\"/cosmos.crypto.secp256k1.PubKey\",\"key\":\"A/2t0ru/iZ4HoiX0DkTuMy9rC2mMeXmiN6luM3pa+IvT\"}")
 )
 
-func SetupGenesisTest() (sdk.Context, *app.App) {
-	app := tests.Setup(false)
+func SetupGenesisTest(t *testing.T) (sdk.Context, *app.App) {
+	app := tests.Setup(t, false)
 	ctx := app.NewContext(false, tmproto.Header{
 		Time: time.Now(),
 	})
@@ -96,12 +97,12 @@ func GenerateInActivateAccount(
 	queryServer := app.SaKeeper
 
 	/* ======== create inactivate smart account ======== */
-	pubKey, err := types.PubKeyToAny(app.AppCodec(), dPubKey)
+	pubKey, err := typesv1.PubKeyToAny(app.AppCodec(), dPubKey)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	queryMsg := &types.QueryGenerateAccountRequest{
+	queryMsg := &typesv1.QueryGenerateAccountRequest{
 		CodeID:  dCodeID,
 		PubKey:  pubKey,
 		Salt:    dSalt,
@@ -117,8 +118,7 @@ func GenerateInActivateAccount(
 	if err != nil {
 		return nil, nil, err
 	}
-
-	newAcc := authtypes.NewBaseAccount(newAccAddr, nil, app.AccountKeeper.GetNextAccountNumber(ctx), 0)
+	newAcc := authtypes.NewBaseAccount(newAccAddr, nil, app.AccountKeeper.NextAccountNumber(ctx), 0)
 
 	app.AccountKeeper.SetAccount(ctx, newAcc)
 
@@ -145,7 +145,7 @@ func AddNewSmartAccount(app *app.App, ctx sdk.Context, addr string, pubKey crypt
 	}
 
 	// create new smart account type
-	smartAccount := types.NewSmartAccountFromAccount(newAcc)
+	smartAccount := typesv1.NewSmartAccountFromAccount(newAcc)
 
 	err = smartAccount.SetPubKey(pubKey)
 	if err != nil {
@@ -162,6 +162,6 @@ func NewBaseAccount(app *app.App, ctx sdk.Context, addr string, pubKey cryptotyp
 		return nil, err
 	}
 
-	newAcc := authtypes.NewBaseAccount(newAccAddr, pubKey, app.AccountKeeper.GetNextAccountNumber(ctx), sequence)
+	newAcc := authtypes.NewBaseAccount(newAccAddr, pubKey, app.AccountKeeper.NextAccountNumber(ctx), sequence)
 	return newAcc, nil
 }

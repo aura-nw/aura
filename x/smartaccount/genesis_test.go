@@ -8,15 +8,15 @@ import (
 
 	helper "github.com/aura-nw/aura/tests/smartaccount"
 	"github.com/aura-nw/aura/x/smartaccount"
-	"github.com/aura-nw/aura/x/smartaccount/types"
+	typesv1 "github.com/aura-nw/aura/x/smartaccount/types/v1beta1"
 )
 
 var (
-	mockNextAccountID = types.DefaultSmartAccountId
+	mockNextAccountID = typesv1.DefaultSmartAccountId
 )
 
 func TestInitGenesis(t *testing.T) {
-	ctx, app := helper.SetupGenesisTest()
+	ctx, app := helper.SetupGenesisTest(t)
 
 	params := app.SaKeeper.GetParams(ctx)
 	require.Equal(t, helper.GenesisState.Params, params)
@@ -26,7 +26,7 @@ func TestInitGenesis(t *testing.T) {
 }
 
 func TestExportGenesis(t *testing.T) {
-	ctx, app := helper.SetupGenesisTest()
+	ctx, app := helper.SetupGenesisTest(t)
 
 	if ctx.IsCheckTx() {
 		fmt.Println("go check tx")

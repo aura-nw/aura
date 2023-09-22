@@ -9,21 +9,21 @@ import (
 	tests "github.com/aura-nw/aura/tests"
 	"github.com/aura-nw/aura/x/smartaccount"
 	"github.com/aura-nw/aura/x/smartaccount/keeper"
-	"github.com/aura-nw/aura/x/smartaccount/types"
+	typesv1 "github.com/aura-nw/aura/x/smartaccount/types/v1beta1"
 
 	helper "github.com/aura-nw/aura/tests/smartaccount"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 )
 
 func TestGetSmartAccountTxSigner(t *testing.T) {
 	var (
-		app     = tests.Setup(false)
+		app     = tests.Setup(t, false)
 		ctx     = app.NewContext(false, tmproto.Header{})
-		keybase = keyring.NewInMemory()
+		keybase = keyring.NewInMemory(app.AppCodec())
 	)
 
 	acc1, err := makeMockAccount(keybase, "test1")
@@ -32,7 +32,7 @@ func TestGetSmartAccountTxSigner(t *testing.T) {
 
 	acc2Mock, err := makeMockAccount(keybase, "test2")
 	require.NoError(t, err)
-	acc2 := types.NewSmartAccountFromAccount(acc2Mock)
+	acc2 := typesv1.NewSmartAccountFromAccount(acc2Mock)
 	err = acc2.SetPubKey(acc2Mock.GetPubKey())
 	require.NoError(t, err)
 	app.AccountKeeper.SetAccount(ctx, acc2)
@@ -113,18 +113,18 @@ func TestGetSmartAccountTxSigner(t *testing.T) {
 		}
 
 		if tc.expIs {
-			require.NotEqual(t, (*types.SmartAccount)(nil), signerAcc)
+			require.NotEqual(t, (*typesv1.SmartAccount)(nil), signerAcc)
 		} else {
-			require.Equal(t, (*types.SmartAccount)(nil), signerAcc)
+			require.Equal(t, (*typesv1.SmartAccount)(nil), signerAcc)
 		}
 	}
 }
 
 func TestGetValidActivateAccountMessage(t *testing.T) {
 	var (
-		app     = tests.Setup(false)
+		app     = tests.Setup(t, false)
 		ctx     = app.NewContext(false, tmproto.Header{})
-		keybase = keyring.NewInMemory()
+		keybase = keyring.NewInMemory(app.AppCodec())
 	)
 
 	acc1, err := makeMockAccount(keybase, "test1")
@@ -158,7 +158,7 @@ func TestGetValidActivateAccountMessage(t *testing.T) {
 		{
 			desc: "tx has one signer and it is an SmartAccount",
 			msgs: []sdk.Msg{
-				&types.MsgActivateAccount{
+				&typesv1.MsgActivateAccount{
 					AccountAddress: acc2.GetAddress().String(),
 				},
 			},
@@ -185,7 +185,7 @@ func TestGetValidActivateAccountMessage(t *testing.T) {
 		{
 			desc: "tx has more than one message and contain activate message",
 			msgs: []sdk.Msg{
-				&types.MsgActivateAccount{AccountAddress: acc1.GetAddress().String()},
+				&typesv1.MsgActivateAccount{AccountAddress: acc1.GetAddress().String()},
 				banktypes.NewMsgSend(acc1.GetAddress(), acc2.GetAddress(), sdk.NewCoins()),
 			},
 			signers: []Signer{signer1},
@@ -195,7 +195,7 @@ func TestGetValidActivateAccountMessage(t *testing.T) {
 		{
 			desc: "tx has more than one signers and contain activate message",
 			msgs: []sdk.Msg{
-				&types.MsgActivateAccount{AccountAddress: acc1.GetAddress().String()},
+				&typesv1.MsgActivateAccount{AccountAddress: acc1.GetAddress().String()},
 			},
 			signers: []Signer{signer1, signer2},
 			expIs:   false,
@@ -213,18 +213,18 @@ func TestGetValidActivateAccountMessage(t *testing.T) {
 		}
 
 		if tc.expIs {
-			require.NotEqual(t, (*types.MsgActivateAccount)(nil), aaMsg)
+			require.NotEqual(t, (*typesv1.MsgActivateAccount)(nil), aaMsg)
 		} else {
-			require.Equal(t, (*types.MsgActivateAccount)(nil), aaMsg)
+			require.Equal(t, (*typesv1.MsgActivateAccount)(nil), aaMsg)
 		}
 	}
 }
 
 func TestSetPubKeyDecorator(t *testing.T) {
 	var (
-		app     = tests.Setup(false)
+		app     = tests.Setup(t, false)
 		ctx     = app.NewContext(false, tmproto.Header{})
-		keybase = keyring.NewInMemory()
+		keybase = keyring.NewInMemory(app.AppCodec())
 	)
 
 	acc, pubKey, err := helper.GenerateInActivateAccount(
@@ -237,7 +237,7 @@ func TestSetPubKeyDecorator(t *testing.T) {
 		helper.DefaultMsg,
 	)
 	require.NoError(t, err)
-	dPubKey, err := types.PubKeyDecode(pubKey)
+	dPubKey, err := typesv1.PubKeyDecode(pubKey)
 	require.NoError(t, err)
 	err = helper.AddNewSmartAccount(app, ctx, acc.GetAddress().String(), dPubKey, 0)
 	require.NoError(t, err)
@@ -287,7 +287,7 @@ func TestSetPubKeyDecorator(t *testing.T) {
 		{
 			desc: "is ActivateAccount tx",
 			msgs: []sdk.Msg{
-				&types.MsgActivateAccount{
+				&typesv1.MsgActivateAccount{
 					AccountAddress: acc.GetAddress().String(),
 					CodeID:         helper.DefaultCodeID,
 					Salt:           helper.DefaultSalt,
@@ -349,8 +349,8 @@ func TestSetPubKeyDecorator(t *testing.T) {
 
 func TestSmartAccountDecoratorForTx(t *testing.T) {
 	var (
-		ctx, app = helper.SetupGenesisTest()
-		keybase  = keyring.NewInMemory()
+		ctx, app = helper.SetupGenesisTest(t)
+		keybase  = keyring.NewInMemory(app.AppCodec())
 	)
 
 	// base smartaccount
@@ -364,7 +364,7 @@ func TestSmartAccountDecoratorForTx(t *testing.T) {
 		helper.DefaultMsg,
 	)
 	require.NoError(t, err)
-	dPubKey1, err := types.PubKeyDecode(pubKey1)
+	dPubKey1, err := typesv1.PubKeyDecode(pubKey1)
 	require.NoError(t, err)
 
 	acc1Signer, err := makeMockAccount(keybase, "test1")
@@ -372,7 +372,7 @@ func TestSmartAccountDecoratorForTx(t *testing.T) {
 	err = acc1Signer.SetPubKey(dPubKey1)
 	require.NoError(t, err)
 
-	msg := &types.MsgActivateAccount{
+	msg := &typesv1.MsgActivateAccount{
 		AccountAddress: acc1.GetAddress().String(),
 		CodeID:         helper.DefaultCodeID,
 		Salt:           helper.DefaultSalt,
@@ -510,8 +510,8 @@ func TestSmartAccountDecoratorForActivation(t *testing.T) {
 	/* =================== test activate account message flow =================== */
 
 	var (
-		ctx, app = helper.SetupGenesisTest()
-		keybase  = keyring.NewInMemory()
+		ctx, app = helper.SetupGenesisTest(t)
+		keybase  = keyring.NewInMemory(app.AppCodec())
 	)
 
 	// base smartaccount
@@ -525,7 +525,7 @@ func TestSmartAccountDecoratorForActivation(t *testing.T) {
 		helper.DefaultMsg,
 	)
 	require.NoError(t, err)
-	dPubKey1, err := types.PubKeyDecode(pubKey1)
+	dPubKey1, err := typesv1.PubKeyDecode(pubKey1)
 	require.NoError(t, err)
 	app.AccountKeeper.SetAccount(ctx, acc1)
 
@@ -548,7 +548,7 @@ func TestSmartAccountDecoratorForActivation(t *testing.T) {
 		helper.DefaultMsg,
 	)
 	require.NoError(t, err)
-	dPubKey3, err := types.PubKeyDecode(pubKey3)
+	dPubKey3, err := typesv1.PubKeyDecode(pubKey3)
 	require.NoError(t, err)
 
 	acc3Signer, err := makeMockAccount(keybase, "test3")
@@ -596,7 +596,7 @@ func TestSmartAccountDecoratorForActivation(t *testing.T) {
 		{
 			desc: "is ActivateAccount message",
 			msgs: []sdk.Msg{
-				&types.MsgActivateAccount{
+				&typesv1.MsgActivateAccount{
 					AccountAddress: acc1.GetAddress().String(),
 					CodeID:         helper.DefaultCodeID,
 					Salt:           helper.DefaultSalt,
@@ -610,7 +610,7 @@ func TestSmartAccountDecoratorForActivation(t *testing.T) {
 		{
 			desc: "error, is ActivateAccount message but invalid signer",
 			msgs: []sdk.Msg{
-				&types.MsgActivateAccount{
+				&typesv1.MsgActivateAccount{
 					AccountAddress: acc3.GetAddress().String(),
 					CodeID:         2,
 					Salt:           []byte("account3"),
@@ -624,7 +624,7 @@ func TestSmartAccountDecoratorForActivation(t *testing.T) {
 		{
 			desc: "error, smartaccount address not the same as predicted",
 			msgs: []sdk.Msg{
-				&types.MsgActivateAccount{
+				&typesv1.MsgActivateAccount{
 					AccountAddress: acc1.GetAddress().String(),
 					CodeID:         helper.DefaultCodeID,
 					Salt:           []byte("custom salt"),

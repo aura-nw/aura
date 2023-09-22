@@ -1,23 +1,31 @@
+version: 1
+build:
+  proto:
+    path: proto
+    third_party_paths:
+    - third_party/proto
+    - proto_vendor
 accounts:
-  - name: Cantho
-    coins: ["50000000000000uaura"]
-  - name: Vinh
-    coins: ["50000000000000uaura"]
-  - name: Hagiang
-    coins: ["50000000000000uaura"]
-  - name: Thaibinh
-    coins: ["50000000000000uaura"]
-validator:
-  name: Cantho
-  staked: "10000000000uaura"
+- name: Cantho
+  coins:
+  - 50000000000000uaura
+- name: Vinh
+  coins:
+  - 50000000000000uaura
+- name: Hagiang
+  coins:
+  - 50000000000000uaura
+- name: Thaibinh
+  coins:
+  - 50000000000000uaura
+faucet:
+  name: null
+  coins: []
+  host: 0.0.0.0:4500
 client:
   openapi:
-    path: "docs/static/openapi.yml"
-init:
-  app:
-    minimum-gas-prices: "0.001uaura"
+    path: docs/static/openapi.yml
 genesis:
-  chain_id: "aura-testnet"
   app_state:
     aura:
       params:
@@ -27,45 +35,42 @@ genesis:
         denom: uaura
     gov:
       deposit_params:
-        min_deposit: [
-         {
-           "denom": "uaura",
-           "amount": "1000000"
-         }
-        ]
-        max_deposit_period: "172800s"
+        max_deposit_period: 172800s
+        min_deposit:
+        - amount: "1000000"
+          denom: uaura
       voting_params:
-        voting_period: "172800s"
+        voting_period: 172800s
     mint:
       params:
-        mint_denom: "uaura"
-        inflation_rate_change: "0.080000000000000000"
+        blocks_per_year: "5373084"
         inflation_max: "0.120000000000000000"
         inflation_min: "0.040000000000000000"
-        blocks_per_year: "5373084"
-    staking:
-      params:
-        bond_denom: "uaura"
-        unbonding_time: "86400s"
-        max_validators: 5
+        inflation_rate_change: "0.080000000000000000"
+        mint_denom: uaura
     slashing:
       params:
+        downtime_jail_duration: 600s
         signed_blocks_window: "1000"
-        downtime_jail_duration: "600s"
     smartaccount:
       params:
-        whitelist_code_id: []
         disable_msgs_list: ["/cosmwasm.wasm.v1.MsgUpdateAdmin","/cosmwasm.wasm.v1.MsgClearAdmin"]
         max_gas_execute: 2000000
+        whitelist_code_id: [
+          {
+            code_id: "1",
+            status: true
+          }
+        ]
       smart_account_id: 0
-
-
-"# Upgrade Aurad version to v0.4.2
-
-This is a proposal to upgrade **aurad** version at height 2,187,716 ~ Wed 7th, 5:30 PM UTC+7 
-
-## Changelog
-
-### Improvements
-
-Allow IBC clients to be recoverd after expired"
+    staking:
+      params:
+        bond_denom: uaura
+        max_validators: 5
+        unbonding_time: 86400s
+  chain_id: aura-testnet
+validators:
+- name: Cantho
+  bonded: 10000000000uaura
+  app:
+    minimum-gas-prices: 0.001uaura

@@ -8,18 +8,19 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 
 	samodulekeeper "github.com/aura-nw/aura/x/smartaccount/keeper"
+	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	consensusparamkeeper "github.com/cosmos/cosmos-sdk/x/consensus/keeper"
 	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
 	exported "github.com/cosmos/ibc-go/v7/modules/core/exported"
 	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
 
 	// SDK v47 modules
-
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
 	// custom
-
+	smartaccounttypesauranw "github.com/aura-nw/aura/x/smartaccount/types/auranw"
 	smartaccounttypesv1 "github.com/aura-nw/aura/x/smartaccount/types/v1"
 )
 
@@ -33,6 +34,7 @@ func CreateUpgradeHandler(
 	paramKeeper paramskeeper.Keeper,
 	consensusParamKeeper consensusparamkeeper.Keeper,
 	ibcKeeper ibckeeper.Keeper,
+	authKeeper authkeeper.AccountKeeper,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		logger := ctx.Logger().With("upgrade", UpgradeName)
@@ -41,6 +43,27 @@ func CreateUpgradeHandler(
 		// The old params module is required to still be imported in your app.go in order to handle this migration.
 		baseAppLegacySS := paramKeeper.Subspace(baseapp.Paramspace).WithKeyTable(paramstypes.ConsensusParamsKeyTable())
 		baseapp.MigrateParams(ctx, baseAppLegacySS, &consensusParamKeeper)
+
+		// Migrate smartaccounts from `auranw` to `v1` verson
+		// Change typeUrl from "auranw.aura.smartaccount.SmartAccount" to "aura.smartaccount.v1.SmartAccount"
+		var iterErr error
+		authKeeper.IterateAccounts(ctx, func(account authtypes.AccountI) (stop bool) {
+			if oldSa, ok := account.(*smartaccounttypesauranw.SmartAccount); ok {
+				newSa := smartaccounttypesv1.NewSmartAccount(oldSa.Address, oldSa.AccountNumber, oldSa.Sequence)
+				err := newSa.SetPubKey(oldSa.GetPubKey())
+				if err != nil {
+					iterErr = err
+					return true
+				}
+
+				authKeeper.SetAccount(ctx, newSa)
+			}
+			return false
+		})
+
+		if iterErr != nil {
+			return nil, iterErr
+		}
 
 		// update smartaccount params
 		smartaccountParams := smartaccounttypesv1.DefaultParams()

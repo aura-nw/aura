@@ -1077,6 +1077,7 @@ func (app *App) setupUpgradeHandlers() {
 			app.ParamsKeeper,
 			app.ConsensusParamsKeeper,
 			*app.IBCKeeper,
+			app.AccountKeeper,
 		),
 	)
 

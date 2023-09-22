@@ -1,9 +1,9 @@
-package v1_test
+package v1beta1_test
 
 import (
 	"testing"
 
-	v1 "github.com/aura-nw/aura/x/smartaccount/types/v1"
+	v1 "github.com/aura-nw/aura/x/smartaccount/types/v1beta1"
 	"github.com/stretchr/testify/require"
 )
 

@@ -21,7 +21,7 @@ import (
 
 	// custom
 	smartaccounttypesauranw "github.com/aura-nw/aura/x/smartaccount/types/auranw"
-	smartaccounttypesv1 "github.com/aura-nw/aura/x/smartaccount/types/v1"
+	smartaccounttypesv1 "github.com/aura-nw/aura/x/smartaccount/types/v1beta1"
 )
 
 // UpgradeName is the name of upgrade. This upgrade added new module

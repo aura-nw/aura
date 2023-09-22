@@ -8,7 +8,7 @@ import (
 
 	helper "github.com/aura-nw/aura/tests/smartaccount"
 	"github.com/aura-nw/aura/x/smartaccount"
-	typesv1 "github.com/aura-nw/aura/x/smartaccount/types/v1"
+	typesv1 "github.com/aura-nw/aura/x/smartaccount/types/v1beta1"
 )
 
 var (

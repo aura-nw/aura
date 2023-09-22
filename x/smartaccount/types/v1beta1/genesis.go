@@ -1,4 +1,4 @@
-package v1
+package v1beta1
 
 // this line is used by starport scaffolding # genesis/types/import
 

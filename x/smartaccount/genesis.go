@@ -2,7 +2,7 @@ package smartaccount
 
 import (
 	"github.com/aura-nw/aura/x/smartaccount/keeper"
-	typesv1 "github.com/aura-nw/aura/x/smartaccount/types/v1"
+	typesv1 "github.com/aura-nw/aura/x/smartaccount/types/v1beta1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 

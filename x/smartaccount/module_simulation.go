@@ -5,7 +5,7 @@ import (
 
 	smartaccountsimulation "github.com/aura-nw/aura/x/smartaccount/simulation"
 	"github.com/aura-nw/aura/x/smartaccount/types"
-	typesv1 "github.com/aura-nw/aura/x/smartaccount/types/v1"
+	typesv1 "github.com/aura-nw/aura/x/smartaccount/types/v1beta1"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"

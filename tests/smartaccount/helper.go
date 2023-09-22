@@ -10,7 +10,7 @@ import (
 	"github.com/aura-nw/aura/app"
 	"github.com/aura-nw/aura/tests"
 	"github.com/aura-nw/aura/x/smartaccount"
-	typesv1 "github.com/aura-nw/aura/x/smartaccount/types/v1"
+	typesv1 "github.com/aura-nw/aura/x/smartaccount/types/v1beta1"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"

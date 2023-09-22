@@ -9,7 +9,7 @@ import (
 	tests "github.com/aura-nw/aura/tests"
 	"github.com/aura-nw/aura/x/smartaccount"
 	"github.com/aura-nw/aura/x/smartaccount/keeper"
-	typesv1 "github.com/aura-nw/aura/x/smartaccount/types/v1"
+	typesv1 "github.com/aura-nw/aura/x/smartaccount/types/v1beta1"
 
 	helper "github.com/aura-nw/aura/tests/smartaccount"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"

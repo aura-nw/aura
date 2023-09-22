@@ -4,10 +4,10 @@ info:
   name: ''
   description: ''
 paths:
-  /aura/smartaccount/v1/generate_account:
+  /aura/smartaccount/v1beta1/generate_account:
     get:
       summary: Queries a list of GenerateAccount items.
-      operationId: AuraSmartaccountV1GenerateAccount
+      operationId: AuraSmartaccountV1Beta1GenerateAccount
       responses:
         '200':
           description: A successful response.
@@ -284,10 +284,10 @@ paths:
           format: byte
       tags:
         - Query
-  /aura/smartaccount/v1/params:
+  /aura/smartaccount/v1beta1/params:
     get:
       summary: Parameters queries the parameters of the module.
-      operationId: AuraSmartaccountV1Params
+      operationId: AuraSmartaccountV1Beta1Params
       responses:
         '200':
           description: A successful response.
@@ -44506,7 +44506,7 @@ definitions:
                   "@type": "type.googleapis.com/google.protobuf.Duration",
                   "value": "1.212s"
                 }
-  aura.smartaccount.v1.CodeID:
+  aura.smartaccount.v1beta1.CodeID:
     type: object
     properties:
       code_id:
@@ -44516,14 +44516,14 @@ definitions:
       status:
         type: boolean
         title: status of code id
-  aura.smartaccount.v1.MsgActivateAccountResponse:
+  aura.smartaccount.v1beta1.MsgActivateAccountResponse:
     type: object
     properties:
       address:
         type: string
-  aura.smartaccount.v1.MsgRecoverResponse:
+  aura.smartaccount.v1beta1.MsgRecoverResponse:
     type: object
-  aura.smartaccount.v1.Params:
+  aura.smartaccount.v1beta1.Params:
     type: object
     properties:
       whitelist_code_id:
@@ -44553,12 +44553,12 @@ definitions:
         format: uint64
         title: limit how much gas can be consumed by the `pre_execute` method
     description: Params defines the parameters for the module.
-  aura.smartaccount.v1.QueryGenerateAccountResponse:
+  aura.smartaccount.v1beta1.QueryGenerateAccountResponse:
     type: object
     properties:
       address:
         type: string
-  aura.smartaccount.v1.QueryParamsResponse:
+  aura.smartaccount.v1beta1.QueryParamsResponse:
     type: object
     properties:
       params:

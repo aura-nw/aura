@@ -1,11 +1,11 @@
 syntax = "proto3";
-package aura.smartaccount.v1;
+package aura.smartaccount.v1beta1;
 
 import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
 import "google/protobuf/any.proto";
 
-option go_package = "github.com/aura-nw/aura/x/smartaccount/types/v1";
+option go_package = "github.com/aura-nw/aura/x/smartaccount/types/v1beta1";
 
 // SmartAccount is a smart contract that is capable of initiating txs.
 //

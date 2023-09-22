@@ -1,11 +1,11 @@
-package v1_test
+package v1beta1_test
 
 import (
 	"testing"
 
 	"github.com/aura-nw/aura/app"
 	helper "github.com/aura-nw/aura/tests/smartaccount"
-	v1 "github.com/aura-nw/aura/x/smartaccount/types/v1"
+	v1 "github.com/aura-nw/aura/x/smartaccount/types/v1beta1"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/stretchr/testify/require"
 )

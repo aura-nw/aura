@@ -65,12 +65,14 @@ genesis:
       constant_fee:
         denom: uaura
     gov:
-      deposit_params:
+      params:
         max_deposit_period: 172800s
-        min_deposit:
-        - amount: "1000000"
-          denom: uaura
-      voting_params:
+        min_deposit: [
+         {
+           "denom": "uaura",
+           "amount": "10000000"
+         }
+        ]
         voting_period: 172800s
     mint:
       params:

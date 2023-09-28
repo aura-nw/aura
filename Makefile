@@ -56,6 +56,12 @@ ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=aura \
 	-X github.com/tendermint/tendermint/version.TMCoreSemVer=$(TM_VERSION) \
         -X github.com/cosmos/cosmos-sdk/version.BuildTags=$(BUILD_TAGS_COMMA_SEP)
 
+ifeq ($(LINK_STATICALLY),true)
+        ldflags += -linkmode=external -extldflags "-Wl,-z,muldefs -static"
+endif
+ldflags += $(LDFLAGS)
+ldflags := $(strip $(ldflags))
+
 BUILD_FLAGS := -tags "$(BUILD_TAGS)" -ldflags '$(ldflags)' -trimpath
 
 all: build install

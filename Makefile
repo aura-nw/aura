@@ -17,7 +17,7 @@ ifeq (,$(VERSION))
 endif
 
 SDK_PACK := $(shell go list -m github.com/cosmos/cosmos-sdk | sed  's/ /\@/g')
-TM_VERSION := $(shell go list -m github.com/tendermint/tendermint | sed 's:.* ::')
+BFT_VERSION := $(shell go list -m github.com/cometbft/cometbft | sed 's:.* ::')
 
 BUILD_TAGS += netgo
 BUILD_TAGS := $(strip $(BUILD_TAGS))
@@ -53,8 +53,8 @@ ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=aura \
 	-X github.com/cosmos/cosmos-sdk/version.AppName=aurad \
 	-X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) \
 	-X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT) \
-	-X github.com/tendermint/tendermint/version.TMCoreSemVer=$(TM_VERSION) \
-        -X github.com/cosmos/cosmos-sdk/version.BuildTags=$(BUILD_TAGS_COMMA_SEP)
+	-X github.com/cometbft/cometbft/version.TMCoreSemVer=$(BFT_VERSION) \
+  -X github.com/cosmos/cosmos-sdk/version.BuildTags=$(BUILD_TAGS_COMMA_SEP)
 
 ifeq ($(LINK_STATICALLY),true)
         ldflags += -linkmode=external -extldflags "-Wl,-z,muldefs -static"
@@ -64,14 +64,21 @@ ldflags := $(strip $(ldflags))
 
 BUILD_FLAGS := -tags "$(BUILD_TAGS)" -ldflags '$(ldflags)' -trimpath
 
+# Go version
+GO_MAJOR_VERSION = $(shell go version | cut -c 14- | cut -d' ' -f1 | cut -d'.' -f1)
+GO_MINOR_VERSION = $(shell go version | cut -c 14- | cut -d' ' -f1 | cut -d'.' -f2)
+MINIMUM_SUPPORTED_GO_MAJOR_VERSION = 1
+MINIMUM_SUPPORTED_GO_MINOR_VERSION = 19
+GO_VERSION_VALIDATION_ERR_MSG = Golang version is not supported, please update to at least $(MINIMUM_SUPPORTED_GO_MAJOR_VERSION).$(MINIMUM_SUPPORTED_GO_MINOR_VERSION)
+
 all: build install
 
-install: go.sum
+install: validate-go-version go.sum
 	@echo "--> Installing aurad"
 	@echo "go install -mod=readonly $(BUILD_FLAGS) ./cmd/aurad"
 	@go install -mod=readonly $(BUILD_FLAGS) ./cmd/aurad
 
-build: go.sum
+build: validate-go-version go.sum
 	@echo "--> Build aurad"
 	@go build -mod=readonly $(BUILD_FLAGS) -o ./build/aurad ./cmd/aurad
 
@@ -84,3 +91,14 @@ test:
 
 clean:
 	@rm -rf build
+
+validate-go-version: ## Validates the installed version of go against Mattermost's minimum requirement.
+	@if [ $(GO_MAJOR_VERSION) -gt $(MINIMUM_SUPPORTED_GO_MAJOR_VERSION) ]; then \
+		exit 0 ;\
+	elif [ $(GO_MAJOR_VERSION) -lt $(MINIMUM_SUPPORTED_GO_MAJOR_VERSION) ]; then \
+		echo '$(GO_VERSION_VALIDATION_ERR_MSG)';\
+		exit 1; \
+	elif [ $(GO_MINOR_VERSION) -lt $(MINIMUM_SUPPORTED_GO_MINOR_VERSION) ] ; then \
+		echo '$(GO_VERSION_VALIDATION_ERR_MSG)';\
+		exit 1; \
+	fi

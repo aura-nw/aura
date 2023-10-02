@@ -137,6 +137,15 @@ func CreateUpgradeHandler(
 		}
 		logger.Info(fmt.Sprintf("post migrate version map: %v", versionMap))
 
+		// Set consensus params
+		conParams, err := consensusParamKeeper.Get(ctx)
+		if err != nil {
+			return nil, err
+		}
+		conParams.Block.MaxBytes = 1048576 // 1MiB
+		conParams.Block.MaxGas = -1
+		consensusParamKeeper.Set(ctx, conParams)
+
 		// https://github.com/cosmos/ibc-go/blob/v7.1.0/docs/migrations/v7-to-v7_1.md
 		// explicitly update the IBC 02-client params, adding the localhost client type
 		params := ibcKeeper.ClientKeeper.GetParams(ctx)

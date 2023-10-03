@@ -1,0 +1,13 @@
+syntax = "proto3";
+package aura.aura;
+
+// this line is used by starport scaffolding # proto/tx/import
+
+option go_package = "github.com/aura-nw/aura/x/aura/types";
+
+// Msg defines the Msg service.
+service Msg {
+    // this line is used by starport scaffolding # proto/tx/rpc
+}
+
+// this line is used by starport scaffolding # proto/tx/message

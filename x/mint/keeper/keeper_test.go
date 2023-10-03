@@ -1,9 +1,11 @@
 package keeper_test
 
 import (
+	"testing"
+
+	"cosmossdk.io/math"
 	"github.com/aura-nw/aura/tests"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
-	"testing"
 
 	"github.com/aura-nw/aura/x/mint/keeper"
 	minttestutil "github.com/aura-nw/aura/x/mint/testutil"
@@ -46,9 +48,9 @@ func (s *KeeperTestSuite) SetupTest() {
 	accountKeeper.EXPECT().GetModuleAddress(minttypes.ModuleName).Return(sdk.AccAddress{})
 
 	feeCollector := authTypes.FeeCollectorName
-	subspace := pk.Subspace(minttypes.ModuleName)
+	authority := "" // Need review
 
-	s.mintKeeper = keeper.NewKeeper(encCfg.Codec, key, subspace, stakingKeeper, accountKeeper, bankKeeper, auraKeeper, feeCollector)
+	s.mintKeeper = keeper.NewKeeper(encCfg.Codec, key, stakingKeeper, accountKeeper, bankKeeper, auraKeeper, feeCollector, authority)
 
 	s.stakingKeeper = stakingKeeper
 	s.bankKeeper = bankKeeper
@@ -87,6 +89,6 @@ func (s *KeeperTestSuite) TestCustomBondedRatio() {
 	bonded := sdk.NewIntFromUint64(500_000)
 	s.stakingKeeper.EXPECT().TotalBondedTokens(s.ctx).Return(bonded)
 
-	s.Require().Equal(s.mintKeeper.CustomBondedRatio(s.ctx, excludeAmount), bonded.ToDec().QuoInt(customStaking))
+	s.Require().Equal(s.mintKeeper.CustomBondedRatio(s.ctx, excludeAmount), math.LegacyNewDecFromInt(bonded).QuoInt(customStaking))
 
 }

@@ -1,23 +1,62 @@
+version: 1
+build:
+  proto:
+    path: proto
+    third_party_paths:
+    - third_party/proto
+    - proto_vendor
 accounts:
-  - name: Cantho
-    coins: ["50000000000000uaura"]
-  - name: Vinh
-    coins: ["50000000000000uaura"]
-  - name: Hagiang
-    coins: ["50000000000000uaura"]
-  - name: Thaibinh
-    coins: ["50000000000000uaura"]
-validator:
-  name: Cantho
-  staked: "10000000000uaura"
+- name: Cantho
+  coins:
+  - 50000000000000uaura
+  mnemonic: "satisfy adjust timber high purchase tuition stool faith fine install that you unaware feed domain license impose boss human eager hat rent enjoy dawn"
+- name: Vinh
+  coins:
+  - 50000000000000uaura
+- name: Hagiang
+  coins:
+  - 50000000000000uaura
+- name: Thaibinh
+  coins:
+  - 50000000000000uaura
+- name: user1
+  coins: ["1000000000000uaura"]
+  mnemonic: "notice oak worry limit wrap speak medal online prefer cluster roof addict wrist behave treat actual wasp year salad speed social layer crew genius"
+- name: user2
+  coins: ["1000000000000uaura"]
+  mnemonic: "quality vacuum heart guard buzz spike sight swarm shove special gym robust assume sudden deposit grid alcohol choice devote leader tilt noodle tide penalty"
+- name: user3
+  coins: ["1000000000000uaura"]
+  mnemonic: "symbol force gallery make bulk round subway violin worry mixture penalty kingdom boring survey tool fringe patrol sausage hard admit remember broken alien absorb"
+- name: user4
+  coins: ["1000000000000uaura"]
+  mnemonic: "bounce success option birth apple portion aunt rural episode solution hockey pencil lend session cause hedgehog slender journey system canvas decorate razor catch empty"
+- name: user5
+  coins: ["1000000000000uaura"]
+  mnemonic: " second render cat sing soup reward cluster island bench diet lumber grocery repeat balcony perfect diesel stumble piano distance caught occur example ozone loyal"
+- name: user6
+  coins: ["1000000000000uaura"]
+  mnemonic: "spatial forest elevator battle also spoon fun skirt flight initial nasty transfer glory palm drama gossip remove fan joke shove label dune debate quick"
+- name: user7
+  coins: ["1000000000000uaura"]
+  mnemonic: "noble width taxi input there patrol clown public spell aunt wish punch moment will misery eight excess arena pen turtle minimum grain vague inmate"
+- name: user8
+  coins: ["1000000000000uaura"]
+  mnemonic: "cream sport mango believe inhale text fish rely elegant below earth april wall rug ritual blossom cherry detail length blind digital proof identify ride"
+- name: user9
+  coins: ["1000000000000uaura"]
+  mnemonic: "index light average senior silent limit usual local involve delay update rack cause inmate wall render magnet common feature laundry exact casual resource hundred"
+- name: user10
+  coins: ["1000000000000uaura"]
+  mnemonic: "prefer forget visit mistake mixture feel eyebrow autumn shop pair address airport diesel street pass vague innocent poem method awful require hurry unhappy shoulder"
+faucet:
+  name: null
+  coins: []
+  host: 0.0.0.0:4500
 client:
   openapi:
-    path: "docs/static/openapi.yml"
-init:
-  app:
-    minimum-gas-prices: "0.001uaura"
+    path: docs/static/openapi.yml
 genesis:
-  chain_id: "aura-testnet"
   app_state:
     aura:
       params:
@@ -26,45 +65,45 @@ genesis:
       constant_fee:
         denom: uaura
     gov:
-      deposit_params:
+      params:
+        max_deposit_period: 172800s
         min_deposit: [
          {
            "denom": "uaura",
-           "amount": "1000000"
+           "amount": "10000000"
          }
         ]
-        max_deposit_period: "172800s"
-      voting_params:
-        voting_period: "172800s"
+        voting_period: 172800s
     mint:
       params:
-        mint_denom: "uaura"
-        inflation_rate_change: "0.080000000000000000"
+        blocks_per_year: "5373084"
         inflation_max: "0.120000000000000000"
         inflation_min: "0.040000000000000000"
-        blocks_per_year: "5373084"
-    staking:
-      params:
-        bond_denom: "uaura"
-        unbonding_time: "86400s"
-        max_validators: 5
+        inflation_rate_change: "0.080000000000000000"
+        mint_denom: uaura
     slashing:
       params:
+        downtime_jail_duration: 600s
         signed_blocks_window: "1000"
-        downtime_jail_duration: "600s"
     smartaccount:
       params:
-        whitelist_code_id: []
+        disable_msgs_list: ["/cosmwasm.wasm.v1.MsgUpdateAdmin","/cosmwasm.wasm.v1.MsgClearAdmin"]
         max_gas_execute: 2000000
+        whitelist_code_id: [
+          {
+            code_id: "1",
+            status: true
+          }
+        ]
       smart_account_id: 0
-
-
-"# Upgrade Aurad version to v0.4.2
-
-This is a proposal to upgrade **aurad** version at height 2,187,716 ~ Wed 7th, 5:30 PM UTC+7 
-
-## Changelog
-
-### Improvements
-
-Allow IBC clients to be recoverd after expired"
+    staking:
+      params:
+        bond_denom: uaura
+        max_validators: 5
+        unbonding_time: 86400s
+  chain_id: aura-testnet
+validators:
+- name: Cantho
+  bonded: 10000000000uaura
+  app:
+    minimum-gas-prices: 0.001uaura

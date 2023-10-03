@@ -18,6 +18,7 @@ type AccountKeeper interface {
 
 	IterateAccounts(ctx sdk.Context, process func(types.AccountI) bool)
 
+	GetModulePermissions() map[string]types.PermissionsForAddress
 	ValidatePermissions(macc types.ModuleAccountI) error
 
 	GetModuleAddress(moduleName string) sdk.AccAddress

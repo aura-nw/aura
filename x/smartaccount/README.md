@@ -330,6 +330,10 @@ struct Recover {
 
 [smart account samples][2]
 
+
+# x/smartaccount
+- `types/auranw` is deprecated, used for **v0.7.0** migration only, and will be removed later. 
+
 [1]: https://cosmwasm.com/
 [2]: https://github.com/aura-nw/smart-account-sample/
 [3]: https://github.com/CosmWasm/wasmd/blob/main/x/wasm/keeper/msg_server.go#L79-L110

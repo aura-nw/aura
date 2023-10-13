@@ -7,6 +7,7 @@ import (
 	sakeeper "github.com/aura-nw/aura/x/smartaccount/keeper"
 	"github.com/aura-nw/aura/x/smartaccount/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 )
 
 // ------------------------- AfterTx Decorator ------------------------- \\
@@ -55,13 +56,52 @@ func (d AfterTxDecorator) PostHandle(ctx sdk.Context, tx sdk.Tx, simulate, succe
 		AfterExecuteTx: &types.AfterExecuteTx{
 			Msgs:      msgsData,
 			CallInfor: callInfor,
+			IsAuthz:   false,
 		},
 	})
+	if err != nil {
+		return ctx, err
+	}
 
 	params := d.saKeeper.GetParams(ctx)
 
 	// execute SA contract for after-execute transaction with limit gas
 	err = sudoWithGasLimit(ctx, d.saKeeper.ContractKeeper, signerAddr, afterExecuteMessage, params.MaxGasExecute)
+	if err != nil {
+		return ctx, err
+	}
+
+	return next(ctx, tx, simulate, success)
+}
+
+// ------------------------- PostValidateAuthzTx Decorator ------------------------- \\
+
+type PostValidateAuthzTxDecorator struct {
+	SaKeeper sakeeper.Keeper
+}
+
+func NewPostValidateAuthzTxDecorator(saKeeper sakeeper.Keeper) *PostValidateAuthzTxDecorator {
+	return &PostValidateAuthzTxDecorator{
+		SaKeeper: saKeeper,
+	}
+}
+
+func (d *PostValidateAuthzTxDecorator) PostHandle(
+	ctx sdk.Context,
+	tx sdk.Tx,
+	simulate bool,
+	success bool,
+	next sdk.PostHandler,
+) (newCtx sdk.Context, err error) {
+
+	sigTx, ok := tx.(authsigning.SigVerifiableTx)
+	if !ok {
+		return ctx, errorsmod.Wrap(types.ErrInvalidTx, "not a SigVerifiableTx")
+	}
+
+	params := d.SaKeeper.GetParams(ctx)
+
+	err = validateAuthzTx(ctx, d.SaKeeper, sigTx, params.MaxGasExecute, false, simulate)
 	if err != nil {
 		return ctx, err
 	}

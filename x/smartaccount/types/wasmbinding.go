@@ -20,11 +20,13 @@ type RecoverTx struct {
 type PreExecuteTx struct {
 	Msgs      []MsgData `json:"msgs"`
 	CallInfor CallInfor `json:"call_info"`
+	IsAuthz   bool      `json:"is_authz"`
 }
 
 type AfterExecuteTx struct {
 	Msgs      []MsgData `json:"msgs"`
 	CallInfor CallInfor `json:"call_info"`
+	IsAuthz   bool      `json:"is_authz"`
 }
 
 type MsgData struct {

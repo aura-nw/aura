@@ -13,6 +13,7 @@ import (
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	authz "github.com/cosmos/cosmos-sdk/x/authz"
 )
 
 func GetSmartAccountTxSigner(ctx sdk.Context, sigTx authsigning.SigVerifiableTx, saKeeper sakeeper.Keeper) (*typesv1.SmartAccount, error) {
@@ -110,6 +111,7 @@ func (d *SmartAccountDecorator) AnteHandle(
 		if err != nil {
 			return ctx, err
 		}
+
 	} else {
 		err = handleSmartAccountActivate(ctx, d.SaKeeper, activateMsg, simulate)
 		if err != nil {
@@ -177,6 +179,7 @@ func handleSmartAccountTx(
 		PreExecuteTx: &types.PreExecuteTx{
 			Msgs:      msgsData,
 			CallInfor: callInfor,
+			IsAuthz:   false,
 		},
 	})
 	if err != nil {
@@ -358,4 +361,150 @@ func (d *SetPubKeyDecorator) AnteHandle(
 	// default authant SetPubKeyDecorator
 	svd := authante.NewSetPubKeyDecorator(d.saKeeper.AccountKeeper)
 	return svd.AnteHandle(ctx, tx, simulate, next)
+}
+
+// ------------------------- ValidateAuthzTx Decorator ------------------------- \\
+
+type ValidateAuthzTxDecorator struct {
+	SaKeeper sakeeper.Keeper
+}
+
+func NewValidateAuthzTxDecorator(saKeeper sakeeper.Keeper) *ValidateAuthzTxDecorator {
+	return &ValidateAuthzTxDecorator{
+		SaKeeper: saKeeper,
+	}
+}
+
+func (d *ValidateAuthzTxDecorator) AnteHandle(
+	ctx sdk.Context,
+	tx sdk.Tx,
+	simulate bool,
+	next sdk.AnteHandler,
+) (newCtx sdk.Context, err error) {
+
+	sigTx, ok := tx.(authsigning.SigVerifiableTx)
+	if !ok {
+		return ctx, errorsmod.Wrap(types.ErrInvalidTx, "not a SigVerifiableTx")
+	}
+
+	params := d.SaKeeper.GetParams(ctx)
+
+	err = validateAuthzTx(ctx, d.SaKeeper, sigTx, params.MaxGasExecute, true, simulate)
+	if err != nil {
+		return ctx, err
+	}
+
+	return next(ctx, tx, simulate)
+}
+
+func validateAuthzTx(
+	ctx sdk.Context,
+	saKeeper sakeeper.Keeper,
+	sigTx authsigning.SigVerifiableTx,
+	maxGas uint64,
+	isAnte bool,
+	simulate bool,
+) error {
+
+	cacheCtx, write := ctx.CacheContext()
+	cacheCtx = cacheCtx.WithGasMeter(sdk.NewGasMeter(maxGas))
+
+	for _, msg := range sigTx.GetMsgs() {
+		if msgExec, ok := msg.(*authz.MsgExec); ok {
+			msgs, err := msgExec.GetMessages()
+			if err != nil {
+				return err
+			}
+
+			err = validateNestedSmartAccountMsgs(cacheCtx, saKeeper, msgs, isAnte)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	write()
+	ctx.EventManager().EmitEvents(cacheCtx.EventManager().Events())
+
+	return nil
+}
+
+func validateNestedSmartAccountMsgs(
+	ctx sdk.Context,
+	saKeeper sakeeper.Keeper,
+	msgs []sdk.Msg,
+	isAnte bool,
+) error {
+
+	for _, msg := range msgs {
+
+		signers := msg.GetSigners()
+
+		if len(signers) == 1 {
+			acc, err := saKeeper.GetSmartAccountByAddress(ctx, signers[0])
+			if err != nil {
+				return err
+			}
+
+			if acc != nil {
+				msgsData, err := types.ParseMessagesString([]sdk.Msg{msg})
+				if err != nil {
+					return err
+				}
+
+				// call_infor is empty if message is executed throught authz exec
+				callInfor := types.CallInfor{
+					Gas:        0,
+					Fee:        sdk.NewCoins(),
+					FeePayer:   "",
+					FeeGranter: "",
+				}
+
+				var execMsg []byte
+				if isAnte {
+					execMsg, err = json.Marshal(&types.AccountMsg{
+						PreExecuteTx: &types.PreExecuteTx{
+							Msgs:      msgsData,
+							CallInfor: callInfor,
+							IsAuthz:   true,
+						},
+					})
+				} else {
+					execMsg, err = json.Marshal(&types.AccountMsg{
+						AfterExecuteTx: &types.AfterExecuteTx{
+							Msgs:      msgsData,
+							CallInfor: callInfor,
+							IsAuthz:   true,
+						},
+					})
+				}
+				if err != nil {
+					return err
+				}
+
+				if _, err := saKeeper.ContractKeeper.Sudo(
+					ctx,
+					acc.GetAddress(),
+					execMsg,
+				); err != nil {
+					return err
+				}
+			}
+		}
+
+		if msgExec, ok := msg.(*authz.MsgExec); ok {
+			msgs, err := msgExec.GetMessages()
+			if err != nil {
+				return err
+			}
+
+			err = validateNestedSmartAccountMsgs(ctx, saKeeper, msgs, isAnte)
+			if err != nil {
+				return err
+			}
+		}
+
+	}
+
+	return nil
 }

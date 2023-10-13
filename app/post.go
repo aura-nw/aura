@@ -16,6 +16,7 @@ type PostHandlerOptions struct {
 func NewPostHandler(options PostHandlerOptions) (sdk.PostHandler, error) {
 	postDecorators := []sdk.PostDecorator{
 		smartaccount.NewAfterTxDecorator(options.SmartAccountKeeper),
+		smartaccount.NewPostValidateAuthzTxDecorator(options.SmartAccountKeeper),
 	}
 
 	return sdk.ChainPostDecorators(postDecorators...), nil

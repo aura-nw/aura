@@ -302,8 +302,7 @@ func (k Keeper) IsInactiveAccount(ctx sdk.Context, acc sdk.AccAddress) (authtype
 
 	// check if account has type base or smart
 	_, isBaseAccount := sAccount.(*authtypes.BaseAccount)
-	_, isSmartAccount := sAccount.(*typesv1.SmartAccount)
-	if !isBaseAccount && !isSmartAccount {
+	if !isBaseAccount {
 		return nil, errorsmod.Wrap(types.ErrAccountNotFoundForAddress, acc.String())
 	}
 

@@ -239,8 +239,7 @@ func handleSmartAccountActivate(
 		// get smart contract account by address
 		sAccount := saKeeper.AccountKeeper.GetAccount(ctx, signer)
 		_, isBase := sAccount.(*authtypes.BaseAccount)
-		_, isSa := sAccount.(*typesv1.SmartAccount)
-		if !isBase && !isSa {
+		if !isBase {
 			return errorsmod.Wrap(types.ErrAccountNotFoundForAddress, signer.String())
 		}
 

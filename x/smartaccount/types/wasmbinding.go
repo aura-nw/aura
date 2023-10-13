@@ -1,9 +1,8 @@
 package types
 
 import (
-	"encoding/json"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/gogoproto/proto"
 )
 
 type AccountMsg struct {
@@ -44,13 +43,13 @@ func ParseMessagesString(msgs []sdk.Msg) ([]MsgData, error) {
 	msgsStr := make([]MsgData, 0)
 
 	for _, msg := range msgs {
-		msgData, err := json.Marshal(msg)
+		msgData, err := proto.Marshal(msg)
 		if err != nil {
 			return nil, err
 		}
 
 		data := MsgData{
-			TypeURL: sdk.MsgTypeURL(msg),
+			TypeURL: proto.MessageName(msg),
 			Value:   string(msgData),
 		}
 

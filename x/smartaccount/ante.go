@@ -111,7 +111,6 @@ func (d *SmartAccountDecorator) AnteHandle(
 		if err != nil {
 			return ctx, err
 		}
-
 	} else {
 		err = handleSmartAccountActivate(ctx, d.SaKeeper, activateMsg, simulate)
 		if err != nil {
@@ -189,10 +188,14 @@ func handleSmartAccountTx(
 	params := saKeeper.GetParams(ctx)
 
 	// execute SA contract for pre-execute transaction with limit gas
-	err = sudoWithGasLimit(ctx, saKeeper.ContractKeeper, signerAcc.GetAddress(), preExecuteMessage, params.MaxGasExecute)
+	// using gas for validate SA msgs will not count to tx total used
+	err, gasRemaining := sudoWithGasLimit(ctx, saKeeper.ContractKeeper, signerAcc.GetAddress(), preExecuteMessage, params.MaxGasExecute)
 	if err != nil {
 		return err
 	}
+
+	// free gas remaining after validate smartaccount msgs
+	saKeeper.SetGasRemaining(ctx, gasRemaining)
 
 	return nil
 }
@@ -258,7 +261,7 @@ func handleSmartAccountActivate(
 func sudoWithGasLimit(
 	ctx sdk.Context, contractKeeper *wasmkeeper.PermissionedKeeper,
 	contractAddr sdk.AccAddress, msg []byte, maxGas sdk.Gas,
-) error {
+) (error, uint64) {
 	cacheCtx, write := ctx.CacheContext()
 	cacheCtx = cacheCtx.WithGasMeter(sdk.NewGasMeter(maxGas))
 
@@ -267,13 +270,13 @@ func sudoWithGasLimit(
 		contractAddr, // contract address
 		msg,
 	); err != nil {
-		return err
+		return err, maxGas
 	}
 
 	write()
 	ctx.EventManager().EmitEvents(cacheCtx.EventManager().Events())
 
-	return nil
+	return nil, cacheCtx.GasMeter().GasRemaining()
 }
 
 // ------------------------- SetPubKey Decorator ------------------------- \\
@@ -388,8 +391,15 @@ func (d *ValidateAuthzTxDecorator) AnteHandle(
 	}
 
 	params := d.SaKeeper.GetParams(ctx)
+	maxGas := params.MaxGasExecute
 
-	err = validateAuthzTx(ctx, d.SaKeeper, sigTx, params.MaxGasExecute, true, simulate)
+	if d.SaKeeper.HasGasRemaining(ctx) {
+		// if pre ante handlers has used free gas, get the remaining
+		maxGas = d.SaKeeper.GetGasRemaining(ctx)
+		d.SaKeeper.DeleteGasRemaining(ctx)
+	}
+
+	err = validateAuthzTx(ctx, d.SaKeeper, sigTx, maxGas, true, simulate)
 	if err != nil {
 		return ctx, err
 	}
@@ -405,7 +415,6 @@ func validateAuthzTx(
 	isAnte bool,
 	simulate bool,
 ) error {
-
 	cacheCtx, write := ctx.CacheContext()
 	cacheCtx = cacheCtx.WithGasMeter(sdk.NewGasMeter(maxGas))
 

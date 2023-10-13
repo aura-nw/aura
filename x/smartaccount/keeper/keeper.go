@@ -102,6 +102,29 @@ func (k Keeper) DeleteSignerAddress(ctx sdk.Context) {
 	store.Delete(types.KeyPrefix(types.SignerAddressKey))
 }
 
+// ------------------------------- GasRemaining -------------------------------
+
+func (k Keeper) GetGasRemaining(ctx sdk.Context) uint64 {
+	store := ctx.KVStore(k.storeKey)
+
+	return sdk.BigEndianToUint64(store.Get(types.KeyPrefix(types.GasRemainingKey)))
+}
+
+func (k Keeper) SetGasRemaining(ctx sdk.Context, gasRemaining uint64) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set(types.KeyPrefix(types.GasRemainingKey), sdk.Uint64ToBigEndian(gasRemaining))
+}
+
+func (k Keeper) HasGasRemaining(ctx sdk.Context) bool {
+	store := ctx.KVStore(k.storeKey)
+	return store.Has(types.KeyPrefix(types.GasRemainingKey))
+}
+
+func (k Keeper) DeleteGasRemaining(ctx sdk.Context) {
+	store := ctx.KVStore(k.storeKey)
+	store.Delete(types.KeyPrefix(types.GasRemainingKey))
+}
+
 // ------------------------------- Other -------------------------------
 
 func (k Keeper) ValidateActiveSA(ctx sdk.Context, msg *typesv1.MsgActivateAccount) (authtypes.AccountI, error) {

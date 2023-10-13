@@ -22,6 +22,9 @@ const (
 	// AbstractAccount, we store its address here. This way, in the PostHandler,
 	// we know whether to call the after_tx method.
 	SignerAddressKey = "smartaccount_signer"
+
+	// free gas remaining in ante and post handlers
+	GasRemainingKey = "gas_remaining"
 )
 
 var (

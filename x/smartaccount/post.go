@@ -66,10 +66,13 @@ func (d AfterTxDecorator) PostHandle(ctx sdk.Context, tx sdk.Tx, simulate, succe
 	params := d.saKeeper.GetParams(ctx)
 
 	// execute SA contract for after-execute transaction with limit gas
-	err = sudoWithGasLimit(ctx, d.saKeeper.ContractKeeper, signerAddr, afterExecuteMessage, params.MaxGasExecute)
+	err, gasRemaining := sudoWithGasLimit(ctx, d.saKeeper.ContractKeeper, signerAddr, afterExecuteMessage, params.MaxGasExecute)
 	if err != nil {
 		return ctx, err
 	}
+
+	// free gas remaining after validate smartaccount msgs
+	d.saKeeper.SetGasRemaining(ctx, gasRemaining)
 
 	return next(ctx, tx, simulate, success)
 }
@@ -100,8 +103,15 @@ func (d *PostValidateAuthzTxDecorator) PostHandle(
 	}
 
 	params := d.SaKeeper.GetParams(ctx)
+	maxGas := params.MaxGasExecute
 
-	err = validateAuthzTx(ctx, d.SaKeeper, sigTx, params.MaxGasExecute, false, simulate)
+	if d.SaKeeper.HasGasRemaining(ctx) {
+		// if pre post handlers has used free gas, get the remaining
+		maxGas = d.SaKeeper.GetGasRemaining(ctx)
+		d.SaKeeper.DeleteGasRemaining(ctx)
+	}
+
+	err = validateAuthzTx(ctx, d.SaKeeper, sigTx, maxGas, false, simulate)
 	if err != nil {
 		return ctx, err
 	}

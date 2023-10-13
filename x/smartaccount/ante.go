@@ -1,13 +1,11 @@
 package smartaccount
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sakeeper "github.com/aura-nw/aura/x/smartaccount/keeper"
 	"github.com/aura-nw/aura/x/smartaccount/types"
 	typesv1 "github.com/aura-nw/aura/x/smartaccount/types/v1beta1"
@@ -140,6 +138,15 @@ func handleSmartAccountTx(
 		return errorsmod.Wrap(types.ErrNotSupported, "Simulation of SmartAccount txs isn't supported yet")
 	}
 
+	// save the account address to the module store. we will need it in the
+	// posthandler
+	//
+	// TODO: a question is that instead of writing to store, can we just put this
+	// in memory instead. in practice however, the address is deleted in the post
+	// handler, so it's never actually written to disk, meaning the difference in
+	// gas consumption should be really small. still worth investigating tho.
+	saKeeper.SetSignerAddress(ctx, signerAcc.GetAddress())
+
 	msgs := sigTx.GetMsgs()
 
 	// check if tx messages is allowed for smartaccount
@@ -149,19 +156,16 @@ func handleSmartAccountTx(
 		return err
 	}
 
-	execMsg, err := validateAndGetAfterExecMessage(msgs, signerAcc)
+	msgsData, err := types.ParseMessagesString(msgs)
 	if err != nil {
 		return err
 	}
 
-	// parse messages in tx to list of string
-	execMsgData, err := types.ParseMessagesString(msgs[:len(msgs)-1])
-	if err != nil {
-		return err
-	}
-
-	// create message for SA contract pre-exeucte
-	validateMessage, err := generatePreExecuteMessage(execMsg, execMsgData)
+	preExecuteMessage, err := json.Marshal(&types.AccountMsg{
+		PreExecuteTx: &types.PreExecuteTx{
+			Msgs: msgsData,
+		},
+	})
 	if err != nil {
 		return err
 	}
@@ -169,7 +173,7 @@ func handleSmartAccountTx(
 	params := saKeeper.GetParams(ctx)
 
 	// execute SA contract for pre-execute transaction with limit gas
-	err = sudoWithGasLimit(ctx, saKeeper.ContractKeeper, signerAcc.GetAddress(), validateMessage, params.MaxGasExecute)
+	err = sudoWithGasLimit(ctx, saKeeper.ContractKeeper, signerAcc.GetAddress(), preExecuteMessage, params.MaxGasExecute)
 	if err != nil {
 		return err
 	}
@@ -232,26 +236,6 @@ func handleSmartAccountActivate(
 	return nil
 }
 
-func validateAndGetAfterExecMessage(msgs []sdk.Msg, signerAcc *typesv1.SmartAccount) (*wasmtypes.MsgExecuteContract, error) {
-	// after-execute message must be the last message and must be MsgExecuteContract
-	var afterExecMsg *wasmtypes.MsgExecuteContract
-	if msg, err := msgs[len(msgs)-1].(*wasmtypes.MsgExecuteContract); err {
-		afterExecMsg = msg
-	} else {
-		return nil, errorsmod.Wrap(types.ErrInvalidMsg, "after-execute message must be type MsgExecuteContract")
-	}
-
-	// get smartaccount address
-	saAddress := signerAcc.GetAddress().String()
-
-	// the message must be sent from the signer's address which is also the smart contract address
-	if afterExecMsg.Sender != saAddress || afterExecMsg.Contract != saAddress {
-		return nil, errorsmod.Wrap(types.ErrInvalidMsg, "sender address and contract address must be the same")
-	}
-
-	return afterExecMsg, nil
-}
-
 // Call a contract's sudo with a gas limit
 // referenced from Osmosis' protorev posthandler:
 // https://github.com/osmosis-labs/osmosis/blob/98025f185ab2ee1b060511ed22679112abcc08fa/x/protorev/keeper/posthandler.go#L42-L43
@@ -274,42 +258,6 @@ func sudoWithGasLimit(
 	ctx.EventManager().EmitEvents(cacheCtx.EventManager().Events())
 
 	return nil
-}
-
-func generatePreExecuteMessage(msg *wasmtypes.MsgExecuteContract, msgs []types.MsgData) ([]byte, error) {
-	var accMsg types.AccountMsg
-	umErr := json.Unmarshal(msg.GetMsg(), &accMsg)
-	if umErr != nil {
-		return nil, errorsmod.Wrap(types.ErrInvalidMsg, umErr.Error())
-	} else if accMsg.AfterExecuteTx == nil {
-		return nil, errorsmod.Wrap(types.ErrInvalidMsg, "must be AfterExecute message")
-	}
-
-	callMsgData, err := json.Marshal(accMsg.AfterExecuteTx.Msgs)
-	if err != nil {
-		return nil, err
-	}
-
-	msgData, err := json.Marshal(&msgs)
-	if err != nil {
-		return nil, err
-	}
-
-	// data in validate message must compatiable to tx.messages
-	if !bytes.Equal(msgData, callMsgData) {
-		return nil, errorsmod.Wrap(types.ErrInvalidMsg, "after-execute message data not compatible with tx.messages")
-	}
-
-	executeMessage, err := json.Marshal(&types.AccountMsg{
-		PreExecuteTx: &types.PreExecuteTx{
-			Msgs: msgs,
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return executeMessage, nil
 }
 
 // ------------------------- SetPubKey Decorator ------------------------- \\

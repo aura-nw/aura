@@ -84,6 +84,26 @@ func (k Keeper) SetNextAccountID(ctx sdk.Context, id uint64) {
 	store.Set(types.KeyPrefix(types.AccountIDKey), sdk.Uint64ToBigEndian(id))
 }
 
+// ------------------------------- SignerAddress -------------------------------
+
+func (k Keeper) GetSignerAddress(ctx sdk.Context) sdk.AccAddress {
+	store := ctx.KVStore(k.storeKey)
+
+	return sdk.AccAddress(store.Get(types.KeyPrefix(types.SignerAddressKey)))
+}
+
+func (k Keeper) SetSignerAddress(ctx sdk.Context, signerAddr sdk.AccAddress) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set(types.KeyPrefix(types.SignerAddressKey), signerAddr)
+}
+
+func (k Keeper) DeleteSignerAddress(ctx sdk.Context) {
+	store := ctx.KVStore(k.storeKey)
+	store.Delete(types.KeyPrefix(types.SignerAddressKey))
+}
+
+// ------------------------------- Other -------------------------------
+
 func (k Keeper) ValidateActiveSA(ctx sdk.Context, msg *typesv1.MsgActivateAccount) (authtypes.AccountI, error) {
 	// validate code id use to init smart account
 	if !k.isWhitelistCodeID(ctx, msg.CodeID) {

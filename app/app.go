@@ -696,6 +696,8 @@ func New(
 		minttypes.ModuleName,
 		crisistypes.ModuleName,
 		ibcexported.ModuleName,
+		// samodule must occur before genutil so that DeliverGenTx can successfully pass the smart account ante handler
+		samoduletypes.ModuleName,
 		genutiltypes.ModuleName,
 		evidencetypes.ModuleName,
 		ibctransfertypes.ModuleName,
@@ -707,7 +709,6 @@ func New(
 		consensusparamtypes.ModuleName,
 		upgradetypes.ModuleName,
 		wasmtypes.ModuleName,
-		samoduletypes.ModuleName,
 		ibchookstypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/initGenesis
 	)
@@ -796,8 +797,11 @@ func New(
 	// Please note that changing any of the anteHandler or postHandler chain is
 	// likely to be a state-machine breaking change, which needs a coordinated
 	// upgrade.
-	postHandler, err := posthandler.NewPostHandler(
-		posthandler.HandlerOptions{},
+	postHandler, err := NewPostHandler(
+		PostHandlerOptions{
+			HandlerOptions:     posthandler.HandlerOptions{},
+			SmartAccountKeeper: app.SaKeeper,
+		},
 	)
 	if err != nil {
 		panic(err)

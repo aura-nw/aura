@@ -95,13 +95,18 @@ func (d *SmartAccountDecorator) AnteHandle(
 		return ctx, errorsmod.Wrap(types.ErrInvalidTx, "not a SigVerifiableTx")
 	}
 
+	feeTx, ok := tx.(sdk.FeeTx)
+	if !ok {
+		return ctx, errorsmod.Wrap(types.ErrInvalidTx, "not a FeeTx")
+	}
+
 	activateMsg, err := GetValidActivateAccountMessage(sigTx)
 	if err != nil {
 		return ctx, err
 	}
 
 	if activateMsg == nil {
-		err = handleSmartAccountTx(ctx, d.SaKeeper, sigTx, simulate)
+		err = handleSmartAccountTx(ctx, d.SaKeeper, sigTx, feeTx, simulate)
 		if err != nil {
 			return ctx, err
 		}
@@ -119,6 +124,7 @@ func handleSmartAccountTx(
 	ctx sdk.Context,
 	saKeeper sakeeper.Keeper,
 	sigTx authsigning.SigVerifiableTx,
+	feeTx sdk.FeeTx,
 	simulate bool,
 ) error {
 
@@ -150,8 +156,7 @@ func handleSmartAccountTx(
 	msgs := sigTx.GetMsgs()
 
 	// check if tx messages is allowed for smartaccount
-	// except after_execute message which is the last one
-	err = saKeeper.CheckAllowedMsgs(ctx, msgs[:len(msgs)-1])
+	err = saKeeper.CheckAllowedMsgs(ctx, msgs)
 	if err != nil {
 		return err
 	}
@@ -161,9 +166,17 @@ func handleSmartAccountTx(
 		return err
 	}
 
+	callInfor := types.CallInfor{
+		Gas:        feeTx.GetGas(),
+		Fee:        feeTx.GetFee(),
+		FeePayer:   feeTx.FeePayer().String(),
+		FeeGranter: feeTx.FeeGranter().String(),
+	}
+
 	preExecuteMessage, err := json.Marshal(&types.AccountMsg{
 		PreExecuteTx: &types.PreExecuteTx{
-			Msgs: msgsData,
+			Msgs:      msgsData,
+			CallInfor: callInfor,
 		},
 	})
 	if err != nil {

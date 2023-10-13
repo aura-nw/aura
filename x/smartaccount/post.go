@@ -44,14 +44,19 @@ func (d AfterTxDecorator) PostHandle(ctx sdk.Context, tx sdk.Tx, simulate, succe
 		return ctx, err
 	}
 
+	callInfor := types.CallInfor{
+		Gas:        feeTx.GetGas(),
+		Fee:        feeTx.GetFee(),
+		FeePayer:   feeTx.FeePayer().String(),
+		FeeGranter: feeTx.FeeGranter().String(),
+	}
+
 	afterExecuteMessage, err := json.Marshal(&types.AccountMsg{
 		AfterExecuteTx: &types.AfterExecuteTx{
-			Msgs: msgsData,
+			Msgs:      msgsData,
+			CallInfor: callInfor,
 		},
 	})
-	if err != nil {
-		return ctx, err
-	}
 
 	params := d.saKeeper.GetParams(ctx)
 

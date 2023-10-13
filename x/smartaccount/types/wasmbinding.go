@@ -19,16 +19,25 @@ type RecoverTx struct {
 }
 
 type PreExecuteTx struct {
-	Msgs []MsgData `json:"msgs"`
+	Msgs      []MsgData `json:"msgs"`
+	CallInfor CallInfor `json:"call_info"`
 }
 
 type AfterExecuteTx struct {
-	Msgs []MsgData `json:"msgs"`
+	Msgs      []MsgData `json:"msgs"`
+	CallInfor CallInfor `json:"call_info"`
 }
 
 type MsgData struct {
 	TypeURL string `json:"type_url"`
 	Value   string `json:"value"`
+}
+
+type CallInfor struct {
+	Fee        sdk.Coins `json:"fee"`
+	Gas        uint64    `json:"gas"`
+	FeePayer   string    `json:"fee_payer"`
+	FeeGranter string    `json:"fee_granter"`
 }
 
 func ParseMessagesString(msgs []sdk.Msg) ([]MsgData, error) {

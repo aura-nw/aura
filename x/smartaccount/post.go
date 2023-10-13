@@ -25,6 +25,11 @@ func NewAfterTxDecorator(saKeeper sakeeper.Keeper) *AfterTxDecorator {
 // https://github.com/larry0x/abstract-account/blob/b3c6432e593d450e7c58dae94cdf2a95930f8159/x/abstractaccount/ante.go#L152-L185
 func (d AfterTxDecorator) PostHandle(ctx sdk.Context, tx sdk.Tx, simulate, success bool, next sdk.PostHandler) (newCtx sdk.Context, err error) {
 
+	// using gas for validate SA msgs will not count to tx total used
+	if simulate {
+		return next(ctx, tx, simulate, success)
+	}
+
 	feeTx, ok := tx.(sdk.FeeTx)
 	if !ok {
 		return ctx, errorsmod.Wrap(types.ErrInvalidTx, "not a FeeTx")
@@ -96,6 +101,11 @@ func (d *PostValidateAuthzTxDecorator) PostHandle(
 	success bool,
 	next sdk.PostHandler,
 ) (newCtx sdk.Context, err error) {
+
+	// using gas for validate SA msgs will not count to tx total used
+	if simulate {
+		return next(ctx, tx, simulate, success)
+	}
 
 	sigTx, ok := tx.(authsigning.SigVerifiableTx)
 	if !ok {

@@ -129,6 +129,11 @@ func handleSmartAccountTx(
 	simulate bool,
 ) error {
 
+	// using gas for validate SA msgs will not count to tx total used
+	if simulate {
+		return nil
+	}
+
 	signerAcc, err := GetSmartAccountTxSigner(ctx, sigTx, saKeeper)
 	if err != nil {
 		return err
@@ -138,11 +143,6 @@ func handleSmartAccountTx(
 	if signerAcc == nil {
 		// do some thing
 		return nil
-	}
-
-	// not support smartaccount tx simulation yet
-	if simulate {
-		return errorsmod.Wrap(types.ErrNotSupported, "Simulation of SmartAccount txs isn't supported yet")
 	}
 
 	// save the account address to the module store. we will need it in the
@@ -188,7 +188,6 @@ func handleSmartAccountTx(
 	params := saKeeper.GetParams(ctx)
 
 	// execute SA contract for pre-execute transaction with limit gas
-	// using gas for validate SA msgs will not count to tx total used
 	err, gasRemaining := sudoWithGasLimit(ctx, saKeeper.ContractKeeper, signerAcc.GetAddress(), preExecuteMessage, params.MaxGasExecute)
 	if err != nil {
 		return err
@@ -384,6 +383,11 @@ func (d *ValidateAuthzTxDecorator) AnteHandle(
 	simulate bool,
 	next sdk.AnteHandler,
 ) (newCtx sdk.Context, err error) {
+
+	// using gas for validate SA msgs will not count to tx total used
+	if simulate {
+		return next(ctx, tx, simulate)
+	}
 
 	sigTx, ok := tx.(authsigning.SigVerifiableTx)
 	if !ok {

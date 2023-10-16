@@ -162,7 +162,7 @@ func handleSmartAccountTx(
 		return err
 	}
 
-	callInfor := types.CallInfor{
+	callInfo := types.CallInfo{
 		Gas:        feeTx.GetGas(),
 		Fee:        feeTx.GetFee(),
 		FeePayer:   feeTx.FeePayer().String(),
@@ -171,9 +171,9 @@ func handleSmartAccountTx(
 
 	preExecuteMessage, err := json.Marshal(&types.AccountMsg{
 		PreExecuteTx: &types.PreExecuteTx{
-			Msgs:      msgsData,
-			CallInfor: callInfor,
-			IsAuthz:   false,
+			Msgs:     msgsData,
+			CallInfo: callInfo,
+			IsAuthz:  false,
 		},
 	})
 	if err != nil {
@@ -453,8 +453,8 @@ func validateNestedSmartAccountMsgs(
 					return err
 				}
 
-				// call_infor is empty if message is executed throught authz exec
-				callInfor := types.CallInfor{
+				// call_info is empty if message is executed throught authz exec
+				callInfo := types.CallInfo{
 					Gas:        0,
 					Fee:        sdk.NewCoins(),
 					FeePayer:   "",
@@ -465,17 +465,17 @@ func validateNestedSmartAccountMsgs(
 				if isAnte {
 					execMsg, err = json.Marshal(&types.AccountMsg{
 						PreExecuteTx: &types.PreExecuteTx{
-							Msgs:      msgsData,
-							CallInfor: callInfor,
-							IsAuthz:   true,
+							Msgs:     msgsData,
+							CallInfo: callInfo,
+							IsAuthz:  true,
 						},
 					})
 				} else {
 					execMsg, err = json.Marshal(&types.AccountMsg{
 						AfterExecuteTx: &types.AfterExecuteTx{
-							Msgs:      msgsData,
-							CallInfor: callInfor,
-							IsAuthz:   true,
+							Msgs:     msgsData,
+							CallInfo: callInfo,
+							IsAuthz:  true,
 						},
 					})
 				}

@@ -44,7 +44,7 @@ func (d AfterTxDecorator) PostHandle(ctx sdk.Context, tx sdk.Tx, simulate, succe
 		return ctx, err
 	}
 
-	callInfor := types.CallInfor{
+	callInfo := types.CallInfo{
 		Gas:        feeTx.GetGas(),
 		Fee:        feeTx.GetFee(),
 		FeePayer:   feeTx.FeePayer().String(),
@@ -53,9 +53,9 @@ func (d AfterTxDecorator) PostHandle(ctx sdk.Context, tx sdk.Tx, simulate, succe
 
 	afterExecuteMessage, err := json.Marshal(&types.AccountMsg{
 		AfterExecuteTx: &types.AfterExecuteTx{
-			Msgs:      msgsData,
-			CallInfor: callInfor,
-			IsAuthz:   false,
+			Msgs:     msgsData,
+			CallInfo: callInfo,
+			IsAuthz:  false,
 		},
 	})
 	if err != nil {

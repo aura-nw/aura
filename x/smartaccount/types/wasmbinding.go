@@ -18,15 +18,15 @@ type RecoverTx struct {
 }
 
 type PreExecuteTx struct {
-	Msgs      []Any     `json:"msgs"`
-	CallInfor CallInfor `json:"call_info"`
-	IsAuthz   bool      `json:"is_authz"`
+	Msgs     []Any    `json:"msgs"`
+	CallInfo CallInfo `json:"call_info"`
+	IsAuthz  bool     `json:"is_authz"`
 }
 
 type AfterExecuteTx struct {
-	Msgs      []Any     `json:"msgs"`
-	CallInfor CallInfor `json:"call_info"`
-	IsAuthz   bool      `json:"is_authz"`
+	Msgs     []Any    `json:"msgs"`
+	CallInfo CallInfo `json:"call_info"`
+	IsAuthz  bool     `json:"is_authz"`
 }
 
 type Any struct {
@@ -34,7 +34,7 @@ type Any struct {
 	Value   []byte `json:"value"`
 }
 
-type CallInfor struct {
+type CallInfo struct {
 	Fee        sdk.Coins `json:"fee"`
 	Gas        uint64    `json:"gas"`
 	FeePayer   string    `json:"fee_payer"`

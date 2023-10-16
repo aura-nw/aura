@@ -3,7 +3,7 @@ package cli
 import (
 	"strconv"
 
-	"github.com/aura-nw/aura/x/smartaccount/types"
+	typesv1 "github.com/aura-nw/aura/x/smartaccount/types/v1beta1"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
@@ -24,12 +24,12 @@ func CmdRecover() *cobra.Command {
 				return err
 			}
 
-			pubKey, err := types.PubKeyToAny(clientCtx.Codec, []byte(args[1]))
+			pubKey, err := typesv1.PubKeyToAny(clientCtx.Codec, []byte(args[1]))
 			if err != nil {
 				return err
 			}
 
-			msg := &types.MsgRecover{
+			msg := &typesv1.MsgRecover{
 				Creator:     clientCtx.GetFromAddress().String(),
 				Address:     args[0],
 				PubKey:      pubKey,

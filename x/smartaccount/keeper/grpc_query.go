@@ -1,7 +1,7 @@
 package keeper
 
 import (
-	"github.com/aura-nw/aura/x/smartaccount/types"
+	typesv1 "github.com/aura-nw/aura/x/smartaccount/types/v1beta1"
 )
 
-var _ types.QueryServer = Keeper{}
+var _ typesv1.QueryServer = Keeper{}

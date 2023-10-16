@@ -6,13 +6,17 @@ import (
 	"fmt"
 	"strconv"
 
+	errorsmod "cosmossdk.io/errors"
+	"github.com/cometbft/cometbft/libs/log"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	"github.com/tendermint/tendermint/libs/log"
+
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-	"github.com/aura-nw/aura/x/smartaccount/types"
+	types "github.com/aura-nw/aura/x/smartaccount/types"
+	typesv1 "github.com/aura-nw/aura/x/smartaccount/types/v1beta1"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
@@ -21,19 +25,19 @@ import (
 type (
 	Keeper struct {
 		cdc            codec.BinaryCodec
-		storeKey       sdk.StoreKey
-		memKey         sdk.StoreKey
+		storeKey       storetypes.StoreKey
+		memKey         storetypes.StoreKey
 		paramstore     paramtypes.Subspace
-		wasmKeeper     wasmkeeper.Keeper
-		contractKeeper *wasmkeeper.PermissionedKeeper
-		accountKeeper  types.AccountKeeper
+		WasmKeeper     wasmkeeper.Keeper
+		ContractKeeper *wasmkeeper.PermissionedKeeper
+		AccountKeeper  types.AccountKeeper
 	}
 )
 
 func NewKeeper(
 	cdc codec.BinaryCodec,
 	storeKey,
-	memKey sdk.StoreKey,
+	memKey storetypes.StoreKey,
 	ps paramtypes.Subspace,
 	wp wasmkeeper.Keeper,
 	contractKeeper *wasmkeeper.PermissionedKeeper,
@@ -41,7 +45,7 @@ func NewKeeper(
 ) Keeper {
 	// set KeyTable if it has not already been set
 	if !ps.HasKeyTable() {
-		ps = ps.WithKeyTable(types.ParamKeyTable())
+		ps = ps.WithKeyTable(typesv1.ParamKeyTable())
 	}
 
 	return Keeper{
@@ -49,9 +53,9 @@ func NewKeeper(
 		storeKey:       storeKey,
 		memKey:         memKey,
 		paramstore:     ps,
-		wasmKeeper:     wp,
-		contractKeeper: contractKeeper,
-		accountKeeper:  ak,
+		WasmKeeper:     wp,
+		ContractKeeper: contractKeeper,
+		AccountKeeper:  ak,
 	}
 }
 
@@ -80,7 +84,7 @@ func (k Keeper) SetNextAccountID(ctx sdk.Context, id uint64) {
 	store.Set(types.KeyPrefix(types.AccountIDKey), sdk.Uint64ToBigEndian(id))
 }
 
-func (k Keeper) ValidateActiveSA(ctx sdk.Context, msg *types.MsgActivateAccount) (authtypes.AccountI, error) {
+func (k Keeper) ValidateActiveSA(ctx sdk.Context, msg *typesv1.MsgActivateAccount) (authtypes.AccountI, error) {
 	// validate code id use to init smart account
 	if !k.isWhitelistCodeID(ctx, msg.CodeID) {
 		k.Logger(ctx).Error("active-sm", "code-id", msg.CodeID)
@@ -105,18 +109,18 @@ func (k Keeper) PrepareBeforeActive(ctx sdk.Context, sAccount authtypes.AccountI
 		return err
 	}
 
-	k.accountKeeper.SetAccount(ctx, sAccount)
+	k.AccountKeeper.SetAccount(ctx, sAccount)
 
 	return nil
 }
 
 func (k Keeper) ActiveSmartAccount(
 	ctx sdk.Context,
-	msg *types.MsgActivateAccount,
+	msg *typesv1.MsgActivateAccount,
 	sAccount authtypes.AccountI,
 ) (cryptotypes.PubKey, error) {
 
-	pubKey, err := types.PubKeyDecode(msg.PubKey)
+	pubKey, err := typesv1.PubKeyDecode(msg.PubKey)
 	if err != nil {
 		return nil, err
 	}
@@ -126,7 +130,7 @@ func (k Keeper) ActiveSmartAccount(
 	owner := sdk.AccAddress(pubKey.Address())
 
 	// instantiate smartcontract by code_id
-	address, _, err := k.contractKeeper.Instantiate2(
+	address, _, err := k.ContractKeeper.Instantiate2(
 		ctx,
 		msg.CodeID,
 		owner,                 // owner
@@ -177,14 +181,14 @@ func (k Keeper) HandleAfterActive(ctx sdk.Context, sAccount authtypes.AccountI, 
 	}
 
 	// create new smart account type
-	smartAccount := types.NewSmartAccountFromAccount(sAccount)
+	smartAccount := typesv1.NewSmartAccountFromAccount(sAccount)
 
 	// set smart account pubkey
 	return k.UpdateAccountPubKey(ctx, smartAccount, pubKey)
 }
 
 // ValidateRecoverSA check input before recover smart account
-func (k Keeper) ValidateRecoverSA(ctx sdk.Context, msg *types.MsgRecover) (authtypes.AccountI, error) {
+func (k Keeper) ValidateRecoverSA(ctx sdk.Context, msg *typesv1.MsgRecover) (authtypes.AccountI, error) {
 	saAddr, err := sdk.AccAddressFromBech32(msg.Address)
 	if err != nil {
 		k.Logger(ctx).Error("recover-sa", "decode-err", err.Error())
@@ -192,8 +196,8 @@ func (k Keeper) ValidateRecoverSA(ctx sdk.Context, msg *types.MsgRecover) (autht
 	}
 
 	// only allow accounts with type SmartAccount to be restored pubkey
-	smartAccount := k.accountKeeper.GetAccount(ctx, saAddr)
-	if _, ok := smartAccount.(*types.SmartAccount); !ok {
+	smartAccount := k.AccountKeeper.GetAccount(ctx, saAddr)
+	if _, ok := smartAccount.(*typesv1.SmartAccount); !ok {
 		return nil, types.ErrAccountNotFoundForAddress
 	}
 
@@ -201,7 +205,7 @@ func (k Keeper) ValidateRecoverSA(ctx sdk.Context, msg *types.MsgRecover) (autht
 }
 
 // CallSMValidate to check logic recover from smart account
-func (k Keeper) CallSMValidate(ctx sdk.Context, msg *types.MsgRecover, saAddr sdk.AccAddress, pubKey cryptotypes.PubKey) error {
+func (k Keeper) CallSMValidate(ctx sdk.Context, msg *typesv1.MsgRecover, saAddr sdk.AccAddress, pubKey cryptotypes.PubKey) error {
 	// credentials
 	credentials, err := base64.StdEncoding.DecodeString(msg.Credentials)
 	if err != nil {
@@ -222,7 +226,7 @@ func (k Keeper) CallSMValidate(ctx sdk.Context, msg *types.MsgRecover, saAddr sd
 	}
 
 	// check recover logic in smart contract
-	_, err = k.contractKeeper.Sudo(ctx, saAddr, sudoMsgBytes)
+	_, err = k.ContractKeeper.Sudo(ctx, saAddr, sudoMsgBytes)
 	if err != nil {
 		return err
 	}
@@ -235,7 +239,7 @@ func (k Keeper) UpdateAccountPubKey(ctx sdk.Context, acc authtypes.AccountI, pub
 		return err
 	}
 
-	k.accountKeeper.SetAccount(ctx, acc)
+	k.AccountKeeper.SetAccount(ctx, acc)
 
 	return nil
 }
@@ -244,41 +248,69 @@ func (k Keeper) UpdateAccountPubKey(ctx sdk.Context, acc authtypes.AccountI, pub
 // otherwise return false
 func (k Keeper) isWhitelistCodeID(ctx sdk.Context, codeID uint64) bool {
 	params := k.GetParams(ctx)
-	if params.WhitelistCodeID == nil {
-		return false
-	}
 
-	// code_id must be in whitelist and has activated status
-	for _, codeIDAllowed := range params.WhitelistCodeID {
-		if codeID == codeIDAllowed.CodeID && codeIDAllowed.Status {
-			return true
-		}
-	}
-
-	return false
+	return params.IsAllowedCodeID(codeID)
 }
 
 // Inactive smart-account must be base account with empty public key or smart account
 // and has not been used for any instantiated contracts
 func (k Keeper) IsInactiveAccount(ctx sdk.Context, acc sdk.AccAddress) (authtypes.AccountI, error) {
-	sAccount := k.accountKeeper.GetAccount(ctx, acc)
+	sAccount := k.AccountKeeper.GetAccount(ctx, acc)
 
 	// check if account has type base or smart
 	_, isBaseAccount := sAccount.(*authtypes.BaseAccount)
-	_, isSmartAccount := sAccount.(*types.SmartAccount)
+	_, isSmartAccount := sAccount.(*typesv1.SmartAccount)
 	if !isBaseAccount && !isSmartAccount {
-		return nil, sdkerrors.Wrap(types.ErrAccountNotFoundForAddress, acc.String())
+		return nil, errorsmod.Wrap(types.ErrAccountNotFoundForAddress, acc.String())
 	}
 
 	// check if base account already has public key
 	if sAccount.GetPubKey() != nil && isBaseAccount {
-		return nil, sdkerrors.Wrap(types.ErrAccountAlreadyExists, acc.String())
+		return nil, errorsmod.Wrap(types.ErrAccountAlreadyExists, acc.String())
 	}
 
 	// check if contract with account not been instantiated
-	if k.wasmKeeper.HasContractInfo(ctx, acc) {
-		return nil, sdkerrors.Wrap(types.ErrAccountAlreadyExists, acc.String())
+	if k.WasmKeeper.HasContractInfo(ctx, acc) {
+		return nil, errorsmod.Wrap(types.ErrAccountAlreadyExists, acc.String())
 	}
 
 	return sAccount, nil
+}
+
+func (k Keeper) GetSmartAccountByAddress(ctx sdk.Context, address sdk.AccAddress) (*typesv1.SmartAccount, error) {
+	signerAcc, err := authante.GetSignerAcc(ctx, k.AccountKeeper, address)
+	if err != nil {
+		return nil, err
+	}
+
+	saAcc, ok := signerAcc.(*typesv1.SmartAccount)
+	if !ok {
+		return nil, nil
+	}
+
+	return saAcc, nil
+}
+
+// IsAllowed returns true when msg URL is not found in the DisableList for given context, else false.
+func (k Keeper) CheckAllowedMsgs(ctx sdk.Context, msgs []sdk.Msg) error {
+	params := k.GetParams(ctx)
+
+	if params.DisableMsgsList == nil {
+		return nil
+	}
+
+	disableMap := make(map[string]bool)
+	for _, url := range params.DisableMsgsList {
+		disableMap[url] = true
+	}
+
+	for _, msg := range msgs {
+		url := sdk.MsgTypeURL(msg)
+
+		if _, ok := disableMap[url]; ok {
+			return errorsmod.Wrap(types.ErrNotAllowedMsg, url)
+		}
+	}
+
+	return nil
 }

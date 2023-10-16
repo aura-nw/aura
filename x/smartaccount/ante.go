@@ -129,11 +129,6 @@ func handleSmartAccountTx(
 	simulate bool,
 ) error {
 
-	// using gas for validate SA msgs will not count to tx total used
-	if simulate {
-		return nil
-	}
-
 	signerAcc, err := GetSmartAccountTxSigner(ctx, sigTx, saKeeper)
 	if err != nil {
 		return err
@@ -254,6 +249,7 @@ func handleSmartAccountActivate(
 }
 
 // Call a contract's sudo with a gas limit
+// using gas for validate SA msgs will not count to tx total used
 // referenced from Osmosis' protorev posthandler:
 // https://github.com/osmosis-labs/osmosis/blob/98025f185ab2ee1b060511ed22679112abcc08fa/x/protorev/keeper/posthandler.go#L42-L43
 func sudoWithGasLimit(
@@ -317,17 +313,19 @@ func (d *SetPubKeyDecorator) AnteHandle(
 			return ctx, err
 		}
 
-		// decode any to pubkey
-		pubKey, err := typesv1.PubKeyDecode(activateMsg.PubKey)
-		if err != nil {
-			return ctx, err
-		}
+		if !simulate {
+			// decode any to pubkey
+			pubKey, err := typesv1.PubKeyDecode(activateMsg.PubKey)
+			if err != nil {
+				return ctx, err
+			}
 
-		// set temporary pubkey for account
-		// need this for the next ante signature checks
-		err = d.saKeeper.UpdateAccountPubKey(ctx, sAccount, pubKey)
-		if err != nil {
-			return ctx, err
+			// set temporary pubkey for account
+			// need this for the next ante signature checks
+			err = d.saKeeper.UpdateAccountPubKey(ctx, sAccount, pubKey)
+			if err != nil {
+				return ctx, err
+			}
 		}
 
 		return next(ctx, tx, simulate)
@@ -341,8 +339,9 @@ func (d *SetPubKeyDecorator) AnteHandle(
 	// if is smart account tx skip authante NewSetPubKeyDecorator
 	// need this to avoid pubkey and address equal check of above decorator
 	if signerAcc != nil {
-		// if this is smart account tx, check if pubkey is set
-		if signerAcc.GetPubKey() == nil {
+		// if this is smart account tx and not in simulation mode
+		// check if pubkey is set
+		if !simulate && signerAcc.GetPubKey() == nil {
 			return ctx, errorsmod.Wrap(types.ErrNilPubkey, signerAcc.String())
 		}
 
@@ -383,11 +382,6 @@ func (d *ValidateAuthzTxDecorator) AnteHandle(
 	next sdk.AnteHandler,
 ) (newCtx sdk.Context, err error) {
 
-	// using gas for validate SA msgs will not count to tx total used
-	if simulate {
-		return next(ctx, tx, simulate)
-	}
-
 	sigTx, ok := tx.(authsigning.SigVerifiableTx)
 	if !ok {
 		return ctx, errorsmod.Wrap(types.ErrInvalidTx, "not a SigVerifiableTx")
@@ -402,7 +396,8 @@ func (d *ValidateAuthzTxDecorator) AnteHandle(
 		d.SaKeeper.DeleteGasRemaining(ctx)
 	}
 
-	err = validateAuthzTx(ctx, d.SaKeeper, sigTx, maxGas, true, simulate)
+	// using gas for validate authz will not count to tx total used
+	err = validateAuthzTx(ctx, d.SaKeeper, sigTx, maxGas, true)
 	if err != nil {
 		return ctx, err
 	}
@@ -416,7 +411,6 @@ func validateAuthzTx(
 	sigTx authsigning.SigVerifiableTx,
 	maxGas uint64,
 	isAnte bool,
-	simulate bool,
 ) error {
 	cacheCtx, write := ctx.CacheContext()
 	cacheCtx = cacheCtx.WithGasMeter(sdk.NewGasMeter(maxGas))

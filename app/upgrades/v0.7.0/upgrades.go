@@ -32,7 +32,8 @@ import (
 	// custom
 	auramoduletypes "github.com/aura-nw/aura/x/aura/types"
 	smartaccounttypes "github.com/aura-nw/aura/x/smartaccount/types"
-	smartaccounttypesauranw "github.com/aura-nw/aura/x/smartaccount/types/auranw"
+
+	//smartaccounttypesauranw "github.com/aura-nw/aura/x/smartaccount/types/auranw"
 	smartaccounttypesv1 "github.com/aura-nw/aura/x/smartaccount/types/v1beta1"
 )
 
@@ -103,7 +104,7 @@ func CreateUpgradeHandler(
 
 		// Migrate smartaccounts from `auranw` to `v1` verson
 		// Change typeUrl from "auranw.aura.smartaccount.SmartAccount" to "aura.smartaccount.v1.SmartAccount"
-		var iterErr error
+		/* var iterErr error
 		authKeeper.IterateAccounts(ctx, func(account authtypes.AccountI) (stop bool) {
 			if oldSa, ok := account.(*smartaccounttypesauranw.SmartAccount); ok {
 				newSa := smartaccounttypesv1.NewSmartAccount(oldSa.Address, oldSa.AccountNumber, oldSa.Sequence)
@@ -120,7 +121,7 @@ func CreateUpgradeHandler(
 
 		if iterErr != nil {
 			return nil, iterErr
-		}
+		} */
 
 		// update smartaccount params
 		smartaccountParams := smartaccounttypesv1.DefaultParams()

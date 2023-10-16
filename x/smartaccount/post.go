@@ -7,7 +7,6 @@ import (
 	sakeeper "github.com/aura-nw/aura/x/smartaccount/keeper"
 	"github.com/aura-nw/aura/x/smartaccount/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 )
 
 // ------------------------- AfterTx Decorator ------------------------- \\
@@ -97,11 +96,6 @@ func (d *PostValidateAuthzTxDecorator) PostHandle(
 	next sdk.PostHandler,
 ) (newCtx sdk.Context, err error) {
 
-	sigTx, ok := tx.(authsigning.SigVerifiableTx)
-	if !ok {
-		return ctx, errorsmod.Wrap(types.ErrInvalidTx, "not a SigVerifiableTx")
-	}
-
 	params := d.SaKeeper.GetParams(ctx)
 	maxGas := params.MaxGasExecute
 
@@ -111,7 +105,7 @@ func (d *PostValidateAuthzTxDecorator) PostHandle(
 		d.SaKeeper.DeleteGasRemaining(ctx)
 	}
 
-	err = validateAuthzTx(ctx, d.SaKeeper, sigTx, maxGas, false)
+	err = validateAuthzTx(ctx, d.SaKeeper, tx, maxGas, false)
 	if err != nil {
 		return ctx, err
 	}

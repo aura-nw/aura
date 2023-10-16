@@ -382,11 +382,6 @@ func (d *ValidateAuthzTxDecorator) AnteHandle(
 	next sdk.AnteHandler,
 ) (newCtx sdk.Context, err error) {
 
-	sigTx, ok := tx.(authsigning.SigVerifiableTx)
-	if !ok {
-		return ctx, errorsmod.Wrap(types.ErrInvalidTx, "not a SigVerifiableTx")
-	}
-
 	params := d.SaKeeper.GetParams(ctx)
 	maxGas := params.MaxGasExecute
 
@@ -397,7 +392,7 @@ func (d *ValidateAuthzTxDecorator) AnteHandle(
 	}
 
 	// using gas for validate authz will not count to tx total used
-	err = validateAuthzTx(ctx, d.SaKeeper, sigTx, maxGas, true)
+	err = validateAuthzTx(ctx, d.SaKeeper, tx, maxGas, true)
 	if err != nil {
 		return ctx, err
 	}
@@ -408,14 +403,14 @@ func (d *ValidateAuthzTxDecorator) AnteHandle(
 func validateAuthzTx(
 	ctx sdk.Context,
 	saKeeper sakeeper.Keeper,
-	sigTx authsigning.SigVerifiableTx,
+	tx sdk.Tx,
 	maxGas uint64,
 	isAnte bool,
 ) error {
 	cacheCtx, write := ctx.CacheContext()
 	cacheCtx = cacheCtx.WithGasMeter(sdk.NewGasMeter(maxGas))
 
-	for _, msg := range sigTx.GetMsgs() {
+	for _, msg := range tx.GetMsgs() {
 		if msgExec, ok := msg.(*authz.MsgExec); ok {
 			msgs, err := msgExec.GetMessages()
 			if err != nil {

@@ -764,7 +764,8 @@ func TestValidateAuthzTxDecorator(t *testing.T) {
 			params := typesv1.Params{
 				MaxGasExecute: 1000,
 			}
-			app.SaKeeper.SetParams(ctx, params)
+			err = app.SaKeeper.SetParams(ctx, params)
+			require.NoError(t, err)
 		}
 
 		if tc.gasRemaining {

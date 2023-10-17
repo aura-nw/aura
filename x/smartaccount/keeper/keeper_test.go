@@ -3,6 +3,7 @@ package keeper_test
 import (
 	"testing"
 
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	helper "github.com/aura-nw/aura/tests/smartaccount"
 	typesv1 "github.com/aura-nw/aura/x/smartaccount/types/v1beta1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -19,6 +20,44 @@ func TestIncrementNextAccountID(t *testing.T) {
 
 	newAccID := keeper.GetNextAccountID(ctx)
 	require.Equal(t, typesv1.DefaultSmartAccountId+1, newAccID)
+}
+
+func TestGetSetDelSignerAddress(t *testing.T) {
+	testAddress := "cosmos10uxaa5gkxpeungu2c9qswx035v6t3r24w6v2r6dxd858rq2mzknqj8ru28"
+
+	ctx, app := helper.SetupGenesisTest(t)
+
+	keeper := app.SaKeeper
+
+	acc, err := sdk.AccAddressFromBech32(testAddress)
+	require.NoError(t, err)
+
+	keeper.SetSignerAddress(ctx, acc)
+	getAcc := keeper.GetSignerAddress(ctx)
+	require.Equal(t, acc, getAcc)
+
+	keeper.DeleteSignerAddress(ctx)
+	getAcc = keeper.GetSignerAddress(ctx)
+	require.Equal(t, sdk.AccAddress(nil), getAcc)
+}
+
+func TestGasRemaining(t *testing.T) {
+	ctx, app := helper.SetupGenesisTest(t)
+
+	keeper := app.SaKeeper
+
+	gasRemaining := uint64(100)
+
+	require.Equal(t, keeper.HasGasRemaining(ctx), false)
+
+	keeper.SetGasRemaining(ctx, gasRemaining)
+	require.Equal(t, keeper.HasGasRemaining(ctx), true)
+
+	gas := keeper.GetGasRemaining(ctx)
+	require.Equal(t, gasRemaining, gas)
+
+	keeper.DeleteGasRemaining(ctx)
+	require.Equal(t, keeper.HasGasRemaining(ctx), false)
 }
 
 func TestValidateActivateSA(t *testing.T) {
@@ -326,7 +365,6 @@ func TestCallSMValidate(t *testing.T) {
 }
 
 func TestIsInactiveAccount(t *testing.T) {
-	testSAAddress1 := "cosmos13t4996czrgft9gw43epuwauccrldu5whx6uprjdmvsmuf7ylg8yqcxgzk3"
 	testBAAddress1 := "cosmos1kzlrmxw3h2n4uzuv73m33cfw7xt7qjf3hlqx33ulc02e9dhxu46qgfxg9l"
 	testBAAddress2 := "cosmos10uxaa5gkxpeungu2c9qswx035v6t3r24w6v2r6dxd858rq2mzknqj8ru28"
 
@@ -339,9 +377,6 @@ func TestIsInactiveAccount(t *testing.T) {
 	require.NoError(t, err)
 
 	dPubKey, err := typesv1.PubKeyDecode(pubKey)
-	require.NoError(t, err)
-
-	err = helper.AddNewSmartAccount(app, ctx, testSAAddress1, dPubKey, 0)
 	require.NoError(t, err)
 
 	err = helper.AddNewBaseAccount(app, ctx, testBAAddress1, nil, 0)
@@ -390,11 +425,6 @@ func TestIsInactiveAccount(t *testing.T) {
 			desc:           "error, baseaccount with pubkey",
 			AccountAddress: testBAAddress2, // base account has pubkey
 			err:            true,
-		},
-		{
-			desc:           "is inactive smartaccount, smartaccount without linked smartcontract",
-			AccountAddress: testSAAddress1,
-			err:            false,
 		},
 		{
 			desc:           "error, smartaccount with linked smartcontract",
@@ -465,6 +495,52 @@ func TestGetSmartAccountByAddress(t *testing.T) {
 			require.NotEqual(t, (*typesv1.SmartAccount)(nil), saAcc)
 		} else {
 			require.Equal(t, (*typesv1.SmartAccount)(nil), saAcc)
+		}
+	}
+}
+
+func TestCheckAllowedMsgs(t *testing.T) {
+	ctx, app := helper.SetupGenesisTest(t)
+
+	keeper := app.SaKeeper
+
+	params := typesv1.Params{
+		DisableMsgsList: []string{
+			"/cosmwasm.wasm.v1.MsgUpdateAdmin",
+			"/cosmwasm.wasm.v1.MsgClearAdmin",
+		},
+		MaxGasExecute: 2000000,
+	}
+	err := keeper.SetParams(ctx, params)
+	require.NoError(t, err)
+
+	for _, tc := range []struct {
+		desc string
+		msgs []sdk.Msg
+		err  bool
+	}{
+		{
+			desc: "allowed msgs",
+			msgs: []sdk.Msg{
+				&typesv1.MsgActivateAccount{},
+			},
+			err: false,
+		},
+		{
+			desc: "note allowed msgs",
+			msgs: []sdk.Msg{
+				&typesv1.MsgActivateAccount{},
+				&wasmtypes.MsgUpdateAdmin{},
+			},
+			err: true,
+		},
+	} {
+		err := keeper.CheckAllowedMsgs(ctx, tc.msgs)
+
+		if !tc.err {
+			require.NoError(t, err)
+		} else {
+			require.Error(t, err)
 		}
 	}
 }

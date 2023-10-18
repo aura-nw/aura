@@ -65,7 +65,7 @@ func (d AfterTxDecorator) PostHandle(ctx sdk.Context, tx sdk.Tx, simulate, succe
 	params := d.saKeeper.GetParams(ctx)
 
 	// execute SA contract for after-execute transaction with limit gas
-	err, gasRemaining := sudoWithGasLimit(ctx, d.saKeeper.ContractKeeper, signerAddr, afterExecuteMessage, params.MaxGasExecute)
+	gasRemaining, err := sudoWithGasLimit(ctx, d.saKeeper.ContractKeeper, signerAddr, afterExecuteMessage, params.MaxGasExecute)
 	if err != nil {
 		return ctx, err
 	}

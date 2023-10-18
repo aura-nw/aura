@@ -183,7 +183,7 @@ func handleSmartAccountTx(
 	params := saKeeper.GetParams(ctx)
 
 	// execute SA contract for pre-execute transaction with limit gas
-	err, gasRemaining := sudoWithGasLimit(ctx, saKeeper.ContractKeeper, signerAcc.GetAddress(), preExecuteMessage, params.MaxGasExecute)
+	gasRemaining, err := sudoWithGasLimit(ctx, saKeeper.ContractKeeper, signerAcc.GetAddress(), preExecuteMessage, params.MaxGasExecute)
 	if err != nil {
 		return err
 	}
@@ -255,7 +255,7 @@ func handleSmartAccountActivate(
 func sudoWithGasLimit(
 	ctx sdk.Context, contractKeeper *wasmkeeper.PermissionedKeeper,
 	contractAddr sdk.AccAddress, msg []byte, maxGas sdk.Gas,
-) (error, uint64) {
+) (uint64, error) {
 	cacheCtx, write := ctx.CacheContext()
 	cacheCtx = cacheCtx.WithGasMeter(sdk.NewGasMeter(maxGas))
 
@@ -264,13 +264,13 @@ func sudoWithGasLimit(
 		contractAddr, // contract address
 		msg,
 	); err != nil {
-		return err, maxGas
+		return maxGas, err
 	}
 
 	write()
 	ctx.EventManager().EmitEvents(cacheCtx.EventManager().Events())
 
-	return nil, cacheCtx.GasMeter().GasRemaining()
+	return cacheCtx.GasMeter().GasRemaining(), nil
 }
 
 // ------------------------- SetPubKey Decorator ------------------------- \\

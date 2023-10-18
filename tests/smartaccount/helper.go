@@ -21,7 +21,7 @@ import (
 var (
 	UserAddr     = "cosmos1lg0g3jpu8luawwezcknamz0l003swknjyw9uch"
 	GenesisState = &typesv1.GenesisState{
-		Params:         typesv1.NewParams([]*typesv1.CodeID{{CodeID: 1, Status: true}}, []string{"/cosmwasm.wasm.v1.MsgExecuteContract"}, typesv1.DefaultMaxGas),
+		Params:         typesv1.NewParams([]*typesv1.CodeID{{CodeID: 1, Status: true}}, []string(nil), typesv1.DefaultMaxGas),
 		SmartAccountId: typesv1.DefaultSmartAccountId,
 	}
 )

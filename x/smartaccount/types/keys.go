@@ -17,6 +17,14 @@ const (
 	MemStoreKey = "mem_smartaccount"
 
 	AccountIDKey = "smartaccount_id"
+
+	// In the AnteHandler, if the tx only has one sender and this sender is an
+	// AbstractAccount, we store its address here. This way, in the PostHandler,
+	// we know whether to call the after_tx method.
+	SignerAddressKey = "smartaccount_signer"
+
+	// free gas remaining in ante and post handlers
+	GasRemainingKey = "gas_remaining"
 )
 
 var (

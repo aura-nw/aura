@@ -16,6 +16,7 @@ func RegisterCodec(cdc *codec.LegacyAmino) {
 
 func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 	registry.RegisterImplementations((*authtypes.AccountI)(nil), &SmartAccount{})
+	registry.RegisterImplementations((*authtypes.GenesisAccount)(nil), &SmartAccount{})
 	registry.RegisterImplementations((*sdk.Msg)(nil),
 		&MsgRecover{},
 	)

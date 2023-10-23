@@ -24,6 +24,8 @@ const (
 	SignerAddressKey = "smartaccount_signer"
 
 	// free gas remaining in ante and post handlers
+	// each smartaccount tx will have a limited amount of gas that can be used for free
+	// the limitation will be determined by the government
 	GasRemainingKey = "gas_remaining"
 )
 

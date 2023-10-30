@@ -200,7 +200,6 @@ func handleSmartAccountActivate(
 	activateMsg *typesv1.MsgActivateAccount,
 	simulate bool,
 ) error {
-	// in ReCheckTx mode, below check may not be necessary
 
 	// get signer of smart account activation message
 	signer := activateMsg.GetSigners()[0]
@@ -229,8 +228,7 @@ func handleSmartAccountActivate(
 		return errorsmod.Wrap(types.ErrInvalidAddress, "not the same as predicted")
 	}
 
-	// if in delivery mode, remove temporary pubkey from account
-	if !ctx.IsCheckTx() && !ctx.IsReCheckTx() && !simulate {
+	if !ctx.IsReCheckTx() && !simulate {
 		// get smart contract account by address
 		sAccount := saKeeper.AccountKeeper.GetAccount(ctx, signer)
 		_, isBase := sAccount.(*authtypes.BaseAccount)
@@ -313,7 +311,7 @@ func (d *SetPubKeyDecorator) AnteHandle(
 			return ctx, err
 		}
 
-		if !simulate {
+		if !ctx.IsReCheckTx() && !simulate {
 			// decode any to pubkey
 			pubKey, err := typesv1.PubKeyDecode(activateMsg.PubKey)
 			if err != nil {

@@ -18,7 +18,6 @@ import (
 	"github.com/aura-nw/aura/x/smartaccount/client/cli"
 	"github.com/aura-nw/aura/x/smartaccount/keeper"
 	"github.com/aura-nw/aura/x/smartaccount/types"
-	typesauranw "github.com/aura-nw/aura/x/smartaccount/types/auranw"
 	typesv1 "github.com/aura-nw/aura/x/smartaccount/types/v1beta1"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -52,18 +51,15 @@ func (AppModuleBasic) Name() string {
 
 func (AppModuleBasic) RegisterCodec(cdc *codec.LegacyAmino) {
 	typesv1.RegisterCodec(cdc)
-	typesauranw.RegisterCodec(cdc)
 }
 
 func (AppModuleBasic) RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	typesv1.RegisterCodec(cdc)
-	typesauranw.RegisterCodec(cdc)
 }
 
 // RegisterInterfaces registers the module's interface types
 func (a AppModuleBasic) RegisterInterfaces(reg cdctypes.InterfaceRegistry) {
 	typesv1.RegisterInterfaces(reg)
-	typesauranw.RegisterInterfaces(reg)
 }
 
 // DefaultGenesis returns the capability module's default genesis state.

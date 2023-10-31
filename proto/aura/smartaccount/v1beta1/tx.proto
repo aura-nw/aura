@@ -49,7 +49,7 @@ message MsgActivateAccount {
   ];
   
   // Public key of smart account
-  google.protobuf.Any pub_key = 4 [(gogoproto.customname) = "PubKey"];
+  google.protobuf.Any public_key = 4 [(gogoproto.customname) = "PubKey"];
 }
 
 message MsgActivateAccountResponse {

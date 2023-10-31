@@ -1,13 +1,11 @@
 package smartaccount
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sakeeper "github.com/aura-nw/aura/x/smartaccount/keeper"
 	"github.com/aura-nw/aura/x/smartaccount/types"
 	typesv1 "github.com/aura-nw/aura/x/smartaccount/types/v1beta1"
@@ -15,6 +13,7 @@ import (
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	authz "github.com/cosmos/cosmos-sdk/x/authz"
 )
 
 func GetSmartAccountTxSigner(ctx sdk.Context, sigTx authsigning.SigVerifiableTx, saKeeper sakeeper.Keeper) (*typesv1.SmartAccount, error) {
@@ -97,13 +96,18 @@ func (d *SmartAccountDecorator) AnteHandle(
 		return ctx, errorsmod.Wrap(types.ErrInvalidTx, "not a SigVerifiableTx")
 	}
 
+	feeTx, ok := tx.(sdk.FeeTx)
+	if !ok {
+		return ctx, errorsmod.Wrap(types.ErrInvalidTx, "not a FeeTx")
+	}
+
 	activateMsg, err := GetValidActivateAccountMessage(sigTx)
 	if err != nil {
 		return ctx, err
 	}
 
 	if activateMsg == nil {
-		err = handleSmartAccountTx(ctx, d.SaKeeper, sigTx, simulate)
+		err = handleSmartAccountTx(ctx, d.SaKeeper, sigTx, feeTx, simulate)
 		if err != nil {
 			return ctx, err
 		}
@@ -121,6 +125,7 @@ func handleSmartAccountTx(
 	ctx sdk.Context,
 	saKeeper sakeeper.Keeper,
 	sigTx authsigning.SigVerifiableTx,
+	feeTx sdk.FeeTx,
 	simulate bool,
 ) error {
 
@@ -135,33 +140,42 @@ func handleSmartAccountTx(
 		return nil
 	}
 
-	// not support smartaccount tx simulation yet
-	if simulate {
-		return errorsmod.Wrap(types.ErrNotSupported, "Simulation of SmartAccount txs isn't supported yet")
-	}
+	// save the account address to the module store. we will need it in the
+	// posthandler
+	//
+	// TODO: a question is that instead of writing to store, can we just put this
+	// in memory instead. in practice however, the address is deleted in the post
+	// handler, so it's never actually written to disk, meaning the difference in
+	// gas consumption should be really small. still worth investigating tho.
+	saKeeper.SetSignerAddress(ctx, signerAcc.GetAddress())
 
 	msgs := sigTx.GetMsgs()
 
 	// check if tx messages is allowed for smartaccount
-	// except after_execute message which is the last one
-	err = saKeeper.CheckAllowedMsgs(ctx, msgs[:len(msgs)-1])
+	err = saKeeper.CheckAllowedMsgs(ctx, msgs)
 	if err != nil {
 		return err
 	}
 
-	execMsg, err := validateAndGetAfterExecMessage(msgs, signerAcc)
+	msgsData, err := types.ParseMessagesString(msgs)
 	if err != nil {
 		return err
 	}
 
-	// parse messages in tx to list of string
-	execMsgData, err := types.ParseMessagesString(msgs[:len(msgs)-1])
-	if err != nil {
-		return err
+	callInfo := types.CallInfo{
+		Gas:        feeTx.GetGas(),
+		Fee:        feeTx.GetFee(),
+		FeePayer:   feeTx.FeePayer().String(),
+		FeeGranter: feeTx.FeeGranter().String(),
 	}
 
-	// create message for SA contract pre-exeucte
-	validateMessage, err := generatePreExecuteMessage(execMsg, execMsgData)
+	preExecuteMessage, err := json.Marshal(&types.AccountMsg{
+		PreExecuteTx: &types.PreExecuteTx{
+			Msgs:     msgsData,
+			CallInfo: callInfo,
+			IsAuthz:  false,
+		},
+	})
 	if err != nil {
 		return err
 	}
@@ -169,10 +183,13 @@ func handleSmartAccountTx(
 	params := saKeeper.GetParams(ctx)
 
 	// execute SA contract for pre-execute transaction with limit gas
-	err = executeWithGasLimit(ctx, saKeeper.ContractKeeper, signerAcc.GetAddress(), validateMessage, params.MaxGasExecute)
+	gasRemaining, err := sudoWithGasLimit(ctx, saKeeper.ContractKeeper, signerAcc.GetAddress(), preExecuteMessage, params.MaxGasExecute)
 	if err != nil {
 		return err
 	}
+
+	// free gas remaining after validate smartaccount msgs
+	saKeeper.SetGasRemaining(ctx, gasRemaining)
 
 	return nil
 }
@@ -217,8 +234,7 @@ func handleSmartAccountActivate(
 		// get smart contract account by address
 		sAccount := saKeeper.AccountKeeper.GetAccount(ctx, signer)
 		_, isBase := sAccount.(*authtypes.BaseAccount)
-		_, isSa := sAccount.(*typesv1.SmartAccount)
-		if !isBase && !isSa {
+		if !isBase {
 			return errorsmod.Wrap(types.ErrAccountNotFoundForAddress, signer.String())
 		}
 
@@ -232,86 +248,29 @@ func handleSmartAccountActivate(
 	return nil
 }
 
-func validateAndGetAfterExecMessage(msgs []sdk.Msg, signerAcc *typesv1.SmartAccount) (*wasmtypes.MsgExecuteContract, error) {
-	// after-execute message must be the last message and must be MsgExecuteContract
-	var afterExecMsg *wasmtypes.MsgExecuteContract
-	if msg, err := msgs[len(msgs)-1].(*wasmtypes.MsgExecuteContract); err {
-		afterExecMsg = msg
-	} else {
-		return nil, errorsmod.Wrap(types.ErrInvalidMsg, "after-execute message must be type MsgExecuteContract")
-	}
-
-	// get smartaccount address
-	saAddress := signerAcc.GetAddress().String()
-
-	// the message must be sent from the signer's address which is also the smart contract address
-	if afterExecMsg.Sender != saAddress || afterExecMsg.Contract != saAddress {
-		return nil, errorsmod.Wrap(types.ErrInvalidMsg, "sender address and contract address must be the same")
-	}
-
-	return afterExecMsg, nil
-}
-
-// Call a contract's execute with a gas limit
+// Call a contract's sudo with a gas limit
+// using gas for validate SA msgs will not count to tx total used
 // referenced from Osmosis' protorev posthandler:
 // https://github.com/osmosis-labs/osmosis/blob/98025f185ab2ee1b060511ed22679112abcc08fa/x/protorev/keeper/posthandler.go#L42-L43
-func executeWithGasLimit(
+func sudoWithGasLimit(
 	ctx sdk.Context, contractKeeper *wasmkeeper.PermissionedKeeper,
 	contractAddr sdk.AccAddress, msg []byte, maxGas sdk.Gas,
-) error {
+) (uint64, error) {
 	cacheCtx, write := ctx.CacheContext()
 	cacheCtx = cacheCtx.WithGasMeter(sdk.NewGasMeter(maxGas))
 
-	if _, err := contractKeeper.Execute(
+	if _, err := contractKeeper.Sudo(
 		cacheCtx,
 		contractAddr, // contract address
-		contractAddr, // signer, the smart account has the same address as the contract linked with it
 		msg,
-		sdk.NewCoins(), // empty funds
 	); err != nil {
-		return err
+		return maxGas, err
 	}
 
 	write()
 	ctx.EventManager().EmitEvents(cacheCtx.EventManager().Events())
 
-	return nil
-}
-
-func generatePreExecuteMessage(msg *wasmtypes.MsgExecuteContract, msgs []types.MsgData) ([]byte, error) {
-	var accMsg types.AccountMsg
-	umErr := json.Unmarshal(msg.GetMsg(), &accMsg)
-	if umErr != nil {
-		return nil, errorsmod.Wrap(types.ErrInvalidMsg, umErr.Error())
-	} else if accMsg.AfterExecuteTx == nil {
-		return nil, errorsmod.Wrap(types.ErrInvalidMsg, "must be AfterExecute message")
-	}
-
-	callMsgData, err := json.Marshal(accMsg.AfterExecuteTx.Msgs)
-	if err != nil {
-		return nil, err
-	}
-
-	msgData, err := json.Marshal(&msgs)
-	if err != nil {
-		return nil, err
-	}
-
-	// data in validate message must compatiable to tx.messages
-	if !bytes.Equal(msgData, callMsgData) {
-		return nil, errorsmod.Wrap(types.ErrInvalidMsg, "after-execute message data not compatible with tx.messages")
-	}
-
-	executeMessage, err := json.Marshal(&types.AccountMsg{
-		PreExecuteTx: &types.PreExecuteTx{
-			Msgs: msgs,
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return executeMessage, nil
+	return cacheCtx.GasMeter().GasRemaining(), nil
 }
 
 // ------------------------- SetPubKey Decorator ------------------------- \\
@@ -354,17 +313,19 @@ func (d *SetPubKeyDecorator) AnteHandle(
 			return ctx, err
 		}
 
-		// decode any to pubkey
-		pubKey, err := typesv1.PubKeyDecode(activateMsg.PubKey)
-		if err != nil {
-			return ctx, err
-		}
+		if !simulate {
+			// decode any to pubkey
+			pubKey, err := typesv1.PubKeyDecode(activateMsg.PubKey)
+			if err != nil {
+				return ctx, err
+			}
 
-		// set temporary pubkey for account
-		// need this for the next ante signature checks
-		err = d.saKeeper.UpdateAccountPubKey(ctx, sAccount, pubKey)
-		if err != nil {
-			return ctx, err
+			// set temporary pubkey for account
+			// need this for the next ante signature checks
+			err = d.saKeeper.UpdateAccountPubKey(ctx, sAccount, pubKey)
+			if err != nil {
+				return ctx, err
+			}
 		}
 
 		return next(ctx, tx, simulate)
@@ -378,8 +339,9 @@ func (d *SetPubKeyDecorator) AnteHandle(
 	// if is smart account tx skip authante NewSetPubKeyDecorator
 	// need this to avoid pubkey and address equal check of above decorator
 	if signerAcc != nil {
-		// if this is smart account tx, check if pubkey is set
-		if signerAcc.GetPubKey() == nil {
+		// if this is smart account tx and not in simulation mode
+		// check if pubkey is set
+		if !simulate && signerAcc.GetPubKey() == nil {
 			return ctx, errorsmod.Wrap(types.ErrNilPubkey, signerAcc.String())
 		}
 
@@ -399,4 +361,151 @@ func (d *SetPubKeyDecorator) AnteHandle(
 	// default authant SetPubKeyDecorator
 	svd := authante.NewSetPubKeyDecorator(d.saKeeper.AccountKeeper)
 	return svd.AnteHandle(ctx, tx, simulate, next)
+}
+
+// ------------------------- ValidateAuthzTx Decorator ------------------------- \\
+
+type ValidateAuthzTxDecorator struct {
+	SaKeeper sakeeper.Keeper
+}
+
+func NewValidateAuthzTxDecorator(saKeeper sakeeper.Keeper) *ValidateAuthzTxDecorator {
+	return &ValidateAuthzTxDecorator{
+		SaKeeper: saKeeper,
+	}
+}
+
+func (d *ValidateAuthzTxDecorator) AnteHandle(
+	ctx sdk.Context,
+	tx sdk.Tx,
+	simulate bool,
+	next sdk.AnteHandler,
+) (newCtx sdk.Context, err error) {
+
+	params := d.SaKeeper.GetParams(ctx)
+	maxGas := params.MaxGasExecute
+
+	if d.SaKeeper.HasGasRemaining(ctx) {
+		// if pre ante handlers has used free gas, get the remaining
+		maxGas = d.SaKeeper.GetGasRemaining(ctx)
+		d.SaKeeper.DeleteGasRemaining(ctx)
+	}
+
+	// using gas for validate authz will not count to tx total used
+	err = validateAuthzTx(ctx, d.SaKeeper, tx, maxGas, true)
+	if err != nil {
+		return ctx, err
+	}
+
+	return next(ctx, tx, simulate)
+}
+
+func validateAuthzTx(
+	ctx sdk.Context,
+	saKeeper sakeeper.Keeper,
+	tx sdk.Tx,
+	maxGas uint64,
+	isAnte bool,
+) error {
+	cacheCtx, write := ctx.CacheContext()
+	cacheCtx = cacheCtx.WithGasMeter(sdk.NewGasMeter(maxGas))
+
+	for _, msg := range tx.GetMsgs() {
+		if msgExec, ok := msg.(*authz.MsgExec); ok {
+			msgs, err := msgExec.GetMessages()
+			if err != nil {
+				return err
+			}
+
+			err = validateNestedSmartAccountMsgs(cacheCtx, saKeeper, msgs, isAnte)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	write()
+	ctx.EventManager().EmitEvents(cacheCtx.EventManager().Events())
+
+	return nil
+}
+
+func validateNestedSmartAccountMsgs(
+	ctx sdk.Context,
+	saKeeper sakeeper.Keeper,
+	msgs []sdk.Msg,
+	isAnte bool,
+) error {
+
+	for _, msg := range msgs {
+
+		signers := msg.GetSigners()
+
+		if len(signers) == 1 {
+			acc, err := saKeeper.GetSmartAccountByAddress(ctx, signers[0])
+			if err != nil {
+				return err
+			}
+
+			if acc != nil {
+				msgsData, err := types.ParseMessagesString([]sdk.Msg{msg})
+				if err != nil {
+					return err
+				}
+
+				// call_info is empty if message is executed throught authz exec
+				callInfo := types.CallInfo{
+					Gas:        0,
+					Fee:        sdk.NewCoins(),
+					FeePayer:   "",
+					FeeGranter: "",
+				}
+
+				var execMsg []byte
+				if isAnte {
+					execMsg, err = json.Marshal(&types.AccountMsg{
+						PreExecuteTx: &types.PreExecuteTx{
+							Msgs:     msgsData,
+							CallInfo: callInfo,
+							IsAuthz:  true,
+						},
+					})
+				} else {
+					execMsg, err = json.Marshal(&types.AccountMsg{
+						AfterExecuteTx: &types.AfterExecuteTx{
+							Msgs:     msgsData,
+							CallInfo: callInfo,
+							IsAuthz:  true,
+						},
+					})
+				}
+				if err != nil {
+					return err
+				}
+
+				if _, err := saKeeper.ContractKeeper.Sudo(
+					ctx,
+					acc.GetAddress(),
+					execMsg,
+				); err != nil {
+					return err
+				}
+			}
+		}
+
+		if msgExec, ok := msg.(*authz.MsgExec); ok {
+			msgs, err := msgExec.GetMessages()
+			if err != nil {
+				return err
+			}
+
+			err = validateNestedSmartAccountMsgs(ctx, saKeeper, msgs, isAnte)
+			if err != nil {
+				return err
+			}
+		}
+
+	}
+
+	return nil
 }

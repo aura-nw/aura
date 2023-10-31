@@ -37,6 +37,14 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 ## Unreleased
 
+## [v0.7.1] - 2023-10-18
+Update smartaccount
+
+### Changes
+- Change entrypoint call verify to sudo
+- Use post handle to verify valid of tx from smartaccount
+- Verify all smartaccount nested in the authz
+
 ## [v0.7.0] - 2023-09-22
 
 Upgrade sdk to v0.47.4

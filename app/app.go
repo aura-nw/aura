@@ -149,6 +149,9 @@ import (
 	authvesting "github.com/cosmos/cosmos-sdk/x/auth/vesting"
 	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	ibcclienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
+
+	tmtypes "github.com/cometbft/cometbft/types"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 )
 
 const (
@@ -168,6 +171,8 @@ var (
 	EnableSpecificProposals = ""
 
 	EmptyWasmOpts []wasmkeeper.Option
+
+	ChainID = ""
 )
 
 // GetEnabledProposals parses the ProposalsEnabled / EnableSpecificProposals values to
@@ -349,6 +354,9 @@ func New(
 	appOpts servertypes.AppOptions,
 	baseAppOptions ...func(*baseapp.BaseApp),
 ) *App {
+
+	ChainID = GetChainID(appOpts)
+
 	appCodec := encodingConfig.Marshaler
 	cdc := encodingConfig.Amino
 	interfaceRegistry := encodingConfig.InterfaceRegistry
@@ -981,6 +989,22 @@ func GetMaccPerms() map[string][]string {
 	return dupMaccPerms
 }
 
+func GetChainID(appOpts servertypes.AppOptions) string {
+	homeDir := cast.ToString(appOpts.Get(flags.FlagHome))
+	chainID := cast.ToString(appOpts.Get(flags.FlagChainID))
+	if chainID == "" {
+		// fallback to genesis chain-id
+		appGenesis, err := tmtypes.GenesisDocFromFile(filepath.Join(homeDir, "config", "genesis.json"))
+		if err != nil {
+			panic(err)
+		}
+
+		chainID = appGenesis.ChainID
+	}
+
+	return chainID
+}
+
 // initParamsKeeper init params keeper and its subspaces
 func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino, key, tkey storetypes.StoreKey) paramskeeper.Keeper {
 	paramsKeeper := paramskeeper.NewKeeper(appCodec, legacyAmino, key, tkey)
@@ -1140,11 +1164,22 @@ func (app *App) setupUpgradeHandlers() {
 		// no store upgrades in v0.6.1
 
 	case v700.UpgradeName:
-		storeUpgrades = &storetypes.StoreUpgrades{
-			Added: []string{
-				consensusparamtypes.StoreKey,
-				crisistypes.StoreKey,
-			},
+		if ChainID == "xstaxy-1" {
+			storeUpgrades = &storetypes.StoreUpgrades{
+				Added: []string{
+					ibchookstypes.StoreKey,
+					samoduletypes.StoreKey,
+					consensusparamtypes.StoreKey,
+					crisistypes.StoreKey,
+				},
+			}
+		} else {
+			storeUpgrades = &storetypes.StoreUpgrades{
+				Added: []string{
+					consensusparamtypes.StoreKey,
+					crisistypes.StoreKey,
+				},
+			}
 		}
 	}
 

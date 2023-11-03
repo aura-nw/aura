@@ -16,6 +16,7 @@ import (
 	authz "github.com/cosmos/cosmos-sdk/x/authz"
 )
 
+// Return tx' signer as SmartAccount, if not return nil
 func GetSmartAccountTxSigner(ctx sdk.Context, sigTx authsigning.SigVerifiableTx, saKeeper sakeeper.Keeper) (*typesv1.SmartAccount, error) {
 	sigs, err := sigTx.GetSignaturesV2()
 	if err != nil {
@@ -42,6 +43,7 @@ func GetValidActivateAccountMessage(sigTx authsigning.SigVerifiableTx) (*typesv1
 
 	if len(msgs) != 1 {
 		// smart account activation message must stand alone
+		// it will prevent bundling of multiple messages with the activating message as the first message to avoid AnteHandler check
 		for _, msg := range msgs {
 			if _, ok := msg.(*typesv1.MsgActivateAccount); ok {
 				return nil, errorsmod.Wrap(types.ErrInvalidTx, "smart account activation message must stand alone")
@@ -147,11 +149,14 @@ func handleSmartAccountTx(
 	// in memory instead. in practice however, the address is deleted in the post
 	// handler, so it's never actually written to disk, meaning the difference in
 	// gas consumption should be really small. still worth investigating tho.
+	// referenced from Larry0x' abstractaccount AnteHandler:
+	// https://github.com/larry0x/abstract-account/blob/b3c6432e593d450e7c58dae94cdf2a95930f8159/x/abstractaccount/ante.go#L81
 	saKeeper.SetSignerAddress(ctx, signerAcc.GetAddress())
 
 	msgs := sigTx.GetMsgs()
 
 	// check if tx messages is allowed for smartaccount
+	// permitted messages will be determined by the government
 	err = saKeeper.CheckAllowedMsgs(ctx, msgs)
 	if err != nil {
 		return err
@@ -183,6 +188,7 @@ func handleSmartAccountTx(
 	params := saKeeper.GetParams(ctx)
 
 	// execute SA contract for pre-execute transaction with limit gas
+	// will using cacheCtx instead of ctx to run contract execution
 	gasRemaining, err := sudoWithGasLimit(ctx, saKeeper.ContractKeeper, signerAcc.GetAddress(), preExecuteMessage, params.MaxGasExecute)
 	if err != nil {
 		return err
@@ -239,6 +245,7 @@ func handleSmartAccountActivate(
 		}
 
 		// remove temporary pubkey for account
+		// wasmd instantiate2 method requires base account with nil pubkey and 0 sequence to be considered an initializable address for smart contract
 		err = saKeeper.UpdateAccountPubKey(ctx, sAccount, nil)
 		if err != nil {
 			return err
@@ -249,7 +256,9 @@ func handleSmartAccountActivate(
 }
 
 // Call a contract's sudo with a gas limit
+//
 // using gas for validate SA msgs will not count to tx total used
+//
 // referenced from Osmosis' protorev posthandler:
 // https://github.com/osmosis-labs/osmosis/blob/98025f185ab2ee1b060511ed22679112abcc08fa/x/protorev/keeper/posthandler.go#L42-L43
 func sudoWithGasLimit(
@@ -307,7 +316,7 @@ func (d *SetPubKeyDecorator) AnteHandle(
 		// get message signer
 		signer := activateMsg.GetSigners()[0]
 
-		// get smart contract account by address, account must be inactivate smart account
+		// get smartaccount by address, must be inactivate account
 		sAccount, err := d.saKeeper.IsInactiveAccount(ctx, signer)
 		if err != nil {
 			return ctx, err
@@ -337,7 +346,7 @@ func (d *SetPubKeyDecorator) AnteHandle(
 	}
 
 	// if is smart account tx skip authante NewSetPubKeyDecorator
-	// need this to avoid pubkey and address equal check of above decorator
+	// need this to avoid pubkey and address equal check of authante SetPubKeyDecorator
 	if signerAcc != nil {
 		// if this is smart account tx and not in simulation mode
 		// check if pubkey is set
@@ -375,6 +384,8 @@ func NewValidateAuthzTxDecorator(saKeeper sakeeper.Keeper) *ValidateAuthzTxDecor
 	}
 }
 
+// If smartaccount messages is executed throught MsgAuthzExec, SmartAccountDecorator cannot detect and validate these messages
+// using AuthzTxDecorator AnteHandler to provide validation for nested smartaccount msgs
 func (d *ValidateAuthzTxDecorator) AnteHandle(
 	ctx sdk.Context,
 	tx sdk.Tx,
@@ -467,7 +478,7 @@ func validateNestedSmartAccountMsgs(
 						PreExecuteTx: &types.PreExecuteTx{
 							Msgs:     msgsData,
 							CallInfo: callInfo,
-							IsAuthz:  true,
+							IsAuthz:  true, // IsAuthz set to true, so smart contract can know that this message is executed using authz
 						},
 					})
 				} else {

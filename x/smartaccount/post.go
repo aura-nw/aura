@@ -20,8 +20,6 @@ func NewAfterTxDecorator(saKeeper sakeeper.Keeper) *AfterTxDecorator {
 	}
 }
 
-// referenced from Larry0x' abstractaccount posthandler:
-// https://github.com/larry0x/abstract-account/blob/b3c6432e593d450e7c58dae94cdf2a95930f8159/x/abstractaccount/ante.go#L152-L185
 func (d AfterTxDecorator) PostHandle(ctx sdk.Context, tx sdk.Tx, simulate, success bool, next sdk.PostHandler) (newCtx sdk.Context, err error) {
 
 	feeTx, ok := tx.(sdk.FeeTx)
@@ -32,6 +30,8 @@ func (d AfterTxDecorator) PostHandle(ctx sdk.Context, tx sdk.Tx, simulate, succe
 	// load the signer address, which we determined during the AnteHandler
 	//
 	// if not found, it means this tx is simply not an AA tx. we skip
+	// referenced from Larry0x' abstractaccount posthandler:
+	// https://github.com/larry0x/abstract-account/blob/b3c6432e593d450e7c58dae94cdf2a95930f8159/x/abstractaccount/ante.go#L153-L161
 	signerAddr := d.saKeeper.GetSignerAddress(ctx)
 	if signerAddr == nil {
 		return next(ctx, tx, simulate, success)

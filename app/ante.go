@@ -79,6 +79,7 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 
 		// new ante for account abstraction
 		smartaccount.NewSmartAccountDecorator(options.SmartAccountKeeper),
+		smartaccount.NewValidateAuthzTxDecorator(options.SmartAccountKeeper),
 		ante.NewIncrementSequenceDecorator(options.AccountKeeper),
 		ibcante.NewRedundantRelayDecorator(options.IBCKeeper),
 	}

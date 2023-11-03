@@ -1,9 +1,8 @@
 package types
 
 import (
-	"encoding/json"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/gogoproto/proto"
 )
 
 type AccountMsg struct {
@@ -19,30 +18,41 @@ type RecoverTx struct {
 }
 
 type PreExecuteTx struct {
-	Msgs []MsgData `json:"msgs"`
+	Msgs     []Any    `json:"msgs"`
+	CallInfo CallInfo `json:"call_info"`
+	IsAuthz  bool     `json:"is_authz"`
 }
 
 type AfterExecuteTx struct {
-	Msgs []MsgData `json:"msgs"`
+	Msgs     []Any    `json:"msgs"`
+	CallInfo CallInfo `json:"call_info"`
+	IsAuthz  bool     `json:"is_authz"`
 }
 
-type MsgData struct {
+type Any struct {
 	TypeURL string `json:"type_url"`
-	Value   string `json:"value"`
+	Value   []byte `json:"value"`
 }
 
-func ParseMessagesString(msgs []sdk.Msg) ([]MsgData, error) {
-	msgsStr := make([]MsgData, 0)
+type CallInfo struct {
+	Fee        sdk.Coins `json:"fee"`
+	Gas        uint64    `json:"gas"`
+	FeePayer   string    `json:"fee_payer"`
+	FeeGranter string    `json:"fee_granter"`
+}
+
+func ParseMessagesString(msgs []sdk.Msg) ([]Any, error) {
+	msgsStr := make([]Any, 0, len(msgs))
 
 	for _, msg := range msgs {
-		msgData, err := json.Marshal(msg)
+		msgBytes, err := proto.Marshal(msg)
 		if err != nil {
 			return nil, err
 		}
 
-		data := MsgData{
-			TypeURL: sdk.MsgTypeURL(msg),
-			Value:   string(msgData),
+		data := Any{
+			TypeURL: "/" + proto.MessageName(msg),
+			Value:   msgBytes,
 		}
 
 		msgsStr = append(msgsStr, data)

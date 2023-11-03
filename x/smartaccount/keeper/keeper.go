@@ -84,6 +84,49 @@ func (k Keeper) SetNextAccountID(ctx sdk.Context, id uint64) {
 	store.Set(types.KeyPrefix(types.AccountIDKey), sdk.Uint64ToBigEndian(id))
 }
 
+// ------------------------------- SignerAddress -------------------------------
+
+func (k Keeper) GetSignerAddress(ctx sdk.Context) sdk.AccAddress {
+	store := ctx.KVStore(k.storeKey)
+
+	return sdk.AccAddress(store.Get(types.KeyPrefix(types.SignerAddressKey)))
+}
+
+func (k Keeper) SetSignerAddress(ctx sdk.Context, signerAddr sdk.AccAddress) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set(types.KeyPrefix(types.SignerAddressKey), signerAddr)
+}
+
+func (k Keeper) DeleteSignerAddress(ctx sdk.Context) {
+	store := ctx.KVStore(k.storeKey)
+	store.Delete(types.KeyPrefix(types.SignerAddressKey))
+}
+
+// ------------------------------- GasRemaining -------------------------------
+
+func (k Keeper) GetGasRemaining(ctx sdk.Context) uint64 {
+	store := ctx.KVStore(k.storeKey)
+
+	return sdk.BigEndianToUint64(store.Get(types.KeyPrefix(types.GasRemainingKey)))
+}
+
+func (k Keeper) SetGasRemaining(ctx sdk.Context, gasRemaining uint64) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set(types.KeyPrefix(types.GasRemainingKey), sdk.Uint64ToBigEndian(gasRemaining))
+}
+
+func (k Keeper) HasGasRemaining(ctx sdk.Context) bool {
+	store := ctx.KVStore(k.storeKey)
+	return store.Has(types.KeyPrefix(types.GasRemainingKey))
+}
+
+func (k Keeper) DeleteGasRemaining(ctx sdk.Context) {
+	store := ctx.KVStore(k.storeKey)
+	store.Delete(types.KeyPrefix(types.GasRemainingKey))
+}
+
+// ------------------------------- Other -------------------------------
+
 func (k Keeper) ValidateActiveSA(ctx sdk.Context, msg *typesv1.MsgActivateAccount) (authtypes.AccountI, error) {
 	// validate code id use to init smart account
 	if !k.isWhitelistCodeID(ctx, msg.CodeID) {
@@ -114,6 +157,7 @@ func (k Keeper) PrepareBeforeActive(ctx sdk.Context, sAccount authtypes.AccountI
 	return nil
 }
 
+// create a new smart account from an inactive account
 func (k Keeper) ActiveSmartAccount(
 	ctx sdk.Context,
 	msg *typesv1.MsgActivateAccount,
@@ -233,6 +277,7 @@ func (k Keeper) CallSMValidate(ctx sdk.Context, msg *typesv1.MsgRecover, saAddr 
 	return nil
 }
 
+// set new pubkey for an account
 func (k Keeper) UpdateAccountPubKey(ctx sdk.Context, acc authtypes.AccountI, pubKey cryptotypes.PubKey) error {
 	err := acc.SetPubKey(pubKey)
 	if err != nil {
@@ -252,15 +297,13 @@ func (k Keeper) isWhitelistCodeID(ctx sdk.Context, codeID uint64) bool {
 	return params.IsAllowedCodeID(codeID)
 }
 
-// Inactive smart-account must be base account with empty public key or smart account
-// and has not been used for any instantiated contracts
+// Inactive smart-account must be base account with empty public key
 func (k Keeper) IsInactiveAccount(ctx sdk.Context, acc sdk.AccAddress) (authtypes.AccountI, error) {
 	sAccount := k.AccountKeeper.GetAccount(ctx, acc)
 
 	// check if account has type base or smart
 	_, isBaseAccount := sAccount.(*authtypes.BaseAccount)
-	_, isSmartAccount := sAccount.(*typesv1.SmartAccount)
-	if !isBaseAccount && !isSmartAccount {
+	if !isBaseAccount {
 		return nil, errorsmod.Wrap(types.ErrAccountNotFoundForAddress, acc.String())
 	}
 

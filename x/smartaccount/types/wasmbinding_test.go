@@ -6,6 +6,7 @@ import (
 	"github.com/aura-nw/aura/x/smartaccount/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/cosmos/gogoproto/proto"
 	"github.com/stretchr/testify/require"
 )
 
@@ -18,30 +19,38 @@ func TestParseMessagesString(t *testing.T) {
 	acc2, err := sdk.AccAddressFromBech32(addr2)
 	require.NoError(t, err)
 
+	bankMsg1 := banktypes.NewMsgSend(acc1, acc2, sdk.NewCoins())
+	value1, err := proto.Marshal(bankMsg1)
+	require.NoError(t, err)
+
+	bankMsg2 := banktypes.NewMsgSend(acc2, acc1, sdk.NewCoins())
+	value2, err := proto.Marshal(bankMsg2)
+	require.NoError(t, err)
+
 	for _, tc := range []struct {
 		desc string
 		msgs []sdk.Msg
-		data []types.MsgData
+		data []types.Any
 	}{
 		{
 			desc: "parse zero message successfully",
 			msgs: []sdk.Msg{},
-			data: []types.MsgData{},
+			data: []types.Any{},
 		},
 		{
 			desc: "parse many messages successfully",
 			msgs: []sdk.Msg{
-				banktypes.NewMsgSend(acc1, acc2, sdk.NewCoins()),
-				banktypes.NewMsgSend(acc2, acc1, sdk.NewCoins()),
+				bankMsg1,
+				bankMsg2,
 			},
-			data: []types.MsgData{
+			data: []types.Any{
 				{
 					TypeURL: "/cosmos.bank.v1beta1.MsgSend",
-					Value:   "{\"from_address\":\"" + addr1 + "\",\"to_address\":\"" + addr2 + "\",\"amount\":[]}",
+					Value:   value1,
 				},
 				{
 					TypeURL: "/cosmos.bank.v1beta1.MsgSend",
-					Value:   "{\"from_address\":\"" + addr2 + "\",\"to_address\":\"" + addr1 + "\",\"amount\":[]}",
+					Value:   value2,
 				},
 			},
 		},

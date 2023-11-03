@@ -157,6 +157,7 @@ func (k Keeper) PrepareBeforeActive(ctx sdk.Context, sAccount authtypes.AccountI
 	return nil
 }
 
+// create a new smart account from an inactive account
 func (k Keeper) ActiveSmartAccount(
 	ctx sdk.Context,
 	msg *typesv1.MsgActivateAccount,
@@ -276,6 +277,7 @@ func (k Keeper) CallSMValidate(ctx sdk.Context, msg *typesv1.MsgRecover, saAddr 
 	return nil
 }
 
+// set new pubkey for an account
 func (k Keeper) UpdateAccountPubKey(ctx sdk.Context, acc authtypes.AccountI, pubKey cryptotypes.PubKey) error {
 	err := acc.SetPubKey(pubKey)
 	if err != nil {
@@ -295,8 +297,7 @@ func (k Keeper) isWhitelistCodeID(ctx sdk.Context, codeID uint64) bool {
 	return params.IsAllowedCodeID(codeID)
 }
 
-// Inactive smart-account must be base account with empty public key or smart account
-// and has not been used for any instantiated contracts
+// Inactive smart-account must be base account with empty public key
 func (k Keeper) IsInactiveAccount(ctx sdk.Context, acc sdk.AccAddress) (authtypes.AccountI, error) {
 	sAccount := k.AccountKeeper.GetAccount(ctx, acc)
 

@@ -112,9 +112,9 @@ To illustrate this in a graph:
 ```
 - **AnteHandler**
     - Since the account doesn't have **PubKey** yet, for signature verification, `SA SetPubKey` will set a temporary **PubKey** for this account using the `public_key` parameter in the message.
-    - After successful signature verification, `SA decorator` will remove temporary **PubKey** so that `SA module` can initiate contract with this account later (action remove only needed in DeliveryTx).
+    - After successful signature verification, `SA decorator` will remove temporary **PubKey** so that `SA module` can initiate contract with this account later.
 - **SA module**
-    - if the message meets all the checks, the module initiates a contract based on its parameters. The new contract will be linked to the pre-generated account (contract address will be same as account address). The module will then convert account to type `SmartAccount` and set **PubKey** for it. Finnaly, save account to `auth` module.
+    - if the message meets all the checks, the module initiates a contract based on its parameters. The new contract will be linked to the pre-generated account (contract address will be same as account address). The module will then convert account to type `SmartAccount` and set **PubKey** for it. Finnaly, save it to `auth` module.
 
 </br>
 
@@ -262,6 +262,120 @@ To illustrate this in a graph:
 - Signer is account with type **SmartAccount**
 
 </br> 
+
+## Ante/Post Handler
+
+### SetPubKey Decorator
+
+Alternative for auth's SetPubkey Decorator
+
+**AnteHandler**
+
+```
+func (d SetPubKeyDecorator) AnteHandle():
+    if isActivationMsg:
+        validateActivationMsg(tx.msgs)
+
+        setTemporaryPubkey(tx.signer, tx.msgs[0].pubkey)
+    else:
+        if isSmartAccountTx:
+            checkNilPubkey(tx.signer)
+        else:
+            return authante.SetPubkeyDecorator() // if is normal tx, run auth's SetPubkey Decorator
+
+    return next() // run next ante handler
+```
+- validateActivationMsg(`msgs`)
+    - Check if activation msg is the only one in the `msgs`
+- setTemporaryPubkey(`signer`, `pubkey`)
+    - Set pubkey for signer 
+- checkNilPubkey(`signer`)
+    - Ensure signer account already has pubkey
+
+### SmartAccount Decorator
+
+Run after auth's SigVerification Decorator for handling smart-account's tx
+
+**AnteHandler**
+
+```
+func (d SmartAccountDecorator) AnteHandle():
+    if isActivationMsg:
+        HandleActivationMsg(tx) // run HandleActivationMsg func
+    elif isSmartAccountTx:
+        HandleSmartAccountTx(tx) // run HandleSmartAccountTx func
+
+    return next() // run next ante handler
+```
+
+```
+func HandleActivationMsg(tx):
+    validateActivationMsg(tx.msgs)
+
+    validateSignerAddress(tx.signer, tx.msgs[0])
+
+    setSignerPubkey(tx.signer, tx.msgs.pubkey)
+```
+
+- validateActivationMsg(`msgs`)
+    - Check if activation msg is the only one in the `msgs`
+- validateSignerAddress(`signer`, `msg`)
+    - Calculate address based on `msg` parameters
+    - Compare new address with the `signer's` address
+- setSignerPubkey(`signer`, `pubkey`)
+    - Set pubkey to `signer's` account
+    
+```
+func HandleSmartAccountTx(tx):
+
+    checkAllowedMsgs(tx.msgs)
+
+    callPreExecuteMsg(tx)
+```
+- checkAllowrdMsgs(`msgs`)
+    - Check if all msg in `msgs` are allowed for smart-account by government
+- callPreExecuteMsg(`tx`)
+    - Call *pre_execute* method of smartcontract that linked with account for `tx` pre-validation
+
+</br>
+
+**PostHandler**
+
+```
+func (d AfterTxDecorator) PostHandle():
+    callAfterExecuteMsg(tx)
+
+    return next() // run next post handler
+```
+- callAfterExecuteMsg(`tx`)
+    - Call *after_execute* method of smartcontract that linked with account for `tx` after-validation
+
+### ValidateAuthzTx Decorator
+
+Run after SmartAccountTx Decorator for handling authz nested smart-account's msgs
+
+**(Ante/Post)Handler**
+
+```
+func (d ValidateAuthzDecorator) (Ante/Post)Handle():
+    for msg in tx.msgs:
+        if msg is authz.MsgExec:
+            validateNestedSmartAccountMsgs(msg.GetMessages())
+    
+    return next() // run next ante handler
+
+func validateNestedSmartAccountMsgs(msgs):
+    for msg in msgs:
+        if msg.signer is typeOf(SmartAccount):
+            call(Pre/After)ExecuteNestedMsg(msg)
+
+        if msg is authz.MsgExec:
+            validateNestedSmartAccountMsgs(msg.GetMessages())
+```
+- callPreExecuteNestedMsg(`msg`)
+    - Call *(pre/after)_execute* method of smartcontract that linked with account for nested `msg` (pre/after)-validation
+
+</br>
 
 ## Params
 Parameters are updatable by the module's authority, typically set to the gov module account.

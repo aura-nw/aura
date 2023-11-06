@@ -14,6 +14,7 @@ import (
 	v600 "github.com/aura-nw/aura/app/upgrades/v0.6.0"
 	v601 "github.com/aura-nw/aura/app/upgrades/v0.6.1"
 	v700 "github.com/aura-nw/aura/app/upgrades/v0.7.0"
+	v701 "github.com/aura-nw/aura/app/upgrades/v0.7.1"
 
 	"github.com/aura-nw/aura/app/internal"
 
@@ -1109,6 +1110,18 @@ func (app *App) setupUpgradeHandlers() {
 		),
 	)
 
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v701.UpgradeName,
+		v701.CreateUpgradeHandler(
+			app.mm, app.configurator,
+			app.SaKeeper,
+			app.ParamsKeeper,
+			app.ConsensusParamsKeeper,
+			*app.IBCKeeper,
+			app.AccountKeeper,
+		),
+	)
+
 	// When a planned update height is reached, the old binary will panic
 	// writing on disk the height and name of the update that triggered it
 	// This will read that value, and execute the preparations for the upgrade.
@@ -1161,21 +1174,22 @@ func (app *App) setupUpgradeHandlers() {
 		}
 
 	case v601.UpgradeName:
-		// no store upgrades in v0.6.1
+		// no store upgrades in v0.6.
 
 	case v700.UpgradeName:
+		storeUpgrades = &storetypes.StoreUpgrades{
+			Added: []string{
+				consensusparamtypes.StoreKey,
+				crisistypes.StoreKey,
+			},
+		}
+
+	case v701.UpgradeName:
 		if ChainID == "xstaxy-1" {
 			storeUpgrades = &storetypes.StoreUpgrades{
 				Added: []string{
 					ibchookstypes.StoreKey,
 					samoduletypes.StoreKey,
-					consensusparamtypes.StoreKey,
-					crisistypes.StoreKey,
-				},
-			}
-		} else {
-			storeUpgrades = &storetypes.StoreUpgrades{
-				Added: []string{
 					consensusparamtypes.StoreKey,
 					crisistypes.StoreKey,
 				},

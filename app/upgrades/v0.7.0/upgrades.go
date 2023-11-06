@@ -49,7 +49,8 @@ func CreateUpgradeHandler(
 	ibcKeeper ibckeeper.Keeper,
 	authKeeper authkeeper.AccountKeeper,
 ) upgradetypes.UpgradeHandler {
-	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
+
+	return func(ctx sdk.Context, plan upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		logger := ctx.Logger().With("upgrade", UpgradeName)
 
 		// https://github.com/cosmos/cosmos-sdk/pull/12363/files

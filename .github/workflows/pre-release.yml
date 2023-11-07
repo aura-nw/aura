@@ -40,9 +40,11 @@ jobs:
           tag: ${{ env.VERSION }}
 
       - name: exit
-        if: ${{ steps.checkTag.outputs.exists }} == true
-        run: exit 1
-        
+        if: ${{ steps.checkTag.outputs.exists }} != 'false'
+        run: |
+          echo ${{ steps.checkTag.outputs.exists }}
+          exit 1
+
       - name: Delete the "latest" Pre-Release
         uses: dev-drprasad/delete-older-releases@v0.2.0
         with:

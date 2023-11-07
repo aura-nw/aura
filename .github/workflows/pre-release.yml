@@ -40,7 +40,7 @@ jobs:
           tag: ${{ env.VERSION }}
 
       - name: exit
-        if: ${{ steps.checkTag.outputs.exists }} != 'false'
+        if: ${{ steps.checkTag.outputs.exists }} != false 
         run: |
           echo ${{ steps.checkTag.outputs.exists }}
           exit 1

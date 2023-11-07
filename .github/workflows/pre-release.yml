@@ -37,7 +37,7 @@ jobs:
       - name: "build binary"
         run: go build -o aurad cmd/aurad/main.go
 
-      - name: Delete the "latest" Release
+      - name: Delete the "latest" Pre-Release
         uses: dev-drprasad/delete-older-releases@v0.2.0
         with:
           keep_latest: 0
@@ -56,8 +56,8 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2  
       
-      - name: Publish the Release
+      - name: Publish the Pre-Release
         run: make release
         env:
-          GORELEASER_SKIP_VALIDATE: true
+          PRE_RELEASE: true
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

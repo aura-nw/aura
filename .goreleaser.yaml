@@ -5,7 +5,7 @@ before:
 env:
   - CGO_ENABLED=1
 builds:
-  - id: aurad
+  - id: aurad-linux-amd64
     main: ./cmd/aurad
     binary: aurad
     goos:
@@ -32,3 +32,12 @@ release:
   prerelease: '{{ if eq .Env.PRE_RELEASE "true" }}true{{else}}false{{end}}'
 checksum:
   name_template: '{{ .ProjectName }}d_{{ .Env.VERSION }}_checksums.txt'
+archives:
+  - id: binary
+    builds:
+      - aurad-linux-amd64
+    name_template: '{{ .ProjectName }}d'
+    wrap_in_directory: false
+    format: binary
+    files:
+      - none*

@@ -121,6 +121,7 @@ release:
 		-e VERSION="$(VERSION)" \
 		-e COMMIT="$(COMMIT)" \
 		-e BFT_VERSION="$(BFT_VERSION)" \
+		-e PRE_RELEASE="$(PRE_RELEASE)" \
 		-e BUILD_TAGS_COMMA_SEP="$(BUILD_TAGS_COMMA_SEP)" \
 		-v /var/run/docker.sock:/var/run/docker.sock \
 		-v `pwd`:/go/src/github.com/aura-nw/aura \

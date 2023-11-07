@@ -14,6 +14,7 @@ import (
 	v600 "github.com/aura-nw/aura/app/upgrades/v0.6.0"
 	v601 "github.com/aura-nw/aura/app/upgrades/v0.6.1"
 	v700 "github.com/aura-nw/aura/app/upgrades/v0.7.0"
+	v701 "github.com/aura-nw/aura/app/upgrades/v0.7.1"
 
 	"github.com/aura-nw/aura/app/internal"
 
@@ -150,6 +151,9 @@ import (
 	authvesting "github.com/cosmos/cosmos-sdk/x/auth/vesting"
 	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	ibcclienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
+
+	tmtypes "github.com/cometbft/cometbft/types"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 )
 
 const (
@@ -169,6 +173,8 @@ var (
 	EnableSpecificProposals = ""
 
 	EmptyWasmOpts []wasmkeeper.Option
+
+	ChainID = ""
 )
 
 // GetEnabledProposals parses the ProposalsEnabled / EnableSpecificProposals values to
@@ -350,6 +356,9 @@ func New(
 	appOpts servertypes.AppOptions,
 	baseAppOptions ...func(*baseapp.BaseApp),
 ) *App {
+
+	ChainID = GetChainID(appOpts)
+
 	appCodec := encodingConfig.Marshaler
 	cdc := encodingConfig.Amino
 	interfaceRegistry := encodingConfig.InterfaceRegistry
@@ -982,6 +991,22 @@ func GetMaccPerms() map[string][]string {
 	return dupMaccPerms
 }
 
+func GetChainID(appOpts servertypes.AppOptions) string {
+	homeDir := cast.ToString(appOpts.Get(flags.FlagHome))
+	chainID := cast.ToString(appOpts.Get(flags.FlagChainID))
+	if chainID == "" {
+		// fallback to genesis chain-id
+		appGenesis, err := tmtypes.GenesisDocFromFile(filepath.Join(homeDir, "config", "genesis.json"))
+		if err != nil {
+			panic(err)
+		}
+
+		chainID = appGenesis.ChainID
+	}
+
+	return chainID
+}
+
 // initParamsKeeper init params keeper and its subspaces
 func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino, key, tkey storetypes.StoreKey) paramskeeper.Keeper {
 	paramsKeeper := paramskeeper.NewKeeper(appCodec, legacyAmino, key, tkey)
@@ -1090,6 +1115,18 @@ func (app *App) setupUpgradeHandlers() {
 		),
 	)
 
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v701.UpgradeName,
+		v701.CreateUpgradeHandler(
+			app.mm, app.configurator,
+			app.SaKeeper,
+			app.ParamsKeeper,
+			app.ConsensusParamsKeeper,
+			*app.IBCKeeper,
+			app.AccountKeeper,
+		),
+	)
+
 	// When a planned update height is reached, the old binary will panic
 	// writing on disk the height and name of the update that triggered it
 	// This will read that value, and execute the preparations for the upgrade.
@@ -1142,7 +1179,7 @@ func (app *App) setupUpgradeHandlers() {
 		}
 
 	case v601.UpgradeName:
-		// no store upgrades in v0.6.1
+		// no store upgrades in v0.6.
 
 	case v700.UpgradeName:
 		storeUpgrades = &storetypes.StoreUpgrades{
@@ -1150,6 +1187,18 @@ func (app *App) setupUpgradeHandlers() {
 				consensusparamtypes.StoreKey,
 				crisistypes.StoreKey,
 			},
+		}
+
+	case v701.UpgradeName:
+		if ChainID == "xstaxy-1" {
+			storeUpgrades = &storetypes.StoreUpgrades{
+				Added: []string{
+					ibchookstypes.StoreKey,
+					samoduletypes.StoreKey,
+					consensusparamtypes.StoreKey,
+					crisistypes.StoreKey,
+				},
+			}
 		}
 	}
 

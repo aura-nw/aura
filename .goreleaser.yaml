@@ -1,6 +1,6 @@
 before:
   hooks:
-    - wget https://github.com/CosmWasm/wasmvm/releases/download/{{.Env.LIBWASM_VERSION }}/libwasmvm_muslc.x86_64.a -O /lib/libwasmvm_muslc.a
+    - wget https://github.com/CosmWasm/wasmvm/releases/download/{{ .Env.LIBWASM_VERSION }}/libwasmvm_muslc.x86_64.a -O /lib/libwasmvm_muslc.a
     - apk add musl-dev
 env:
   - CGO_ENABLED=1
@@ -29,7 +29,7 @@ builds:
       - netgo
       - muslc
 release:
-  prerelease: '{{ if eq .Env.PRE_RELEASE true }}true{{else}}false{{end}}'
+  prerelease: '{{ if eq .Env.PRE_RELEASE 'true' }}true{{else}}false{{end}}'
 checksum:
   name_template: '{{ .ProjectName }}d_{{ .Env.VERSION }}_checksums.txt'
 archives:

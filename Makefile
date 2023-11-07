@@ -116,7 +116,7 @@ release:
 	$(DOCKER) run \
 		--rm \
 		-e LIBWASM_VERSION=$(LIBWASM_VERSION) \
-		-e PRE_RELEASE=$(PRE_RELEASE) \
+		-e PRE_RELEASE="$(PRE_RELEASE)" \
 		-e GITHUB_TOKEN="$(GITHUB_TOKEN)" \
 		-e VERSION="$(VERSION)" \
 		-e COMMIT="$(COMMIT)" \

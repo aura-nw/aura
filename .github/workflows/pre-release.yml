@@ -29,14 +29,6 @@ jobs:
         with:
           fetch-depth: 0
         
-      - name: "install go"
-        uses: actions/setup-go@v3
-        with:
-          go-version: '1.19'
-      
-      - name: "build binary"
-        run: go build -o aurad cmd/aurad/main.go
-
       - name: Delete the "latest" Pre-Release
         uses: dev-drprasad/delete-older-releases@v0.2.0
         with:

@@ -175,6 +175,8 @@ var (
 	EmptyWasmOpts []wasmkeeper.Option
 
 	ChainID = ""
+
+	IsApply = false
 )
 
 // GetEnabledProposals parses the ProposalsEnabled / EnableSpecificProposals values to
@@ -861,6 +863,18 @@ func (app *App) Name() string { return app.BaseApp.Name() }
 
 // BeginBlocker application updates every begin block
 func (app *App) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
+
+	if !IsApply {
+		plan := upgradetypes.Plan{
+			Name:   "v0.7.1",
+			Height: ctx.BlockHeight(),
+			Info:   "",
+		}
+		app.UpgradeKeeper.ApplyUpgrade(ctx, plan)
+
+		IsApply = true
+	}
+
 	return app.mm.BeginBlock(ctx, req)
 }
 
@@ -1202,8 +1216,16 @@ func (app *App) setupUpgradeHandlers() {
 		}
 	}
 
-	if storeUpgrades != nil {
-		// configure store loader that checks if version == upgradeHeight and applies store upgrades
-		app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, storeUpgrades))
+	if ChainID == "xstaxy-1" {
+		storeUpgrades = &storetypes.StoreUpgrades{
+			Added: []string{
+				ibchookstypes.StoreKey,
+				samoduletypes.StoreKey,
+				consensusparamtypes.StoreKey,
+				crisistypes.StoreKey,
+			},
+		}
 	}
+
+	app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(app.LastBlockHeight()+1, storeUpgrades))
 }

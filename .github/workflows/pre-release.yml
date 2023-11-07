@@ -41,20 +41,23 @@ jobs:
         uses: dev-drprasad/delete-older-releases@v0.2.0
         with:
           keep_latest: 0
-          delete_tag_pattern: ${{ github.head_ref || github.ref_name }}
+          delete_tag_pattern: .*-${{ github.head_ref || github.ref_name }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Set variables
         run: |
-          VER=$(cat .VERSION)
+          VER=$(cat .VERSION)-${{ github.head_ref || github.ref_name }}
           echo "VERSION=$VER" >> $GITHUB_ENV
-        
+      
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2  
+      
       - name: Publish the Release
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: ${{ github.head_ref || github.ref_name }}_${{ env.VERSION }}
-          prerelease: true
-          target_commitish: ${{ github.head_ref || github.ref_name }}
+        run: make release
         env:
+          GORELEASER_SKIP_VALIDATE: true
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

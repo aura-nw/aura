@@ -1,0 +1,34 @@
+before:
+  hooks:
+    - wget https://github.com/CosmWasm/wasmvm/releases/download/{{.Env.LIBWASM_VERSION }}/libwasmvm_muslc.x86_64.a -O /lib/libwasmvm_muslc.a
+    - apk add musl-dev
+env:
+  - CGO_ENABLED=1
+builds:
+  - id: aurad
+    main: ./cmd/aurad
+    binary: aurad
+    goos:
+      - linux
+    goarch:
+      - amd64
+    flags:
+      - -mod=readonly
+      - -trimpath
+    ldflags:
+      - -s -w
+      - -X github.com/cosmos/cosmos-sdk/version.Name=aura
+      - -X github.com/cosmos/cosmos-sdk/version.AppName=aurad
+      - -X github.com/cosmos/cosmos-sdk/version.Version=$(.Env.VERSION)
+      - -X github.com/cosmos/cosmos-sdk/version.Commit=$(.Env.COMMIT)
+      - -X github.com/cometbft/cometbft/version.TMCoreSemVer=$(.Env.BFT_VERSION)
+      - -X github.com/cosmos/cosmos-sdk/version.BuildTags=$(.Env.BUILD_TAGS_COMMA_SEP)
+      - -linkmode=external
+      - -extldflags '-Wl,-z,muldefs --static -lm'
+    tags:
+      - netgo
+      - muslc
+release:
+  prerelease: '{{ if eq .Env.PRE_RELEASE "true" }}true{{else}}false{{end}}'
+checksum:
+  name_template: '{{ .ProjectName }}d_{{ .Env.VERSION }}_checksums.txt'

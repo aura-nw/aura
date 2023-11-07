@@ -29,7 +29,7 @@ builds:
       - netgo
       - muslc
 release:
-  prerelease: true
+  prerelease: {{ .Env.PRE_RELEASE }}
 checksum:
   name_template: '{{ .ProjectName }}d_{{ .Env.VERSION }}_checksums.txt'
 archives:

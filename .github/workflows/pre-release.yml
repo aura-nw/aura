@@ -29,6 +29,20 @@ jobs:
         with:
           fetch-depth: 0
         
+      - name: Set variables
+        run: |
+          VER=$(cat .VERSION)-${{ github.head_ref || github.ref_name }}
+          echo "VERSION=$VER" >> $GITHUB_ENV
+      
+      - uses: mukunku/tag-exists-action@v1.4.0
+        id: checkTag
+        with: 
+          tag: ${{ env.VERSION }}
+
+      - name: exit
+        if: ${{ steps.checkTag.outputs.exists }} == true
+        run: exit 1
+        
       - name: Delete the "latest" Pre-Release
         uses: dev-drprasad/delete-older-releases@v0.2.0
         with:
@@ -36,11 +50,6 @@ jobs:
           delete_tag_pattern: .*-${{ github.head_ref || github.ref_name }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      
-      - name: Set variables
-        run: |
-          VER=$(cat .VERSION)-${{ github.head_ref || github.ref_name }}
-          echo "VERSION=$VER" >> $GITHUB_ENV
       
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2

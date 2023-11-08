@@ -73,26 +73,11 @@ func StoreCodeID(app *app.App, ctx sdk.Context, creator sdk.AccAddress, path str
 func GenerateInActivateAccount(
 	app *app.App,
 	ctx sdk.Context,
-	path string,
 	dPubKey []byte,
 	dCodeID uint64,
 	dSalt []byte,
 	dMsg []byte,
 ) (*authtypes.BaseAccount, *codectypes.Any, error) {
-	/* ======== store wasm ======== */
-	user, err := sdk.AccAddressFromBech32(UserAddr)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	// store code
-	codeID, _, err := StoreCodeID(app, ctx, user, path)
-	if err != nil {
-		return nil, nil, err
-	}
-	if codeID != dCodeID {
-		return nil, nil, fmt.Errorf("invalid codeID")
-	}
 
 	queryServer := app.SaKeeper
 

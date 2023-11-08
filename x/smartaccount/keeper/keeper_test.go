@@ -1,8 +1,6 @@
 package keeper_test
 
 import (
-	"testing"
-
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	helper "github.com/aura-nw/aura/tests/smartaccount"
 	typesv1 "github.com/aura-nw/aura/x/smartaccount/types/v1beta1"
@@ -10,67 +8,63 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestIncrementNextAccountID(t *testing.T) {
-	ctx, app := helper.SetupGenesisTest(t)
+func (s *KeeperTestSuite) TestIncrementNextAccountID() {
+	ctx, app := helper.SetupGenesisTest(s.T())
 
 	keeper := app.SaKeeper
 
 	accID := keeper.GetAndIncrementNextAccountID(ctx)
-	require.Equal(t, typesv1.DefaultSmartAccountId, accID)
+	require.Equal(s.T(), typesv1.DefaultSmartAccountId, accID)
 
 	newAccID := keeper.GetNextAccountID(ctx)
-	require.Equal(t, typesv1.DefaultSmartAccountId+1, newAccID)
+	require.Equal(s.T(), typesv1.DefaultSmartAccountId+1, newAccID)
 }
 
-func TestGetSetDelSignerAddress(t *testing.T) {
+func (s *KeeperTestSuite) TestGetSetDelSignerAddress() {
 	testAddress := "cosmos10uxaa5gkxpeungu2c9qswx035v6t3r24w6v2r6dxd858rq2mzknqj8ru28"
 
-	ctx, app := helper.SetupGenesisTest(t)
-
-	keeper := app.SaKeeper
+	keeper := s.App.SaKeeper
 
 	acc, err := sdk.AccAddressFromBech32(testAddress)
-	require.NoError(t, err)
+	require.NoError(s.T(), err)
 
-	keeper.SetSignerAddress(ctx, acc)
-	getAcc := keeper.GetSignerAddress(ctx)
-	require.Equal(t, acc, getAcc)
+	keeper.SetSignerAddress(s.ctx, acc)
+	getAcc := keeper.GetSignerAddress(s.ctx)
+	require.Equal(s.T(), acc, getAcc)
 
-	keeper.DeleteSignerAddress(ctx)
-	getAcc = keeper.GetSignerAddress(ctx)
-	require.Equal(t, sdk.AccAddress(nil), getAcc)
+	keeper.DeleteSignerAddress(s.ctx)
+	getAcc = keeper.GetSignerAddress(s.ctx)
+	require.Equal(s.T(), sdk.AccAddress(nil), getAcc)
 }
 
-func TestGasRemaining(t *testing.T) {
-	ctx, app := helper.SetupGenesisTest(t)
+func (s *KeeperTestSuite) TestGasRemaining() {
 
-	keeper := app.SaKeeper
+	keeper := s.App.SaKeeper
 
 	gasRemaining := uint64(100)
 
-	require.Equal(t, keeper.HasGasRemaining(ctx), false)
+	require.Equal(s.T(), keeper.HasGasRemaining(s.ctx), false)
 
-	keeper.SetGasRemaining(ctx, gasRemaining)
-	require.Equal(t, keeper.HasGasRemaining(ctx), true)
+	keeper.SetGasRemaining(s.ctx, gasRemaining)
+	require.Equal(s.T(), keeper.HasGasRemaining(s.ctx), true)
 
-	gas := keeper.GetGasRemaining(ctx)
-	require.Equal(t, gasRemaining, gas)
+	gas := keeper.GetGasRemaining(s.ctx)
+	require.Equal(s.T(), gasRemaining, gas)
 
-	keeper.DeleteGasRemaining(ctx)
-	require.Equal(t, keeper.HasGasRemaining(ctx), false)
+	keeper.DeleteGasRemaining(s.ctx)
+	require.Equal(s.T(), keeper.HasGasRemaining(s.ctx), false)
 }
 
-func TestValidateActivateSA(t *testing.T) {
-	ctx, app := helper.SetupGenesisTest(t)
+func (s *KeeperTestSuite) TestValidateActivateSA() {
 
-	keeper := app.SaKeeper
+	keeper := s.App.SaKeeper
 
-	pubKey, err := typesv1.PubKeyToAny(app.AppCodec(), helper.DefaultPubKey)
-	require.NoError(t, err)
+	pubKey, err := typesv1.PubKeyToAny(s.App.AppCodec(), helper.DefaultPubKey)
+	require.NoError(s.T(), err)
 
 	// add new base account to chain
-	err = helper.AddNewBaseAccount(app, ctx, helper.UserAddr, nil, uint64(0))
-	require.NoError(t, err)
+	err = helper.AddNewBaseAccount(s.App, s.ctx, helper.UserAddr, nil, uint64(0))
+	require.NoError(s.T(), err)
 
 	for _, tc := range []struct {
 		desc           string
@@ -106,40 +100,39 @@ func TestValidateActivateSA(t *testing.T) {
 			PubKey:         pubKey,
 		}
 
-		_, err := keeper.ValidateActiveSA(ctx, msg)
+		_, err := keeper.ValidateActiveSA(s.ctx, msg)
 
 		if tc.err {
-			require.Error(t, err)
+			require.Error(s.T(), err)
 		} else {
-			require.NoError(t, err)
+			require.NoError(s.T(), err)
 		}
 	}
 
 }
 
-func TestPrepareBeforeActive(t *testing.T) {
-	ctx, app := helper.SetupGenesisTest(t)
+func (s *KeeperTestSuite) TestPrepareBeforeActive() {
 
-	keeper := app.SaKeeper
+	keeper := s.App.SaKeeper
 
 	// add new base account to chain
-	err := helper.AddNewBaseAccount(app, ctx, helper.UserAddr, nil, 1)
-	require.NoError(t, err)
+	err := helper.AddNewBaseAccount(s.App, s.ctx, helper.UserAddr, nil, 1)
+	require.NoError(s.T(), err)
 
 	accAddr, err := sdk.AccAddressFromBech32(helper.UserAddr)
-	require.NoError(t, err)
-	acc := app.AccountKeeper.GetAccount(ctx, accAddr)
-	require.Equal(t, uint64(1), acc.GetSequence())
+	require.NoError(s.T(), err)
+	acc := s.App.AccountKeeper.GetAccount(s.ctx, accAddr)
+	require.Equal(s.T(), uint64(1), acc.GetSequence())
 
 	// PrepareBeforeActive et sequence of account to zero
-	err = keeper.PrepareBeforeActive(ctx, acc)
-	require.NoError(t, err)
+	err = keeper.PrepareBeforeActive(s.ctx, acc)
+	require.NoError(s.T(), err)
 
-	acc = app.AccountKeeper.GetAccount(ctx, accAddr)
-	require.Equal(t, uint64(0), acc.GetSequence())
+	acc = s.App.AccountKeeper.GetAccount(s.ctx, accAddr)
+	require.Equal(s.T(), uint64(0), acc.GetSequence())
 }
 
-func TestActiveSmartAccount(t *testing.T) {
+func (s *KeeperTestSuite) TestActiveSmartAccount() {
 	for _, tc := range []struct {
 		desc           string
 		AccountAddress string
@@ -165,20 +158,19 @@ func TestActiveSmartAccount(t *testing.T) {
 			err:            false,
 		},
 	} {
-		ctx, app := helper.SetupGenesisTest(t)
+		cachedCtx, _ := s.ctx.CacheContext()
 
-		keeper := app.SaKeeper
+		keeper := s.App.SaKeeper
 
 		acc, pub, err := helper.GenerateInActivateAccount(
-			app,
-			ctx,
-			helper.WasmPath2+"base.wasm",
+			s.App,
+			cachedCtx,
 			helper.DefaultPubKey,
 			uint64(1),
 			helper.DefaultSalt,
 			helper.DefaultMsg,
 		)
-		require.NoError(t, err)
+		require.NoError(s.T(), err)
 
 		accAddr := acc.GetAddress().String()
 		if tc.AccountAddress != "" {
@@ -193,61 +185,58 @@ func TestActiveSmartAccount(t *testing.T) {
 			PubKey:         pub,
 		}
 
-		_, err = keeper.ActiveSmartAccount(ctx, msg, acc)
+		_, err = keeper.ActiveSmartAccount(cachedCtx, msg, acc)
 		if tc.err {
-			require.Error(t, err)
+			require.Error(s.T(), err)
 		} else {
-			require.NoError(t, err)
+			require.NoError(s.T(), err)
 		}
 	}
 }
 
-func TestHandleAfterActive(t *testing.T) {
-	ctx, app := helper.SetupGenesisTest(t)
+func (s *KeeperTestSuite) TestHandleAfterActive() {
 
-	keeper := app.SaKeeper
+	keeper := s.App.SaKeeper
 
 	// add new base account to chain
-	err := helper.AddNewBaseAccount(app, ctx, helper.UserAddr, nil, 1)
-	require.NoError(t, err)
+	err := helper.AddNewBaseAccount(s.App, s.ctx, helper.UserAddr, nil, 1)
+	require.NoError(s.T(), err)
 
 	accAddr, err := sdk.AccAddressFromBech32(helper.UserAddr)
-	require.NoError(t, err)
-	acc := app.AccountKeeper.GetAccount(ctx, accAddr)
-	require.Equal(t, uint64(1), acc.GetSequence())
-	require.Equal(t, nil, acc.GetPubKey())
+	require.NoError(s.T(), err)
+	acc := s.App.AccountKeeper.GetAccount(s.ctx, accAddr)
+	require.Equal(s.T(), uint64(1), acc.GetSequence())
+	require.Equal(s.T(), nil, acc.GetPubKey())
 
 	// prepare pubkey
-	pubKey, err := typesv1.PubKeyToAny(app.AppCodec(), helper.DefaultPubKey)
-	require.NoError(t, err)
+	pubKey, err := typesv1.PubKeyToAny(s.App.AppCodec(), helper.DefaultPubKey)
+	require.NoError(s.T(), err)
 
 	dPubKey, err := typesv1.PubKeyDecode(pubKey)
-	require.NoError(t, err)
+	require.NoError(s.T(), err)
 
 	// PrepareBeforeActive et sequence of account to zero
 	backupSe := uint64(2)
-	err = keeper.HandleAfterActive(ctx, acc, backupSe, dPubKey)
-	require.NoError(t, err)
+	err = keeper.HandleAfterActive(s.ctx, acc, backupSe, dPubKey)
+	require.NoError(s.T(), err)
 
-	acc = app.AccountKeeper.GetAccount(ctx, accAddr)
-	require.Equal(t, uint64(2), acc.GetSequence())
-	require.Equal(t, dPubKey, acc.GetPubKey())
+	acc = s.App.AccountKeeper.GetAccount(s.ctx, accAddr)
+	require.Equal(s.T(), uint64(2), acc.GetSequence())
+	require.Equal(s.T(), dPubKey, acc.GetPubKey())
 }
 
-func TestValidateRecoverSA(t *testing.T) {
+func (s *KeeperTestSuite) TestValidateRecoverSA() {
 	defaultCredentials := ""
 	testSAAddress := "cosmos10uxaa5gkxpeungu2c9qswx035v6t3r24w6v2r6dxd858rq2mzknqj8ru28"
 	testBAAddress := "cosmos13t4996czrgft9gw43epuwauccrldu5whx6uprjdmvsmuf7ylg8yqcxgzk3"
 
-	ctx, app := helper.SetupGenesisTest(t)
+	keeper := s.App.SaKeeper
 
-	keeper := app.SaKeeper
+	err := helper.AddNewSmartAccount(s.App, s.ctx, testSAAddress, nil, 0)
+	require.NoError(s.T(), err)
 
-	err := helper.AddNewSmartAccount(app, ctx, testSAAddress, nil, 0)
-	require.NoError(t, err)
-
-	err = helper.AddNewBaseAccount(app, ctx, testBAAddress, nil, 0)
-	require.NoError(t, err)
+	err = helper.AddNewBaseAccount(s.App, s.ctx, testBAAddress, nil, 0)
+	require.NoError(s.T(), err)
 
 	for _, tc := range []struct {
 		desc           string
@@ -270,8 +259,8 @@ func TestValidateRecoverSA(t *testing.T) {
 			err:            false,
 		},
 	} {
-		pubKey, err := typesv1.PubKeyToAny(app.AppCodec(), helper.DefaultPubKey)
-		require.NoError(t, err)
+		pubKey, err := typesv1.PubKeyToAny(s.App.AppCodec(), helper.DefaultPubKey)
+		require.NoError(s.T(), err)
 
 		msg := &typesv1.MsgRecover{
 			Creator:     helper.UserAddr,
@@ -280,51 +269,48 @@ func TestValidateRecoverSA(t *testing.T) {
 			Credentials: defaultCredentials,
 		}
 
-		_, err = keeper.ValidateRecoverSA(ctx, msg)
+		_, err = keeper.ValidateRecoverSA(s.ctx, msg)
 		if tc.err {
-			require.Error(t, err)
+			require.Error(s.T(), err)
 		} else {
-			require.NoError(t, err)
+			require.NoError(s.T(), err)
 		}
 	}
 }
 
-func TestCallSMValidate(t *testing.T) {
+func (s *KeeperTestSuite) TestCallSMValidate() {
 	customMsg := []byte("{\"recover_key\":\"024ab33b4f0808eba493ac4e3ead798c8339e2fd216b20ca110001fd094784c07f\"}")
 
-	ctx, app := helper.SetupGenesisTest(t)
-
-	keeper := app.SaKeeper
+	keeper := s.App.SaKeeper
 
 	// prepare pubkey
-	pubKey, err := typesv1.PubKeyToAny(app.AppCodec(), helper.DefaultPubKey)
-	require.NoError(t, err)
+	pubKey, err := typesv1.PubKeyToAny(s.App.AppCodec(), helper.DefaultPubKey)
+	require.NoError(s.T(), err)
 
-	rPubKey, err := typesv1.PubKeyToAny(app.AppCodec(), helper.DefaultRPubKery)
-	require.NoError(t, err)
+	rPubKey, err := typesv1.PubKeyToAny(s.App.AppCodec(), helper.DefaultRPubKery)
+	require.NoError(s.T(), err)
 	dRPubKey, err := typesv1.PubKeyDecode(rPubKey)
-	require.NoError(t, err)
+	require.NoError(s.T(), err)
 
 	acc, _, err := helper.GenerateInActivateAccount(
-		app,
-		ctx,
-		helper.WasmPath2+"recovery.wasm",
+		s.App,
+		s.ctx,
 		helper.DefaultPubKey,
-		helper.DefaultCodeID,
+		uint64(2),
 		helper.DefaultSalt,
 		customMsg,
 	)
-	require.NoError(t, err)
+	require.NoError(s.T(), err)
 
 	msg := &typesv1.MsgActivateAccount{
 		AccountAddress: acc.GetAddress().String(),
-		CodeID:         helper.DefaultCodeID,
+		CodeID:         uint64(2),
 		Salt:           helper.DefaultSalt,
 		InitMsg:        customMsg,
 		PubKey:         pubKey,
 	}
-	_, err = keeper.ActiveSmartAccount(ctx, msg, acc)
-	require.NoError(t, err)
+	_, err = keeper.ActiveSmartAccount(s.ctx, msg, acc)
+	require.NoError(s.T(), err)
 
 	for _, tc := range []struct {
 		desc        string
@@ -355,46 +341,43 @@ func TestCallSMValidate(t *testing.T) {
 			Credentials: tc.credentials,
 		}
 
-		err = keeper.CallSMValidate(ctx, msg, acc.GetAddress(), dRPubKey)
+		err = keeper.CallSMValidate(s.ctx, msg, acc.GetAddress(), dRPubKey)
 		if tc.err {
-			require.Error(t, err)
+			require.Error(s.T(), err)
 		} else {
-			require.NoError(t, err)
+			require.NoError(s.T(), err)
 		}
 	}
 }
 
-func TestIsInactiveAccount(t *testing.T) {
+func (s *KeeperTestSuite) TestIsInactiveAccount() {
 	testBAAddress1 := "cosmos1kzlrmxw3h2n4uzuv73m33cfw7xt7qjf3hlqx33ulc02e9dhxu46qgfxg9l"
 	testBAAddress2 := "cosmos10uxaa5gkxpeungu2c9qswx035v6t3r24w6v2r6dxd858rq2mzknqj8ru28"
 
-	ctx, app := helper.SetupGenesisTest(t)
-
-	keeper := app.SaKeeper
+	keeper := s.App.SaKeeper
 
 	// prepare pubkey
-	pubKey, err := typesv1.PubKeyToAny(app.AppCodec(), helper.DefaultPubKey)
-	require.NoError(t, err)
+	pubKey, err := typesv1.PubKeyToAny(s.App.AppCodec(), helper.DefaultPubKey)
+	require.NoError(s.T(), err)
 
 	dPubKey, err := typesv1.PubKeyDecode(pubKey)
-	require.NoError(t, err)
+	require.NoError(s.T(), err)
 
-	err = helper.AddNewBaseAccount(app, ctx, testBAAddress1, nil, 0)
-	require.NoError(t, err)
+	err = helper.AddNewBaseAccount(s.App, s.ctx, testBAAddress1, nil, 0)
+	require.NoError(s.T(), err)
 
-	err = helper.AddNewBaseAccount(app, ctx, testBAAddress2, dPubKey, 0)
-	require.NoError(t, err)
+	err = helper.AddNewBaseAccount(s.App, s.ctx, testBAAddress2, dPubKey, 0)
+	require.NoError(s.T(), err)
 
 	acc, _, err := helper.GenerateInActivateAccount(
-		app,
-		ctx,
-		helper.WasmPath2+"base.wasm",
+		s.App,
+		s.ctx,
 		helper.DefaultPubKey,
 		helper.DefaultCodeID,
 		helper.DefaultSalt,
 		helper.DefaultMsg,
 	)
-	require.NoError(t, err)
+	require.NoError(s.T(), err)
 
 	msg := &typesv1.MsgActivateAccount{
 		AccountAddress: acc.GetAddress().String(),
@@ -403,8 +386,8 @@ func TestIsInactiveAccount(t *testing.T) {
 		InitMsg:        helper.DefaultMsg,
 		PubKey:         pubKey,
 	}
-	_, err = keeper.ActiveSmartAccount(ctx, msg, acc)
-	require.NoError(t, err)
+	_, err = keeper.ActiveSmartAccount(s.ctx, msg, acc)
+	require.NoError(s.T(), err)
 
 	for _, tc := range []struct {
 		desc           string
@@ -433,29 +416,27 @@ func TestIsInactiveAccount(t *testing.T) {
 		},
 	} {
 		acc, err := sdk.AccAddressFromBech32(tc.AccountAddress)
-		require.NoError(t, err)
+		require.NoError(s.T(), err)
 
-		_, err = keeper.IsInactiveAccount(ctx, acc)
+		_, err = keeper.IsInactiveAccount(s.ctx, acc)
 		if tc.err {
-			require.Error(t, err)
+			require.Error(s.T(), err)
 		} else {
-			require.NoError(t, err)
+			require.NoError(s.T(), err)
 		}
 	}
 }
 
-func TestGetSmartAccountByAddress(t *testing.T) {
+func (s *KeeperTestSuite) TestGetSmartAccountByAddress() {
 	testAddress1 := "cosmos13t4996czrgft9gw43epuwauccrldu5whx6uprjdmvsmuf7ylg8yqcxgzk3"
 	testAddress2 := "cosmos1kzlrmxw3h2n4uzuv73m33cfw7xt7qjf3hlqx33ulc02e9dhxu46qgfxg9l"
 	testAddress3 := "cosmos10uxaa5gkxpeungu2c9qswx035v6t3r24w6v2r6dxd858rq2mzknqj8ru28"
 
-	ctx, app := helper.SetupGenesisTest(t)
+	err := helper.AddNewSmartAccount(s.App, s.ctx, testAddress1, nil, 0)
+	require.NoError(s.T(), err)
 
-	err := helper.AddNewSmartAccount(app, ctx, testAddress1, nil, 0)
-	require.NoError(t, err)
-
-	err = helper.AddNewBaseAccount(app, ctx, testAddress2, nil, 0)
-	require.NoError(t, err)
+	err = helper.AddNewBaseAccount(s.App, s.ctx, testAddress2, nil, 0)
+	require.NoError(s.T(), err)
 
 	for _, tc := range []struct {
 		desc           string
@@ -481,28 +462,27 @@ func TestGetSmartAccountByAddress(t *testing.T) {
 		},
 	} {
 		acc, err := sdk.AccAddressFromBech32(tc.AccountAddress)
-		require.NoError(t, err)
+		require.NoError(s.T(), err)
 
-		saAcc, err := app.SaKeeper.GetSmartAccountByAddress(ctx, acc)
+		saAcc, err := s.App.SaKeeper.GetSmartAccountByAddress(s.ctx, acc)
 
 		if tc.err {
-			require.Error(t, err)
+			require.Error(s.T(), err)
 		} else {
-			require.NoError(t, err)
+			require.NoError(s.T(), err)
 		}
 
 		if tc.exist {
-			require.NotEqual(t, (*typesv1.SmartAccount)(nil), saAcc)
+			require.NotEqual(s.T(), (*typesv1.SmartAccount)(nil), saAcc)
 		} else {
-			require.Equal(t, (*typesv1.SmartAccount)(nil), saAcc)
+			require.Equal(s.T(), (*typesv1.SmartAccount)(nil), saAcc)
 		}
 	}
 }
 
-func TestCheckAllowedMsgs(t *testing.T) {
-	ctx, app := helper.SetupGenesisTest(t)
+func (s *KeeperTestSuite) TestCheckAllowedMsgs() {
 
-	keeper := app.SaKeeper
+	keeper := s.App.SaKeeper
 
 	params := typesv1.Params{
 		DisableMsgsList: []string{
@@ -511,8 +491,8 @@ func TestCheckAllowedMsgs(t *testing.T) {
 		},
 		MaxGasExecute: 2000000,
 	}
-	err := keeper.SetParams(ctx, params)
-	require.NoError(t, err)
+	err := keeper.SetParams(s.ctx, params)
+	require.NoError(s.T(), err)
 
 	for _, tc := range []struct {
 		desc string
@@ -535,12 +515,12 @@ func TestCheckAllowedMsgs(t *testing.T) {
 			err: true,
 		},
 	} {
-		err := keeper.CheckAllowedMsgs(ctx, tc.msgs)
+		err := keeper.CheckAllowedMsgs(s.ctx, tc.msgs)
 
 		if !tc.err {
-			require.NoError(t, err)
+			require.NoError(s.T(), err)
 		} else {
-			require.Error(t, err)
+			require.Error(s.T(), err)
 		}
 	}
 }

@@ -6,18 +6,16 @@ on:
     - euphoria
 
 jobs:
+  test: 
+    uses: ./.github/workflows/test.yml
+
+  lint:
+    uses: ./.github/workflows/golangci-lint.yml
+
   pre_release:
+    needs: [test, lint]
     runs-on: ubuntu-latest
     steps:
-      - name: Check job
-        uses: technote-space/workflow-conclusion-action@v3
-
-      - name: exit
-        if: env.WORKFLOW_CONCLUSION == 'failure'
-        run: |
-          echo "jobs failed"
-          exit 1 
-
       - name: Checkout
         uses: actions/checkout@v3
         with:

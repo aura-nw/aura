@@ -4,6 +4,8 @@ before:
     - apk add musl-dev
 env:
   - CGO_ENABLED=1
+  - >- 
+    {{- if eq .Env.PRE_RELEASE "true"}}PRE_RELEASE=true{{- end }}
 builds:
   - id: aurad-linux-amd64
     main: ./cmd/aurad
@@ -29,7 +31,7 @@ builds:
       - netgo
       - muslc
 release:
-  prerelease: $(.Env.PRE_RELEASE)
+  prerelease: $(PRE_RELEASE)
 checksum:
   name_template: '{{ .ProjectName }}d_{{ .Env.VERSION }}_checksums.txt'
 archives:

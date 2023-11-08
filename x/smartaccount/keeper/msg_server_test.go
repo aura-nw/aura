@@ -1,8 +1,6 @@
 package keeper_test
 
 import (
-	"testing"
-
 	"github.com/stretchr/testify/require"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -13,7 +11,7 @@ import (
 )
 
 // ------------------------------ ActivateAccount ------------------------------
-func TestActivateAccount(t *testing.T) {
+func (s *KeeperTestSuite) TestActivateAccount() {
 	for _, tc := range []struct {
 		accountAddress string
 		codeID         uint64
@@ -38,21 +36,20 @@ func TestActivateAccount(t *testing.T) {
 			err:            false,
 		},
 	} {
-		ctx, app := helper.SetupGenesisTest(t)
+		cachedCtx, _ := s.ctx.CacheContext()
 
 		newAcc, pubKey, err := helper.GenerateInActivateAccount(
-			app,
-			ctx,
-			helper.WasmPath2+"base.wasm",
+			s.App,
+			cachedCtx,
 			helper.DefaultPubKey,
 			helper.DefaultCodeID,
 			helper.DefaultSalt,
 			helper.DefaultMsg,
 		)
-		require.NoError(t, err)
+		require.NoError(s.T(), err)
 
 		/* ======== activate smart account ======== */
-		msgServer := keeper.NewMsgServerImpl(app.SaKeeper)
+		msgServer := keeper.NewMsgServerImpl(s.App.SaKeeper)
 
 		// smartaccount address
 		accAddr := newAcc.Address
@@ -69,28 +66,28 @@ func TestActivateAccount(t *testing.T) {
 		}
 
 		// activate account
-		res, err := msgServer.ActivateAccount(sdk.WrapSDKContext(ctx), msg)
+		res, err := msgServer.ActivateAccount(sdk.WrapSDKContext(cachedCtx), msg)
 
 		if tc.err {
-			require.Error(t, err)
+			require.Error(s.T(), err)
 		} else {
-			require.NoError(t, err)
-			require.Equal(t, newAcc.String(), res.Address)
+			require.NoError(s.T(), err)
+			require.Equal(s.T(), newAcc.String(), res.Address)
 
 			// must be smartaccount type
 			saAccAddr, err := sdk.AccAddressFromBech32(accAddr)
-			require.NoError(t, err)
+			require.NoError(s.T(), err)
 
-			saAccount := app.AccountKeeper.GetAccount(ctx, saAccAddr)
+			saAccount := s.App.AccountKeeper.GetAccount(cachedCtx, saAccAddr)
 
 			_, ok := saAccount.(*typesv1.SmartAccount)
-			require.Equal(t, true, ok)
+			require.Equal(s.T(), true, ok)
 		}
 	}
 }
 
 // ------------------------------ RecoverAccount ------------------------------
-func TestRecoverAccount(t *testing.T) {
+func (s *KeeperTestSuite) TestRecoverAccount() {
 	customMsg := []byte("{\"recover_key\":\"024ab33b4f0808eba493ac4e3ead798c8339e2fd216b20ca110001fd094784c07f\"}")
 
 	for _, tc := range []struct {
@@ -117,34 +114,35 @@ func TestRecoverAccount(t *testing.T) {
 			err:            false,
 		},
 	} {
-		ctx, app := helper.SetupGenesisTest(t)
+		cachedCtx, _ := s.ctx.CacheContext()
+
+		s.App.SaKeeper.SetParams(cachedCtx, typesv1.NewParams([]*typesv1.CodeID{{CodeID: 2, Status: true}}, []string(nil), typesv1.DefaultMaxGas))
 
 		newAcc, pubKey, err := helper.GenerateInActivateAccount(
-			app,
-			ctx,
-			helper.WasmPath2+"recovery.wasm",
+			s.App,
+			cachedCtx,
 			helper.DefaultPubKey,
-			helper.DefaultCodeID,
+			uint64(2),
 			helper.DefaultSalt,
 			customMsg,
 		)
-		require.NoError(t, err)
+		require.NoError(s.T(), err)
 
-		msgServer := keeper.NewMsgServerImpl(app.SaKeeper)
+		msgServer := keeper.NewMsgServerImpl(s.App.SaKeeper)
 
 		/* ======== activate smart account ======== */
 		msg := &typesv1.MsgActivateAccount{
 			AccountAddress: newAcc.Address,
-			CodeID:         helper.DefaultCodeID,
+			CodeID:         uint64(2),
 			Salt:           helper.DefaultSalt,
 			InitMsg:        customMsg,
 			PubKey:         pubKey,
 		}
 
 		// activate account
-		res, err := msgServer.ActivateAccount(sdk.WrapSDKContext(ctx), msg)
-		require.NoError(t, err)
-		require.Equal(t, newAcc.String(), res.Address)
+		res, err := msgServer.ActivateAccount(sdk.WrapSDKContext(cachedCtx), msg)
+		require.NoError(s.T(), err)
+		require.Equal(s.T(), newAcc.String(), res.Address)
 
 		/* ======== Recover ======== */
 		accAddr := newAcc.Address
@@ -152,8 +150,8 @@ func TestRecoverAccount(t *testing.T) {
 			accAddr = tc.accountAddress
 		}
 
-		rPubKey, err := typesv1.PubKeyToAny(app.AppCodec(), helper.DefaultRPubKery)
-		require.NoError(t, err)
+		rPubKey, err := typesv1.PubKeyToAny(s.App.AppCodec(), helper.DefaultRPubKery)
+		require.NoError(s.T(), err)
 
 		recoverMsg := &typesv1.MsgRecover{
 			Creator:     helper.UserAddr,
@@ -162,28 +160,28 @@ func TestRecoverAccount(t *testing.T) {
 			Credentials: tc.credentials,
 		}
 
-		_, rErr := msgServer.Recover(sdk.WrapSDKContext(ctx), recoverMsg)
+		_, rErr := msgServer.Recover(sdk.WrapSDKContext(cachedCtx), recoverMsg)
 
 		saAccAddr, err := sdk.AccAddressFromBech32(newAcc.Address)
-		require.NoError(t, err)
+		require.NoError(s.T(), err)
 
-		saAccount := app.AccountKeeper.GetAccount(ctx, saAccAddr)
+		saAccount := s.App.AccountKeeper.GetAccount(cachedCtx, saAccAddr)
 
 		_, ok := saAccount.(*typesv1.SmartAccount)
-		require.Equal(t, true, ok)
+		require.Equal(s.T(), true, ok)
 
 		if tc.err {
 			dPubKey, err := typesv1.PubKeyDecode(pubKey)
-			require.NoError(t, err)
+			require.NoError(s.T(), err)
 
-			require.Equal(t, saAccount.GetPubKey(), dPubKey)
-			require.Error(t, rErr)
+			require.Equal(s.T(), saAccount.GetPubKey(), dPubKey)
+			require.Error(s.T(), rErr)
 		} else {
 			rPubKey, err := typesv1.PubKeyDecode(rPubKey)
-			require.NoError(t, err)
+			require.NoError(s.T(), err)
 
-			require.Equal(t, saAccount.GetPubKey(), rPubKey)
-			require.NoError(t, rErr)
+			require.Equal(s.T(), saAccount.GetPubKey(), rPubKey)
+			require.NoError(s.T(), rErr)
 
 		}
 	}

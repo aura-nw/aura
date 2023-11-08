@@ -62,5 +62,5 @@ jobs:
       - name: Publish the Pre-Release
         run: make release
         env:
-          PRE_RELEASE: "yes"
+          PRE_RELEASE: true
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

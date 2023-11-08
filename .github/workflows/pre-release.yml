@@ -1,29 +1,23 @@
-# This workflow is useful if you want to automate the process of:
-#
-# a) Creating a new prelease when you push a new tag with a "v" prefix (version).
-#
-#    This type of prerelease is meant to be used for production: alpha, beta, rc, etc. types of releases.
-#    After the prerelease is created, you need to make your changes on the release page at the relevant
-#    Github page and publish your release.
-#
-# b) Creating/updating the "latest" prerelease when you push to your default branch.
-#
-#    This type of prelease is useful to make your bleeding-edge binaries available to advanced users.
-#
-# The workflow will not run if there is no tag pushed with a "v" prefix and no change pushed to your 
-# default branch.
 on: 
   push:
     branches:
     - dev
-    - halo
     - serenity
     - euphoria
 
 jobs:
-  might_release:
+  pre_release:
     runs-on: ubuntu-latest
     steps:
+      - name: Check job
+        uses: technote-space/workflow-conclusion-action@v3
+
+      - name: exit
+        if: env.WORKFLOW_CONCLUSION == 'failure'
+        run: |
+          echo "jobs failed"
+          exit 1 
+
       - name: Checkout
         uses: actions/checkout@v3
         with:
@@ -62,5 +56,4 @@ jobs:
       - name: Publish the Pre-Release
         run: make release
         env:
-          PRE_RELEASE: true
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

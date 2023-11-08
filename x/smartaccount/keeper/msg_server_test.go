@@ -116,7 +116,8 @@ func (s *KeeperTestSuite) TestRecoverAccount() {
 	} {
 		cachedCtx, _ := s.ctx.CacheContext()
 
-		s.App.SaKeeper.SetParams(cachedCtx, typesv1.NewParams([]*typesv1.CodeID{{CodeID: 2, Status: true}}, []string(nil), typesv1.DefaultMaxGas))
+		err := s.App.SaKeeper.SetParams(cachedCtx, typesv1.NewParams([]*typesv1.CodeID{{CodeID: 2, Status: true}}, []string(nil), typesv1.DefaultMaxGas))
+		require.NoError(s.T(), err)
 
 		newAcc, pubKey, err := helper.GenerateInActivateAccount(
 			s.App,

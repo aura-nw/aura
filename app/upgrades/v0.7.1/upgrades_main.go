@@ -125,7 +125,7 @@ func UpgradeMainnetHandler(
 	if err != nil {
 		return nil, err
 	}
-	conParams.Block.MaxBytes = 1048576 // 1MiB
+	conParams.Block.MaxBytes = 2097152  // 2MiB
 	conParams.Block.MaxGas = -1
 	consensusParamKeeper.Set(ctx, conParams)
 

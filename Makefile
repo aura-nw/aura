@@ -7,6 +7,12 @@ PACKAGES=$(shell go list ./... | grep -v '/simulation')
 BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 COMMIT := $(shell git log -1 --format='%H')
 
+# library versions
+LIBWASM_VERSION = $(shell go list -m -f '{{ .Version }}' github.com/CosmWasm/wasmvm)
+
+# docker 
+DOCKER := $(shell which docker)
+
 # don't override user values
 ifeq (,$(VERSION))
 	VERSION := $(shell git describe --tags)
@@ -16,7 +22,6 @@ ifeq (,$(VERSION))
 	endif
 endif
 
-SDK_PACK := $(shell go list -m github.com/cosmos/cosmos-sdk | sed  's/ /\@/g')
 BFT_VERSION := $(shell go list -m github.com/cometbft/cometbft | sed 's:.* ::')
 
 BUILD_TAGS += netgo
@@ -71,6 +76,8 @@ MINIMUM_SUPPORTED_GO_MAJOR_VERSION = 1
 MINIMUM_SUPPORTED_GO_MINOR_VERSION = 19
 GO_VERSION_VALIDATION_ERR_MSG = Golang version is not supported, please update to at least $(MINIMUM_SUPPORTED_GO_MAJOR_VERSION).$(MINIMUM_SUPPORTED_GO_MINOR_VERSION)
 
+GORELEASER_VERSION = v1.20.0
+
 all: build install
 
 install: validate-go-version go.sum
@@ -102,3 +109,21 @@ validate-go-version: ## Validates the installed version of go against Mattermost
 		echo '$(GO_VERSION_VALIDATION_ERR_MSG)';\
 		exit 1; \
 	fi
+
+release:
+	git tag $(VERSION)
+	git push origin $(VERSION)
+	$(DOCKER) run \
+		--rm \
+		-e LIBWASM_VERSION=$(LIBWASM_VERSION) \
+		-e GITHUB_TOKEN="$(GITHUB_TOKEN)" \
+		-e VERSION="$(VERSION)" \
+		-e COMMIT="$(COMMIT)" \
+		-e BFT_VERSION="$(BFT_VERSION)" \
+		-e PRE_RELEASE=$(PRE_RELEASE) \
+		-e BUILD_TAGS_COMMA_SEP="$(BUILD_TAGS_COMMA_SEP)" \
+		-v /var/run/docker.sock:/var/run/docker.sock \
+		-v `pwd`:/go/src/github.com/aura-nw/aura \
+		-w /go/src/github.com/aura-nw/aura \
+		ghcr.io/goreleaser/goreleaser:$(GORELEASER_VERSION) \
+		--clean --skip-validate

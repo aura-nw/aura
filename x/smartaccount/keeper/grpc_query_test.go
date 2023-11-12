@@ -1,8 +1,6 @@
 package keeper_test
 
 import (
-	"testing"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	helper "github.com/aura-nw/aura/tests/smartaccount"
@@ -11,10 +9,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestQueryParams(t *testing.T) {
-	ctx, app := helper.SetupGenesisTest(t)
+func (s *KeeperTestSuite) TestQueryParams() {
 
-	queryServer := app.SaKeeper
+	queryServer := s.App.SaKeeper
 
 	for _, tc := range []struct {
 		desc string
@@ -34,30 +31,23 @@ func TestQueryParams(t *testing.T) {
 			err:  true,
 		},
 	} {
-		res, err := queryServer.Params(sdk.WrapSDKContext(ctx), tc.msg)
+		res, err := queryServer.Params(sdk.WrapSDKContext(s.ctx), tc.msg)
 
 		if tc.err {
-			require.Error(t, err)
+			require.Error(s.T(), err)
 		} else {
-			require.NoError(t, err)
-			require.Equal(t, tc.res, res.Params)
+			require.NoError(s.T(), err)
+			require.Equal(s.T(), tc.res, res.Params)
 		}
 	}
 }
 
-func TestQueryGenerateAccount(t *testing.T) {
-	ctx, app := helper.SetupGenesisTest(t)
+func (s *KeeperTestSuite) TestQueryGenerateAccount() {
 
-	creator := app.AccountKeeper.GetAllAccounts(ctx)[0]
+	queryServer := s.App.SaKeeper
 
-	codeID, _, err := helper.StoreCodeID(app, ctx, creator.GetAddress(), helper.WasmPath2+"base.wasm")
-	require.NoError(t, err)
-	require.Equal(t, codeID, helper.DefaultCodeID)
-
-	queryServer := app.SaKeeper
-
-	pubKey, err := typesv1.PubKeyToAny(app.AppCodec(), helper.DefaultPubKey)
-	require.NoError(t, err)
+	pubKey, err := typesv1.PubKeyToAny(s.App.AppCodec(), helper.DefaultPubKey)
+	require.NoError(s.T(), err)
 
 	for _, tc := range []struct {
 		desc string
@@ -88,7 +78,7 @@ func TestQueryGenerateAccount(t *testing.T) {
 		{
 			desc: "error, codeID not exist on chain",
 			msg: &typesv1.QueryGenerateAccountRequest{
-				CodeID:  uint64(2), // code_id not exist
+				CodeID:  uint64(3), // code_id not exist
 				PubKey:  pubKey,
 				Salt:    helper.DefaultSalt,
 				InitMsg: helper.DefaultMsg,
@@ -106,12 +96,12 @@ func TestQueryGenerateAccount(t *testing.T) {
 			err: false,
 		},
 	} {
-		_, err := queryServer.GenerateAccount(sdk.WrapSDKContext(ctx), tc.msg)
+		_, err := queryServer.GenerateAccount(sdk.WrapSDKContext(s.ctx), tc.msg)
 
 		if tc.err {
-			require.Error(t, err)
+			require.Error(s.T(), err)
 		} else {
-			require.NoError(t, err)
+			require.NoError(s.T(), err)
 		}
 	}
 }

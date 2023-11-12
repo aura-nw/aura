@@ -1,8 +1,6 @@
 package smartaccount_test
 
 import (
-	"testing"
-
 	helper "github.com/aura-nw/aura/tests/smartaccount"
 	"github.com/aura-nw/aura/x/smartaccount"
 	"github.com/aura-nw/aura/x/smartaccount/keeper"
@@ -15,26 +13,23 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestAfterTxDecorator(t *testing.T) {
-	var (
-		ctx, app = helper.SetupGenesisTest(t)
-		keybase  = keyring.NewInMemory(app.AppCodec())
-	)
+func (s *TestSuite) TestAfterTxDecorator() {
+
+	keybase := keyring.NewInMemory(s.App.AppCodec())
 
 	newAcc, pubKey, err := helper.GenerateInActivateAccount(
-		app,
-		ctx,
-		helper.WasmPath1+"base.wasm",
+		s.App,
+		s.ctx,
 		helper.DefaultPubKey,
 		helper.DefaultCodeID,
 		helper.DefaultSalt,
 		helper.DefaultMsg,
 	)
-	require.NoError(t, err)
+	require.NoError(s.T(), err)
 	dPubKey, err := typesv1.PubKeyDecode(pubKey)
-	require.NoError(t, err)
+	require.NoError(s.T(), err)
 
-	msgServer := keeper.NewMsgServerImpl(app.SaKeeper)
+	msgServer := keeper.NewMsgServerImpl(s.App.SaKeeper)
 
 	/* ======== activate smart account ======== */
 	msg := &typesv1.MsgActivateAccount{
@@ -46,15 +41,15 @@ func TestAfterTxDecorator(t *testing.T) {
 	}
 
 	// activate account
-	res, err := msgServer.ActivateAccount(sdk.WrapSDKContext(ctx), msg)
-	require.NoError(t, err)
-	require.Equal(t, newAcc.String(), res.Address)
+	res, err := msgServer.ActivateAccount(sdk.WrapSDKContext(s.ctx), msg)
+	require.NoError(s.T(), err)
+	require.Equal(s.T(), newAcc.String(), res.Address)
 
 	accSigner, err := makeMockAccount(keybase, "test")
-	require.NoError(t, err)
+	require.NoError(s.T(), err)
 	err = accSigner.SetPubKey(dPubKey)
-	require.NoError(t, err)
-	app.AccountKeeper.SetAccount(ctx, accSigner)
+	require.NoError(s.T(), err)
+	s.App.AccountKeeper.SetAccount(s.ctx, accSigner)
 
 	signer := Signer{
 		keyName:        "test",
@@ -64,7 +59,7 @@ func TestAfterTxDecorator(t *testing.T) {
 	}
 
 	acc1, err := makeMockAccount(keybase, "test1")
-	require.NoError(t, err)
+	require.NoError(s.T(), err)
 
 	for _, tc := range []struct {
 		desc    string
@@ -93,43 +88,40 @@ func TestAfterTxDecorator(t *testing.T) {
 		},
 	} {
 		if tc.isSa {
-			app.SaKeeper.SetSignerAddress(ctx, newAcc.GetAddress())
+			s.App.SaKeeper.SetSignerAddress(s.ctx, newAcc.GetAddress())
 		}
 
-		sigTx, err := prepareTx(ctx, keybase, tc.msgs, tc.signers, mockChainID, true)
-		require.NoError(t, err)
+		sigTx, err := prepareTx(s.ctx, keybase, tc.msgs, tc.signers, mockChainID, true)
+		require.NoError(s.T(), err)
 
-		saat := smartaccount.NewAfterTxDecorator(app.SaKeeper)
-		_, err = saat.PostHandle(ctx, sigTx, false, true, DefaultPostHandler())
+		saat := smartaccount.NewAfterTxDecorator(s.App.SaKeeper)
+		_, err = saat.PostHandle(s.ctx, sigTx, false, true, DefaultPostHandler())
 
 		if tc.err {
-			require.Error(t, err)
+			require.Error(s.T(), err)
 		} else {
-			require.NoError(t, err)
+			require.NoError(s.T(), err)
 		}
 	}
 }
 
-func TestPostValidateAuthzTxDecorator(t *testing.T) {
-	var (
-		ctx, app = helper.SetupGenesisTest(t)
-		keybase  = keyring.NewInMemory(app.AppCodec())
-	)
+func (s *TestSuite) TestPostValidateAuthzTxDecorator() {
+
+	keybase := keyring.NewInMemory(s.App.AppCodec())
 
 	newAcc, pubKey, err := helper.GenerateInActivateAccount(
-		app,
-		ctx,
-		helper.WasmPath1+"base.wasm",
+		s.App,
+		s.ctx,
 		helper.DefaultPubKey,
 		helper.DefaultCodeID,
 		helper.DefaultSalt,
 		helper.DefaultMsg,
 	)
-	require.NoError(t, err)
+	require.NoError(s.T(), err)
 	dPubKey, err := typesv1.PubKeyDecode(pubKey)
-	require.NoError(t, err)
+	require.NoError(s.T(), err)
 
-	msgServer := keeper.NewMsgServerImpl(app.SaKeeper)
+	msgServer := keeper.NewMsgServerImpl(s.App.SaKeeper)
 
 	/* ======== activate smart account ======== */
 	msg := &typesv1.MsgActivateAccount{
@@ -141,15 +133,15 @@ func TestPostValidateAuthzTxDecorator(t *testing.T) {
 	}
 
 	// activate account
-	res, err := msgServer.ActivateAccount(sdk.WrapSDKContext(ctx), msg)
-	require.NoError(t, err)
-	require.Equal(t, newAcc.String(), res.Address)
+	res, err := msgServer.ActivateAccount(sdk.WrapSDKContext(s.ctx), msg)
+	require.NoError(s.T(), err)
+	require.Equal(s.T(), newAcc.String(), res.Address)
 
 	accSigner, err := makeMockAccount(keybase, "test")
-	require.NoError(t, err)
+	require.NoError(s.T(), err)
 	err = accSigner.SetPubKey(dPubKey)
-	require.NoError(t, err)
-	app.AccountKeeper.SetAccount(ctx, accSigner)
+	require.NoError(s.T(), err)
+	s.App.AccountKeeper.SetAccount(s.ctx, accSigner)
 
 	signer := Signer{
 		keyName:        "test",
@@ -159,10 +151,10 @@ func TestPostValidateAuthzTxDecorator(t *testing.T) {
 	}
 
 	acc1, err := makeMockAccount(keybase, "test1")
-	require.NoError(t, err)
+	require.NoError(s.T(), err)
 
 	anyBankSend, err := codectypes.NewAnyWithValue(banktypes.NewMsgSend(newAcc.GetAddress(), acc1.GetAddress(), sdk.Coins{}))
-	require.NoError(t, err)
+	require.NoError(s.T(), err)
 
 	anyMsgExec, err := codectypes.NewAnyWithValue(&authz.MsgExec{
 		Grantee: signer.acc.GetAddress().String(),
@@ -170,7 +162,7 @@ func TestPostValidateAuthzTxDecorator(t *testing.T) {
 			anyBankSend,
 		},
 	})
-	require.NoError(t, err)
+	require.NoError(s.T(), err)
 
 	for _, tc := range []struct {
 		desc         string
@@ -237,28 +229,28 @@ func TestPostValidateAuthzTxDecorator(t *testing.T) {
 			params := typesv1.Params{
 				MaxGasExecute: 1000,
 			}
-			err = app.SaKeeper.SetParams(ctx, params)
-			require.NoError(t, err)
+			err = s.App.SaKeeper.SetParams(s.ctx, params)
+			require.NoError(s.T(), err)
 		}
 
 		if tc.gasRemaining {
 			gasRemaining := uint64(1000)
-			app.SaKeeper.SetGasRemaining(ctx, gasRemaining)
+			s.App.SaKeeper.SetGasRemaining(s.ctx, gasRemaining)
 		}
 
-		sigTx, err := prepareTx(ctx, keybase, tc.msgs, tc.signers, mockChainID, true)
-		require.NoError(t, err)
+		sigTx, err := prepareTx(s.ctx, keybase, tc.msgs, tc.signers, mockChainID, true)
+		require.NoError(s.T(), err)
 
-		saat := smartaccount.NewPostValidateAuthzTxDecorator(app.SaKeeper)
+		saat := smartaccount.NewPostValidateAuthzTxDecorator(s.App.SaKeeper)
 
 		if !tc.err {
-			require.NotPanics(t, func() {
-				_, err = saat.PostHandle(ctx, sigTx, false, true, DefaultPostHandler())
-				require.NoError(t, err)
+			require.NotPanics(s.T(), func() {
+				_, err = saat.PostHandle(s.ctx, sigTx, false, true, DefaultPostHandler())
+				require.NoError(s.T(), err)
 			})
 		} else {
-			require.Panics(t, func() {
-				_, err = saat.PostHandle(ctx, sigTx, false, true, DefaultPostHandler())
+			require.Panics(s.T(), func() {
+				_, err = saat.PostHandle(s.ctx, sigTx, false, true, DefaultPostHandler())
 			})
 		}
 	}

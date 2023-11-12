@@ -19,10 +19,10 @@ builds:
       - -s -w
       - -X github.com/cosmos/cosmos-sdk/version.Name=aura
       - -X github.com/cosmos/cosmos-sdk/version.AppName=aurad
-      - -X github.com/cosmos/cosmos-sdk/version.Version=$(.Env.VERSION)
-      - -X github.com/cosmos/cosmos-sdk/version.Commit=$(.Env.COMMIT)
-      - -X github.com/cometbft/cometbft/version.TMCoreSemVer=$(.Env.BFT_VERSION)
-      - -X github.com/cosmos/cosmos-sdk/version.BuildTags=$(.Env.BUILD_TAGS_COMMA_SEP)
+      - -X github.com/cosmos/cosmos-sdk/version.Version={{ .Env.VERSION }}
+      - -X github.com/cosmos/cosmos-sdk/version.Commit={{ .Env.COMMIT }}
+      - -X github.com/cometbft/cometbft/version.TMCoreSemVer={{ .Env.BFT_VERSION }}
+      - -X github.com/cosmos/cosmos-sdk/version.BuildTags={{ .Env.BUILD_TAGS_COMMA_SEP }}
       - -linkmode=external
       - -extldflags '-Wl,-z,muldefs --static -lm'
     tags:

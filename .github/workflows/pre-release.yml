@@ -39,7 +39,7 @@ jobs:
           exit 1
 
       - name: Delete the "latest" Pre-Release
-        uses: dev-drprasad/delete-older-releases@v0.2.0
+        uses: dev-drprasad/delete-older-releases@v0.3.2
         with:
           keep_latest: 0
           delete_tag_pattern: .*-${{ github.head_ref || github.ref_name }}

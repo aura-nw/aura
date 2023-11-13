@@ -579,9 +579,11 @@ func New(
 		govRouter.AddRoute(wasmtypes.RouterKey, wasm.NewWasmProposalHandler(app.WasmKeeper, enabledProposals)) //nolint:staticcheck // still use same ver 0.41.0 of wasmd
 	}
 
+	customGovConfig := govtypes.DefaultConfig()
+	customGovConfig.MaxMetadataLen = 2000
 	app.GovKeeper = govkeeper.NewKeeper(
 		appCodec, keys[govtypes.StoreKey], app.AccountKeeper, app.BankKeeper,
-		stakingKeeper, app.BaseApp.MsgServiceRouter(), govtypes.DefaultConfig(), govModAddress,
+		stakingKeeper, app.BaseApp.MsgServiceRouter(), customGovConfig, govModAddress,
 	)
 
 	// Set legacy router for backwards compatibility with gov v1beta1

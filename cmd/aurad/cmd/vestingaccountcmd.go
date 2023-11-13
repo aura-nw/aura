@@ -81,28 +81,29 @@ contain valid denominations. Accounts may optionally be supplied with vesting pa
 
 			vestingStart, err := cmd.Flags().GetInt64(flagVestingStart)
 			if err != nil {
-				return err
+				return fmt.Errorf("can not get vestingStart: %w", err)
 			}
 			periodLength, err := cmd.Flags().GetInt64(flagVestingPeriod)
 			if err != nil {
-				return err
+				return fmt.Errorf("can not get periodLength: %w", err)
 			}
 			vestingTime, err := cmd.Flags().GetInt64(flagVestingTime)
 			if err != nil {
-				return err
+				return fmt.Errorf("can not get vestingTime: %w", err)
 			}
 			vestingAmtStr, err := cmd.Flags().GetString(flagVestingAmt)
 			if err != nil {
-				return err
+				return fmt.Errorf("can not get vestingAmt: %w", err)
 			}
 			cliffTime, err := cmd.Flags().GetInt64(flagCliffTime)
 			if err != nil {
-				return err
+				return fmt.Errorf("can not get cliffTime: %w", err)
 			}
 			cliffAmtStr, err := cmd.Flags().GetString(flagCliffAmount)
 			if err != nil {
-				return err
+				return fmt.Errorf("can not get cliffAmt: %w", err)
 			}
+
 
 			vestingAmt, err := sdk.ParseCoinsNormalized(vestingAmtStr)
 			if err != nil {

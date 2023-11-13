@@ -1,45 +1,40 @@
 package smartaccount_test
 
 import (
-	"testing"
-
 	"github.com/stretchr/testify/require"
 
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
-	tests "github.com/aura-nw/aura/tests"
 	"github.com/aura-nw/aura/x/smartaccount"
 	"github.com/aura-nw/aura/x/smartaccount/keeper"
 	typesv1 "github.com/aura-nw/aura/x/smartaccount/types/v1beta1"
+	"github.com/cosmos/cosmos-sdk/x/authz"
 
 	helper "github.com/aura-nw/aura/tests/smartaccount"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 )
 
-func TestGetSmartAccountTxSigner(t *testing.T) {
-	var (
-		app     = tests.Setup(t, false)
-		ctx     = app.NewContext(false, tmproto.Header{})
-		keybase = keyring.NewInMemory(app.AppCodec())
-	)
+func (s *TestSuite) TestGetSmartAccountTxSigner() {
+
+	keybase := keyring.NewInMemory(s.App.AppCodec())
 
 	acc1, err := makeMockAccount(keybase, "test1")
-	require.NoError(t, err)
-	app.AccountKeeper.SetAccount(ctx, acc1)
+	require.NoError(s.T(), err)
+	s.App.AccountKeeper.SetAccount(s.ctx, acc1)
 
 	acc2Mock, err := makeMockAccount(keybase, "test2")
-	require.NoError(t, err)
+	require.NoError(s.T(), err)
 	acc2 := typesv1.NewSmartAccountFromAccount(acc2Mock)
 	err = acc2.SetPubKey(acc2Mock.GetPubKey())
-	require.NoError(t, err)
-	app.AccountKeeper.SetAccount(ctx, acc2)
-	require.NoError(t, err)
+	require.NoError(s.T(), err)
+	s.App.AccountKeeper.SetAccount(s.ctx, acc2)
+	require.NoError(s.T(), err)
 
 	acc3, err := makeMockAccount(keybase, "test3")
-	require.NoError(t, err)
+	require.NoError(s.T(), err)
 
 	signer1 := Signer{
 		keyName:        "test1",
@@ -102,38 +97,35 @@ func TestGetSmartAccountTxSigner(t *testing.T) {
 			expIs:   false,
 		},
 	} {
-		sigTx, err := prepareTx(ctx, keybase, tc.msgs, tc.signers, mockChainID, true)
-		require.NoError(t, err)
+		sigTx, err := prepareTx(s.ctx, keybase, tc.msgs, tc.signers, mockChainID, true)
+		require.NoError(s.T(), err)
 
-		signerAcc, err := smartaccount.GetSmartAccountTxSigner(ctx, sigTx, app.SaKeeper)
+		signerAcc, err := smartaccount.GetSmartAccountTxSigner(s.ctx, sigTx, s.App.SaKeeper)
 		if tc.err {
-			require.Error(t, err)
+			require.Error(s.T(), err)
 		} else {
-			require.NoError(t, err)
+			require.NoError(s.T(), err)
 		}
 
 		if tc.expIs {
-			require.NotEqual(t, (*typesv1.SmartAccount)(nil), signerAcc)
+			require.NotEqual(s.T(), (*typesv1.SmartAccount)(nil), signerAcc)
 		} else {
-			require.Equal(t, (*typesv1.SmartAccount)(nil), signerAcc)
+			require.Equal(s.T(), (*typesv1.SmartAccount)(nil), signerAcc)
 		}
 	}
 }
 
-func TestGetValidActivateAccountMessage(t *testing.T) {
-	var (
-		app     = tests.Setup(t, false)
-		ctx     = app.NewContext(false, tmproto.Header{})
-		keybase = keyring.NewInMemory(app.AppCodec())
-	)
+func (s *TestSuite) TestGetValidActivateAccountMessage() {
+
+	keybase := keyring.NewInMemory(s.App.AppCodec())
 
 	acc1, err := makeMockAccount(keybase, "test1")
-	require.NoError(t, err)
-	app.AccountKeeper.SetAccount(ctx, acc1)
+	require.NoError(s.T(), err)
+	s.App.AccountKeeper.SetAccount(s.ctx, acc1)
 
 	acc2, err := makeMockAccount(keybase, "test2")
-	require.NoError(t, err)
-	app.AccountKeeper.SetAccount(ctx, acc2)
+	require.NoError(s.T(), err)
+	s.App.AccountKeeper.SetAccount(s.ctx, acc2)
 
 	signer1 := Signer{
 		keyName:        "test1",
@@ -202,67 +194,60 @@ func TestGetValidActivateAccountMessage(t *testing.T) {
 			err:     true,
 		},
 	} {
-		sigTx, err := prepareTx(ctx, keybase, tc.msgs, tc.signers, mockChainID, true)
-		require.NoError(t, err)
+		sigTx, err := prepareTx(s.ctx, keybase, tc.msgs, tc.signers, mockChainID, true)
+		require.NoError(s.T(), err)
 
 		aaMsg, err := smartaccount.GetValidActivateAccountMessage(sigTx)
 		if tc.err {
-			require.Error(t, err)
+			require.Error(s.T(), err)
 		} else {
-			require.NoError(t, err)
+			require.NoError(s.T(), err)
 		}
 
 		if tc.expIs {
-			require.NotEqual(t, (*typesv1.MsgActivateAccount)(nil), aaMsg)
+			require.NotEqual(s.T(), (*typesv1.MsgActivateAccount)(nil), aaMsg)
 		} else {
-			require.Equal(t, (*typesv1.MsgActivateAccount)(nil), aaMsg)
+			require.Equal(s.T(), (*typesv1.MsgActivateAccount)(nil), aaMsg)
 		}
 	}
 }
 
-func TestSetPubKeyDecorator(t *testing.T) {
-	var (
-		app     = tests.Setup(t, false)
-		ctx     = app.NewContext(false, tmproto.Header{})
-		keybase = keyring.NewInMemory(app.AppCodec())
-	)
+func (s *TestSuite) TestSetPubKeyDecorator() {
+
+	keybase := keyring.NewInMemory(s.App.AppCodec())
 
 	acc, pubKey, err := helper.GenerateInActivateAccount(
-		app,
-		ctx,
-		helper.WasmPath1+"base.wasm",
+		s.App,
+		s.ctx,
 		helper.DefaultPubKey,
 		helper.DefaultCodeID,
 		helper.DefaultSalt,
 		helper.DefaultMsg,
 	)
-	require.NoError(t, err)
+	require.NoError(s.T(), err)
 	dPubKey, err := typesv1.PubKeyDecode(pubKey)
-	require.NoError(t, err)
-	err = helper.AddNewSmartAccount(app, ctx, acc.GetAddress().String(), dPubKey, 0)
-	require.NoError(t, err)
+	require.NoError(s.T(), err)
 
 	acc1, _, err := helper.GenerateInActivateAccount(
-		app,
-		ctx,
-		helper.WasmPath1+"base.wasm",
+		s.App,
+		s.ctx,
 		helper.DefaultPubKey,
-		2,
+		helper.DefaultCodeID,
 		[]byte("test 2"),
 		helper.DefaultMsg,
 	)
-	require.NoError(t, err)
-	err = helper.AddNewSmartAccount(app, ctx, acc1.GetAddress().String(), nil, 0)
-	require.NoError(t, err)
+	require.NoError(s.T(), err)
+	err = helper.AddNewSmartAccount(s.App, s.ctx, acc1.GetAddress().String(), nil, 0)
+	require.NoError(s.T(), err)
 
 	acc1Signer, err := makeMockAccount(keybase, "test1")
-	require.NoError(t, err)
+	require.NoError(s.T(), err)
 	err = acc1Signer.SetPubKey(dPubKey)
-	require.NoError(t, err)
+	require.NoError(s.T(), err)
 
 	acc2, err := makeMockAccount(keybase, "test2")
-	require.NoError(t, err)
-	app.AccountKeeper.SetAccount(ctx, acc2)
+	require.NoError(s.T(), err)
+	s.App.AccountKeeper.SetAccount(s.ctx, acc2)
 
 	signer1 := Signer{
 		keyName:        "test1",
@@ -283,6 +268,7 @@ func TestSetPubKeyDecorator(t *testing.T) {
 		msgs    []sdk.Msg
 		signers []Signer
 		err     bool
+		isSa    bool
 	}{
 		{
 			desc: "is ActivateAccount tx",
@@ -310,6 +296,7 @@ func TestSetPubKeyDecorator(t *testing.T) {
 			},
 			signers: []Signer{signer1},
 			err:     false,
+			isSa:    true,
 		},
 		{
 			desc: "not ActivateAccount nor SmartAccount tx, just normal tx",
@@ -333,44 +320,59 @@ func TestSetPubKeyDecorator(t *testing.T) {
 			err:     true,
 		},
 	} {
-		sigTx, err := prepareTx(ctx, keybase, tc.msgs, tc.signers, mockChainID, true)
-		require.NoError(t, err)
+		if tc.isSa {
+			err = helper.AddNewSmartAccount(s.App, s.ctx, acc.GetAddress().String(), dPubKey, 0)
+			require.NoError(s.T(), err)
+		}
 
-		sad := smartaccount.NewSetPubKeyDecorator(app.SaKeeper)
-		_, err = sad.AnteHandle(ctx, sigTx, false, DefaultAnteHandler())
+		sigTx, err := prepareTx(s.ctx, keybase, tc.msgs, tc.signers, mockChainID, true)
+		require.NoError(s.T(), err)
+
+		sad := smartaccount.NewSetPubKeyDecorator(s.App.SaKeeper)
+		_, err = sad.AnteHandle(s.ctx, sigTx, false, DefaultAnteHandler())
 
 		if tc.err {
-			require.Error(t, err)
+			require.Error(s.T(), err)
 		} else {
-			require.NoError(t, err)
+			require.NoError(s.T(), err)
 		}
 	}
 }
 
-func TestSmartAccountDecoratorForTx(t *testing.T) {
-	var (
-		ctx, app = helper.SetupGenesisTest(t)
-		keybase  = keyring.NewInMemory(app.AppCodec())
-	)
+func (s *TestSuite) TestSmartAccountDecoratorForTx() {
+
+	keybase := keyring.NewInMemory(s.App.AppCodec())
+
+	params := typesv1.Params{
+		WhitelistCodeID: []*typesv1.CodeID{
+			{CodeID: 1, Status: true},
+		},
+		DisableMsgsList: []string{
+			"/cosmwasm.wasm.v1.MsgUpdateAdmin",
+			"/cosmwasm.wasm.v1.MsgClearAdmin",
+		},
+		MaxGasExecute: 2000000,
+	}
+	err := s.App.SaKeeper.SetParams(s.ctx, params)
+	require.NoError(s.T(), err)
 
 	// base smartaccount
 	acc1, pubKey1, err := helper.GenerateInActivateAccount(
-		app,
-		ctx,
-		helper.WasmPath1+"base.wasm",
+		s.App,
+		s.ctx,
 		helper.DefaultPubKey,
 		helper.DefaultCodeID,
 		helper.DefaultSalt,
 		helper.DefaultMsg,
 	)
-	require.NoError(t, err)
+	require.NoError(s.T(), err)
 	dPubKey1, err := typesv1.PubKeyDecode(pubKey1)
-	require.NoError(t, err)
+	require.NoError(s.T(), err)
 
 	acc1Signer, err := makeMockAccount(keybase, "test1")
-	require.NoError(t, err)
+	require.NoError(s.T(), err)
 	err = acc1Signer.SetPubKey(dPubKey1)
-	require.NoError(t, err)
+	require.NoError(s.T(), err)
 
 	msg := &typesv1.MsgActivateAccount{
 		AccountAddress: acc1.GetAddress().String(),
@@ -380,13 +382,13 @@ func TestSmartAccountDecoratorForTx(t *testing.T) {
 		PubKey:         pubKey1,
 	}
 
-	msgServer := keeper.NewMsgServerImpl(app.SaKeeper)
+	msgServer := keeper.NewMsgServerImpl(s.App.SaKeeper)
 	// activate account
-	_, err = msgServer.ActivateAccount(sdk.WrapSDKContext(ctx), msg)
-	require.NoError(t, err)
+	_, err = msgServer.ActivateAccount(sdk.WrapSDKContext(s.ctx), msg)
+	require.NoError(s.T(), err)
 
 	acc2, err := makeMockAccount(keybase, "test2")
-	require.NoError(t, err)
+	require.NoError(s.T(), err)
 
 	signer1 := Signer{
 		keyName:        "test1",
@@ -431,7 +433,7 @@ func TestSmartAccountDecoratorForTx(t *testing.T) {
 			err:     false,
 		},
 		{
-			desc: "error, SmartAccount tx not support simulate",
+			desc: "SmartAccount tx support simulate",
 			msgs: []sdk.Msg{
 				banktypes.NewMsgSend(acc1.GetAddress(), acc2.GetAddress(), sdk.NewCoins()),
 				&wasmtypes.MsgExecuteContract{
@@ -442,122 +444,83 @@ func TestSmartAccountDecoratorForTx(t *testing.T) {
 			},
 			signers:  []Signer{signer1},
 			simulate: true,
-			err:      true,
+			err:      false,
 		},
 		{
-			desc: "error, tx has after-execute message but not call to linked contract",
+			desc: "error, not allowed msgs",
 			msgs: []sdk.Msg{
 				banktypes.NewMsgSend(acc1.GetAddress(), acc2.GetAddress(), sdk.NewCoins()),
-				&wasmtypes.MsgExecuteContract{
-					Sender:   acc1.GetAddress().String(),
-					Contract: acc2.GetAddress().String(),
-				},
-			},
-			signers: []Signer{signer1},
-			err:     true,
-		},
-		{
-			desc: "invalid smartaccount tx, after execute message data not compatible with tx messages",
-			msgs: []sdk.Msg{
-				banktypes.NewMsgSend(acc1.GetAddress(), acc2.GetAddress(), sdk.NewCoins()),
-				&wasmtypes.MsgExecuteContract{
-					Sender:   acc1.GetAddress().String(),
-					Contract: acc1.GetAddress().String(),
-					Msg:      []byte("{\"after_execute\":{\"msgs\":[]}}"),
-				},
-			},
-			signers: []Signer{signer1},
-			err:     true,
-		},
-		{
-			desc: "error, not SmartAccount tx, validateMessage not found",
-			msgs: []sdk.Msg{
-				banktypes.NewMsgSend(acc1.GetAddress(), acc2.GetAddress(), sdk.NewCoins()),
-			},
-			signers: []Signer{signer1},
-			err:     true,
-		},
-		{
-			desc: "error, not SmartAccount tx, invalid ValidateMessage",
-			msgs: []sdk.Msg{
-				banktypes.NewMsgSend(acc1.GetAddress(), acc2.GetAddress(), sdk.NewCoins()),
-				&wasmtypes.MsgExecuteContract{
-					Sender:   acc1.GetAddress().String(),
-					Contract: acc1.GetAddress().String(),
-					Msg:      []byte("{\"execute\":{\"msgs\":[{\"type_url\":\"/cosmos.bank.v1beta1.MsgSend\",\"value\":\"{\\\"from_address\\\":\\\"" + acc1.GetAddress().String() + "\\\",\\\"to_address\\\":\\\"" + acc2.GetAddress().String() + "\\\",\\\"amount\\\":[]}\"}]}}"),
+				&wasmtypes.MsgUpdateAdmin{
+					Sender:   acc1.Address,
+					NewAdmin: acc1.Address,
+					Contract: "cosmos1ztwdgj227nzrkgv0gxt0d3fx5q905ltjzwv5t9",
 				},
 			},
 			signers: []Signer{signer1},
 			err:     true,
 		},
 	} {
-		sigTx, err := prepareTx(ctx, keybase, tc.msgs, tc.signers, mockChainID, true)
-		require.NoError(t, err)
+		sigTx, err := prepareTx(s.ctx, keybase, tc.msgs, tc.signers, mockChainID, true)
+		require.NoError(s.T(), err)
 
-		satd := smartaccount.NewSmartAccountDecorator(app.SaKeeper)
-		_, err = satd.AnteHandle(ctx, sigTx, tc.simulate, DefaultAnteHandler())
+		satd := smartaccount.NewSmartAccountDecorator(s.App.SaKeeper)
+		_, err = satd.AnteHandle(s.ctx, sigTx, tc.simulate, DefaultAnteHandler())
 
 		if tc.err {
-			require.Error(t, err)
+			require.Error(s.T(), err)
 		} else {
-			require.NoError(t, err)
+			require.NoError(s.T(), err)
 		}
 	}
 }
 
-func TestSmartAccountDecoratorForActivation(t *testing.T) {
+func (s *TestSuite) TestSmartAccountDecoratorForActivation() {
 
 	/* =================== test activate account message flow =================== */
-
-	var (
-		ctx, app = helper.SetupGenesisTest(t)
-		keybase  = keyring.NewInMemory(app.AppCodec())
-	)
+	keybase := keyring.NewInMemory(s.App.AppCodec())
 
 	// base smartaccount
 	acc1, pubKey1, err := helper.GenerateInActivateAccount(
-		app,
-		ctx,
-		helper.WasmPath1+"base.wasm",
+		s.App,
+		s.ctx,
 		helper.DefaultPubKey,
 		helper.DefaultCodeID,
 		helper.DefaultSalt,
 		helper.DefaultMsg,
 	)
-	require.NoError(t, err)
+	require.NoError(s.T(), err)
 	dPubKey1, err := typesv1.PubKeyDecode(pubKey1)
-	require.NoError(t, err)
-	app.AccountKeeper.SetAccount(ctx, acc1)
+	require.NoError(s.T(), err)
+	s.App.AccountKeeper.SetAccount(s.ctx, acc1)
 
 	acc1Signer, err := makeMockAccount(keybase, "test1")
-	require.NoError(t, err)
+	require.NoError(s.T(), err)
 	err = acc1Signer.SetPubKey(dPubKey1)
-	require.NoError(t, err)
+	require.NoError(s.T(), err)
 
 	acc2, err := makeMockAccount(keybase, "test2")
-	require.NoError(t, err)
+	require.NoError(s.T(), err)
 
 	// setup module account
 	acc3, pubKey3, err := helper.GenerateInActivateAccount(
-		app,
-		ctx,
-		helper.WasmPath1+"base.wasm",
+		s.App,
+		s.ctx,
 		helper.DefaultPubKey,
-		2,
+		helper.DefaultCodeID,
 		[]byte("account3"),
 		helper.DefaultMsg,
 	)
-	require.NoError(t, err)
+	require.NoError(s.T(), err)
 	dPubKey3, err := typesv1.PubKeyDecode(pubKey3)
-	require.NoError(t, err)
+	require.NoError(s.T(), err)
 
 	acc3Signer, err := makeMockAccount(keybase, "test3")
-	require.NoError(t, err)
+	require.NoError(s.T(), err)
 	err = acc3Signer.SetPubKey(dPubKey3)
-	require.NoError(t, err)
+	require.NoError(s.T(), err)
 	moduleAcc3 := authtypes.NewModuleAccount(acc3, "test", "hello")
-	app.AccountKeeper.SetAccount(ctx, moduleAcc3)
-	require.NoError(t, err)
+	s.App.AccountKeeper.SetAccount(s.ctx, moduleAcc3)
+	require.NoError(s.T(), err)
 
 	signer1 := Signer{
 		keyName:        "test1",
@@ -636,16 +599,167 @@ func TestSmartAccountDecoratorForActivation(t *testing.T) {
 			err:     true,
 		},
 	} {
-		sigTx, err := prepareTx(ctx, keybase, tc.msgs, tc.signers, mockChainID, true)
-		require.NoError(t, err)
+		sigTx, err := prepareTx(s.ctx, keybase, tc.msgs, tc.signers, mockChainID, true)
+		require.NoError(s.T(), err)
 
-		satd := smartaccount.NewSmartAccountDecorator(app.SaKeeper)
-		_, err = satd.AnteHandle(ctx, sigTx, tc.simulate, DefaultAnteHandler())
+		satd := smartaccount.NewSmartAccountDecorator(s.App.SaKeeper)
+		_, err = satd.AnteHandle(s.ctx, sigTx, tc.simulate, DefaultAnteHandler())
 
 		if tc.err {
-			require.Error(t, err)
+			require.Error(s.T(), err)
 		} else {
-			require.NoError(t, err)
+			require.NoError(s.T(), err)
+		}
+	}
+}
+
+func (s *TestSuite) TestValidateAuthzTxDecorator() {
+
+	keybase := keyring.NewInMemory(s.App.AppCodec())
+
+	newAcc, pubKey, err := helper.GenerateInActivateAccount(
+		s.App,
+		s.ctx,
+		helper.DefaultPubKey,
+		helper.DefaultCodeID,
+		helper.DefaultSalt,
+		helper.DefaultMsg,
+	)
+	require.NoError(s.T(), err)
+	dPubKey, err := typesv1.PubKeyDecode(pubKey)
+	require.NoError(s.T(), err)
+
+	msgServer := keeper.NewMsgServerImpl(s.App.SaKeeper)
+
+	/* ======== activate smart account ======== */
+	msg := &typesv1.MsgActivateAccount{
+		AccountAddress: newAcc.Address,
+		CodeID:         helper.DefaultCodeID,
+		Salt:           helper.DefaultSalt,
+		InitMsg:        helper.DefaultMsg,
+		PubKey:         pubKey,
+	}
+
+	// activate account
+	res, err := msgServer.ActivateAccount(sdk.WrapSDKContext(s.ctx), msg)
+	require.NoError(s.T(), err)
+	require.Equal(s.T(), newAcc.String(), res.Address)
+
+	accSigner, err := makeMockAccount(keybase, "test")
+	require.NoError(s.T(), err)
+	err = accSigner.SetPubKey(dPubKey)
+	require.NoError(s.T(), err)
+	s.App.AccountKeeper.SetAccount(s.ctx, accSigner)
+
+	signer := Signer{
+		keyName:        "test",
+		acc:            accSigner,
+		overrideAccNum: nil,
+		overrideSeq:    nil,
+	}
+
+	acc1, err := makeMockAccount(keybase, "test1")
+	require.NoError(s.T(), err)
+
+	anyBankSend, err := codectypes.NewAnyWithValue(banktypes.NewMsgSend(newAcc.GetAddress(), acc1.GetAddress(), sdk.Coins{}))
+	require.NoError(s.T(), err)
+
+	anyMsgExec, err := codectypes.NewAnyWithValue(&authz.MsgExec{
+		Grantee: signer.acc.GetAddress().String(),
+		Msgs: []*codectypes.Any{
+			anyBankSend,
+		},
+	})
+	require.NoError(s.T(), err)
+
+	for _, tc := range []struct {
+		desc         string
+		msgs         []sdk.Msg
+		signers      []Signer
+		setGas       bool
+		gasRemaining bool
+		err          bool
+	}{
+		{
+			desc: "validate one level nested smartaccount success",
+			msgs: []sdk.Msg{
+				&authz.MsgExec{
+					Grantee: signer.acc.GetAddress().String(),
+					Msgs:    []*codectypes.Any{anyBankSend},
+				},
+			},
+			signers: []Signer{signer},
+			err:     false,
+		},
+		{
+			desc: "validate multi level nested smartaccount success",
+			msgs: []sdk.Msg{
+				&authz.MsgExec{
+					Grantee: signer.acc.GetAddress().String(),
+					Msgs: []*codectypes.Any{
+						anyMsgExec,
+					},
+				},
+			},
+			signers: []Signer{signer},
+			err:     false,
+		},
+		{
+			desc: "panic, validate nested smartaccount fail with out of gas",
+			msgs: []sdk.Msg{
+				&authz.MsgExec{
+					Grantee: signer.acc.GetAddress().String(),
+					Msgs: []*codectypes.Any{
+						anyMsgExec,
+					},
+				},
+			},
+			signers: []Signer{signer},
+			setGas:  true,
+			err:     true,
+		},
+		{
+			desc: "panic, validate nested smartaccount fail with not enough gas remaining",
+			msgs: []sdk.Msg{
+				&authz.MsgExec{
+					Grantee: signer.acc.GetAddress().String(),
+					Msgs: []*codectypes.Any{
+						anyMsgExec,
+					},
+				},
+			},
+			signers:      []Signer{signer},
+			gasRemaining: true,
+			err:          true,
+		},
+	} {
+		if tc.setGas {
+			params := typesv1.Params{
+				MaxGasExecute: 1000,
+			}
+			err = s.App.SaKeeper.SetParams(s.ctx, params)
+			require.NoError(s.T(), err)
+		}
+
+		if tc.gasRemaining {
+			gasRemaining := uint64(1000)
+			s.App.SaKeeper.SetGasRemaining(s.ctx, gasRemaining)
+		}
+
+		sigTx, err := prepareTx(s.ctx, keybase, tc.msgs, tc.signers, mockChainID, true)
+		require.NoError(s.T(), err)
+
+		saat := smartaccount.NewValidateAuthzTxDecorator(s.App.SaKeeper)
+
+		if !tc.err {
+			require.NotPanics(s.T(), func() {
+				_, err = saat.AnteHandle(s.ctx, sigTx, false, DefaultAnteHandler())
+				require.NoError(s.T(), err)
+			})
+		} else {
+			require.Panics(s.T(), func() {
+				_, err = saat.AnteHandle(s.ctx, sigTx, false, DefaultAnteHandler())
+			})
 		}
 	}
 }

@@ -1,15 +1,6 @@
 name: go-test
 on:
-  push:
-    branches:
-      - dev
-      - serenity
-      - euphoria
-  pull_request:
-permissions:
-  contents: read
-  # Optional: allow read access to pull request. Use with `only-new-issues` option.
-  # pull-requests: read
+  workflow_call:
 jobs:
   build:
     runs-on: ubuntu-latest

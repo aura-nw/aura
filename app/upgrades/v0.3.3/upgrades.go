@@ -17,7 +17,7 @@ func CreateUpgradeHandler(
 		// Refs:
 		// - https://docs.cosmos.network/master/building-modules/upgrade.html#registering-migrations
 		// - https://docs.cosmos.network/master/migrations/chain-upgrade-guide-044.html#chain-upgrade
-		
+
 		// transfer module consensus version has been bumped to 2
 		return mm.RunMigrations(ctx, configurator, vm)
 	}

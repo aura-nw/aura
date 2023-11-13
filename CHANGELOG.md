@@ -37,12 +37,57 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 ## Unreleased
 
-## [v0.4.5] - 2023-05-30
+## [v0.7.1] - 2023-10-18
+Update smartaccount
+
+### Changes
+- Change entrypoint call verify to sudo
+- Use post handle to verify valid of tx from smartaccount
+- Verify all smartaccount nested in the authz
+
+## [v0.7.0] - 2023-09-22
+
+Upgrade sdk to v0.47.4
+
+### Changes
+- The custom auth/vesting is deprecated - use sdk auth/vesting instead
+- The ibc-middleware is deprecated - use sdk ibc-hooks instead
+- The Params module is deprecated, each module now handles its own parameters
+- Restructure proto, cmd
+- Add types version for smartaccount module
+- Upgrade testenv
+
+### Features
+- New PostHandler
+- Gov proposals can be handled through the deprecated Params module or directly to the target module
+
+## [v0.6.1] - 2023-07-07
 
 ### Improvements
-- Fix ibc security, bump ibc-go from 3.3.0 to 4.3.1
-- Fix wasmd security, bump wasmvm from 1.2.1 to 1.2.3
-- Bump go version to 1.19, force to use go1.19 via makefile
+- Add config swagger
+- Change before check tx of smart account from query to execution
+
+## [v0.6.0] - 2023-06-30
+
+### Features
+- Support module SmartAccount
+
+## [v0.5.2] - 2023-06-19
+
+### Improvements
+- Fix bug create vesting account
+
+## [v0.5.1] - 2023-04-19
+
+### Improvements
+- Applying the patch of wasmvm, upgrade from v1.2.1 to v1.2.3
+- Add makefile support ledger
+
+## [v0.5.0] - 2023-04-18
+
+### Features
+- Implement ibc-middleware support GMP protocol of Axelar network
+- Upgrade wasmd from 0.29.1 to 0.31.0
 
 ## [v0.4.4] - 2023-03-13
 

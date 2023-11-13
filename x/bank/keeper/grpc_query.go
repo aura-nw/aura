@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/bank/types"
 	"google.golang.org/grpc/codes"
@@ -22,7 +23,7 @@ func (k BaseKeeper) TotalSupply(ctx context.Context, req *types.QueryTotalSupply
 		excludeTotalSupply = excludeTotalSupply.Add(excludeCoin)
 	}
 
-	totalSupply = totalSupply.Sub(excludeTotalSupply)
+	totalSupply = totalSupply.Sub(excludeTotalSupply...)
 
 	return &types.QueryTotalSupplyResponse{Supply: totalSupply, Pagination: pageRes}, nil
 }

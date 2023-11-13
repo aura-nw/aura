@@ -1,6 +1,9 @@
 package feegrant
 
 import (
+	"time"
+
+	errorsmod "cosmossdk.io/errors"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -20,7 +23,7 @@ var _ types.UnpackInterfacesMessage = (*AllowedContractAllowance)(nil)
 func NewAllowedContractAllowance(allowance feegrant.FeeAllowanceI, allowedAddress []string) (*AllowedContractAllowance, error) {
 	msg, ok := allowance.(proto.Message)
 	if !ok {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrPackAny, "cannot proto marshal %T", msg)
+		return nil, errorsmod.Wrapf(sdkerrors.ErrPackAny, "cannot proto marshal %T", msg)
 	}
 	any, err := types.NewAnyWithValue(msg)
 	if err != nil {
@@ -40,7 +43,7 @@ func (a *AllowedContractAllowance) UnpackInterfaces(unpacker types.AnyUnpacker) 
 
 func (a *AllowedContractAllowance) Accept(ctx sdk.Context, fee sdk.Coins, msgs []sdk.Msg) (remove bool, err error) {
 	if !a.allContractAllowed(ctx, msgs) {
-		return false, sdkerrors.Wrap(ErrAddressNotAllowed, "address does not exist in allowed addresses")
+		return false, errorsmod.Wrap(ErrAddressNotAllowed, "address does not exist in allowed addresses")
 	}
 
 	allowance, err := a.GetAllowance()
@@ -59,10 +62,10 @@ func (a *AllowedContractAllowance) Accept(ctx sdk.Context, fee sdk.Coins, msgs [
 
 func (a *AllowedContractAllowance) ValidateBasic() error {
 	if a.Allowance == nil {
-		return sdkerrors.Wrap(feegrant.ErrNoAllowance, "allowance should not be empty")
+		return errorsmod.Wrap(feegrant.ErrNoAllowance, "allowance should not be empty")
 	}
 	if len(a.AllowedAddress) == 0 {
-		return sdkerrors.Wrap(feegrant.ErrNoMessages, "allowed address shouldn't be empty")
+		return errorsmod.Wrap(feegrant.ErrNoMessages, "allowed address shouldn't be empty")
 	}
 
 	allowance, err := a.GetAllowance()
@@ -77,7 +80,7 @@ func (a *AllowedContractAllowance) ValidateBasic() error {
 func (a *AllowedContractAllowance) GetAllowance() (feegrant.FeeAllowanceI, error) {
 	allowance, ok := a.Allowance.GetCachedValue().(feegrant.FeeAllowanceI)
 	if !ok {
-		return nil, sdkerrors.Wrap(feegrant.ErrNoAllowance, "failed to get allowance")
+		return nil, errorsmod.Wrap(feegrant.ErrNoAllowance, "failed to get allowance")
 	}
 
 	return allowance, nil
@@ -116,8 +119,17 @@ func (a *AllowedContractAllowance) SetAllowance(allowance feegrant.FeeAllowanceI
 	var err error
 	a.Allowance, err = types.NewAnyWithValue(allowance.(proto.Message))
 	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrPackAny, "cannot proto marshal %T", allowance)
+		return errorsmod.Wrapf(sdkerrors.ErrPackAny, "cannot proto marshal %T", allowance)
 	}
 
 	return nil
+}
+
+// ExpiresAt returns the expiry time of the AllowedMsgAllowance.
+func (a AllowedContractAllowance) ExpiresAt() (*time.Time, error) {
+	allowance, err := a.GetAllowance()
+	if err != nil {
+		return nil, err
+	}
+	return allowance.ExpiresAt()
 }

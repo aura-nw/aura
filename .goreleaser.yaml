@@ -28,6 +28,8 @@ builds:
     tags:
       - netgo
       - muslc
+changelog:
+  use: github-native
 release:
   prerelease: auto
 checksum:

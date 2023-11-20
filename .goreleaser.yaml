@@ -28,40 +28,8 @@ builds:
     tags:
       - netgo
       - muslc
-
 changelog:
-  sort: asc
-  templates:
-    release: |
-      # {{ .Tag }}
-
-      {{ .Date.Format "2006-01-02" }}
-
-      {{ with .Commits }}
-      ## Commits
-
-      {{ range . }}
-      - {{ .Subject }}
-      {{ end }}
-      {{ end }}
-
-      {{ with .PullRequests }}
-      ## Pull Requests
-
-      {{ range . }}
-      - {{ .Title }} (#{{ .Number }})
-      {{ end }}
-      {{ end }}
-
-      {{ if .Notes }}
-
-      ## Notes
-
-      {{ .Notes }}
-
-      {{ end }}
-
-    commit: "{{ .Hash }} {{ .Subject }}"
+  use: github-native
 release:
   prerelease: auto
 checksum:

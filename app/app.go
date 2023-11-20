@@ -15,6 +15,7 @@ import (
 	v601 "github.com/aura-nw/aura/app/upgrades/v0.6.1"
 	v700 "github.com/aura-nw/aura/app/upgrades/v0.7.0"
 	v701 "github.com/aura-nw/aura/app/upgrades/v0.7.1"
+	v702 "github.com/aura-nw/aura/app/upgrades/v0.7.2"
 
 	"github.com/aura-nw/aura/app/internal"
 
@@ -124,6 +125,7 @@ import (
 	authzkeeper "github.com/cosmos/cosmos-sdk/x/authz/keeper"
 	authzmodule "github.com/cosmos/cosmos-sdk/x/authz/module"
 
+	wasmapp "github.com/CosmWasm/wasmd/app"
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
@@ -533,7 +535,7 @@ func New(
 
 	// The last arguments can contain custom message handlers, and custom query handlers,
 	// if we want to allow any custom callbacks
-	supportedFeatures := "iterator,staking,stargate"
+	availableCapabilities := strings.Join(wasmapp.AllCapabilities(), ",")
 	wasmOpts := GetWasmOpts(appOpts)
 	app.WasmKeeper = wasmkeeper.NewKeeper(
 		appCodec,
@@ -551,7 +553,7 @@ func New(
 		app.BaseApp.GRPCQueryRouter(),
 		wasmDir,
 		wasmConfig,
-		supportedFeatures,
+		availableCapabilities,
 		govModAddress,
 		wasmOpts...,
 	)
@@ -579,9 +581,11 @@ func New(
 		govRouter.AddRoute(wasmtypes.RouterKey, wasm.NewWasmProposalHandler(app.WasmKeeper, enabledProposals)) //nolint:staticcheck // still use same ver 0.41.0 of wasmd
 	}
 
+	customGovConfig := govtypes.DefaultConfig()
+	customGovConfig.MaxMetadataLen = 2000
 	app.GovKeeper = govkeeper.NewKeeper(
 		appCodec, keys[govtypes.StoreKey], app.AccountKeeper, app.BankKeeper,
-		stakingKeeper, app.BaseApp.MsgServiceRouter(), govtypes.DefaultConfig(), govModAddress,
+		stakingKeeper, app.BaseApp.MsgServiceRouter(), customGovConfig, govModAddress,
 	)
 
 	// Set legacy router for backwards compatibility with gov v1beta1
@@ -1122,6 +1126,11 @@ func (app *App) setupUpgradeHandlers() {
 		),
 	)
 
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v702.UpgradeName,
+		v702.CreateUpgradeHandler(app.mm, app.configurator),
+	)
+
 	// When a planned update height is reached, the old binary will panic
 	// writing on disk the height and name of the update that triggered it
 	// This will read that value, and execute the preparations for the upgrade.
@@ -1195,6 +1204,9 @@ func (app *App) setupUpgradeHandlers() {
 				},
 			}
 		}
+
+	case v702.UpgradeName:
+		// no store upgrades in v0.7.2
 	}
 
 	if storeUpgrades != nil {

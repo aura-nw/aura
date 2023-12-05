@@ -37,6 +37,14 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 ## Unreleased
 
+## [v0.7.2] - 2023-11-20
+
+### Features
+- Support wasmvm capabilities:
+    - "cosmwasm_1_1"
+    - "cosmwasm_1_2"
+    - "cosmwasm_1_3"
+
 ## [v0.7.1] - 2023-10-18
 Update smartaccount
 

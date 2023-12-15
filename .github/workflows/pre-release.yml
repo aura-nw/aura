@@ -27,7 +27,7 @@ jobs:
           VER=$(cat .VERSION)-${{ github.head_ref || github.ref_name }}
           echo "VERSION=$VER" >> $GITHUB_ENV
       
-      - uses: mukunku/tag-exists-action@v1.4.0
+      - uses: mukunku/tag-exists-action@v1.5.0
         id: checkTag
         with: 
           tag: ${{ env.VERSION }}

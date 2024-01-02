@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	apphelpers "github.com/aura-nw/aura/app/helpers"
+
 	errorsmod "cosmossdk.io/errors"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	sakeeper "github.com/aura-nw/aura/x/smartaccount/keeper"
@@ -266,11 +268,9 @@ func sudoWithGasLimit(
 	cacheCtx, write := ctx.CacheContext()
 	cacheCtx = cacheCtx.WithGasMeter(sdk.NewGasMeter(maxGas))
 
-	if _, err := contractKeeper.Sudo(
-		cacheCtx,
-		contractAddr, // contract address
-		msg,
-	); err != nil {
+	var err error
+	apphelpers.SudoContract(contractKeeper, cacheCtx, contractAddr, msg, &err)
+	if err != nil {
 		return maxGas, err
 	}
 

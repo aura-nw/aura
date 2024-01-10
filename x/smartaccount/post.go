@@ -27,6 +27,12 @@ func (d AfterTxDecorator) PostHandle(ctx sdk.Context, tx sdk.Tx, simulate, succe
 		return ctx, errorsmod.Wrap(types.ErrInvalidTx, "not a FeeTx")
 	}
 
+	// skip checkTx and re-checkTx
+	// AfterTx can be considered as part of `runMsgs` process
+	if ctx.IsCheckTx() || ctx.IsReCheckTx() {
+		return next(ctx, tx, simulate, success)
+	}
+
 	// load the signer address, which we determined during the AnteHandler
 	//
 	// if not found, it means this tx is simply not an AA tx. we skip
@@ -95,6 +101,12 @@ func (d *PostValidateAuthzTxDecorator) PostHandle(
 	success bool,
 	next sdk.PostHandler,
 ) (newCtx sdk.Context, err error) {
+
+	// skip checkTx and re-checkTx
+	// PostValidateAuthzTx can be considered as part of `runMsgs` process
+	if ctx.IsCheckTx() || ctx.IsReCheckTx() {
+		return next(ctx, tx, simulate, success)
+	}
 
 	params := d.SaKeeper.GetParams(ctx)
 	maxGas := params.MaxGasExecute

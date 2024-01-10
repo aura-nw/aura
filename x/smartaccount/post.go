@@ -56,11 +56,15 @@ func (d AfterTxDecorator) PostHandle(ctx sdk.Context, tx sdk.Tx, simulate, succe
 		FeeGranter: feeTx.FeeGranter().String(),
 	}
 
+	emptyAuthzInfo := types.AuthzInfo{
+		Grantee: "",
+	}
+
 	afterExecuteMessage, err := json.Marshal(&types.AccountMsg{
 		AfterExecuteTx: &types.AfterExecuteTx{
-			Msgs:     msgsData,
-			CallInfo: callInfo,
-			IsAuthz:  false,
+			Msgs:      msgsData,
+			CallInfo:  callInfo,
+			AuthzInfo: emptyAuthzInfo,
 		},
 	})
 	if err != nil {

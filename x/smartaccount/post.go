@@ -27,6 +27,11 @@ func (d AfterTxDecorator) PostHandle(ctx sdk.Context, tx sdk.Tx, simulate, succe
 		return ctx, errorsmod.Wrap(types.ErrInvalidTx, "not a FeeTx")
 	}
 
+	// skip checkTx and re-checkTx
+	if ctx.IsCheckTx() || ctx.IsReCheckTx() {
+		return next(ctx, tx, simulate, success)
+	}
+
 	// load the signer address, which we determined during the AnteHandler
 	//
 	// if not found, it means this tx is simply not an AA tx. we skip
@@ -62,16 +67,14 @@ func (d AfterTxDecorator) PostHandle(ctx sdk.Context, tx sdk.Tx, simulate, succe
 		return ctx, err
 	}
 
-	params := d.saKeeper.GetParams(ctx)
-
-	// execute SA contract for after-execute transaction with limit gas
-	gasRemaining, err := sudoWithGasLimit(ctx, d.saKeeper.ContractKeeper, signerAddr, afterExecuteMessage, params.MaxGasExecute)
-	if err != nil {
+	// execute SA contract for after-execute transaction
+	if _, err := d.saKeeper.ContractKeeper.Sudo(
+		ctx,
+		signerAddr, // contract address
+		afterExecuteMessage,
+	); err != nil {
 		return ctx, err
 	}
-
-	// free gas remaining after validate smartaccount msgs
-	d.saKeeper.SetGasRemaining(ctx, gasRemaining)
 
 	return next(ctx, tx, simulate, success)
 }
@@ -96,16 +99,12 @@ func (d *PostValidateAuthzTxDecorator) PostHandle(
 	next sdk.PostHandler,
 ) (newCtx sdk.Context, err error) {
 
-	params := d.SaKeeper.GetParams(ctx)
-	maxGas := params.MaxGasExecute
-
-	if d.SaKeeper.HasGasRemaining(ctx) {
-		// if pre post handlers has used free gas, get the remaining
-		maxGas = d.SaKeeper.GetGasRemaining(ctx)
-		d.SaKeeper.DeleteGasRemaining(ctx)
+	// skip checkTx and re-checkTx
+	if ctx.IsCheckTx() || ctx.IsReCheckTx() {
+		return next(ctx, tx, simulate, success)
 	}
 
-	err = validateAuthzTx(ctx, d.SaKeeper, tx, maxGas, false)
+	err = validateAuthzTx(ctx, d.SaKeeper, tx, false)
 	if err != nil {
 		return ctx, err
 	}

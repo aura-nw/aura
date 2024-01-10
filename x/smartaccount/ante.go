@@ -400,11 +400,17 @@ func (d *ValidateAuthzTxDecorator) AnteHandle(
 		d.SaKeeper.DeleteGasRemaining(ctx)
 	}
 
+	cacheCtx, write := ctx.CacheContext()
+	cacheCtx = cacheCtx.WithGasMeter(sdk.NewGasMeter(maxGas))
+
 	// using gas for validate authz will not count to tx total used
-	err = validateAuthzTx(ctx, d.SaKeeper, tx, maxGas, true)
+	err = validateAuthzTx(cacheCtx, d.SaKeeper, tx, true)
 	if err != nil {
 		return ctx, err
 	}
+
+	write()
+	ctx.EventManager().EmitEvents(cacheCtx.EventManager().Events())
 
 	return next(ctx, tx, simulate)
 }
@@ -413,12 +419,8 @@ func validateAuthzTx(
 	ctx sdk.Context,
 	saKeeper sakeeper.Keeper,
 	tx sdk.Tx,
-	maxGas uint64,
 	isAnte bool,
 ) error {
-	cacheCtx, write := ctx.CacheContext()
-	cacheCtx = cacheCtx.WithGasMeter(sdk.NewGasMeter(maxGas))
-
 	for _, msg := range tx.GetMsgs() {
 		if msgExec, ok := msg.(*authz.MsgExec); ok {
 			msgs, err := msgExec.GetMessages()
@@ -426,15 +428,12 @@ func validateAuthzTx(
 				return err
 			}
 
-			err = validateNestedSmartAccountMsgs(cacheCtx, saKeeper, msgs, isAnte)
+			err = validateNestedSmartAccountMsgs(ctx, saKeeper, msgs, isAnte)
 			if err != nil {
 				return err
 			}
 		}
 	}
-
-	write()
-	ctx.EventManager().EmitEvents(cacheCtx.EventManager().Events())
 
 	return nil
 }

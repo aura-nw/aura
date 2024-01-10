@@ -174,11 +174,15 @@ func handleSmartAccountTx(
 		FeeGranter: feeTx.FeeGranter().String(),
 	}
 
+	emptyAuthzInfo := types.AuthzInfo{
+		Grantee: "",
+	}
+
 	preExecuteMessage, err := json.Marshal(&types.AccountMsg{
 		PreExecuteTx: &types.PreExecuteTx{
-			Msgs:     msgsData,
-			CallInfo: callInfo,
-			IsAuthz:  false,
+			Msgs:      msgsData,
+			CallInfo:  callInfo,
+			AuthzInfo: emptyAuthzInfo,
 		},
 	})
 	if err != nil {
@@ -428,7 +432,13 @@ func validateAuthzTx(
 				return err
 			}
 
-			err = validateNestedSmartAccountMsgs(ctx, saKeeper, msgs, isAnte)
+			err = validateNestedSmartAccountMsgs(
+				ctx,
+				saKeeper,
+				msgs,
+				msgExec.Grantee,
+				isAnte,
+			)
 			if err != nil {
 				return err
 			}
@@ -442,6 +452,7 @@ func validateNestedSmartAccountMsgs(
 	ctx sdk.Context,
 	saKeeper sakeeper.Keeper,
 	msgs []sdk.Msg,
+	grantee string,
 	isAnte bool,
 ) error {
 
@@ -469,21 +480,25 @@ func validateNestedSmartAccountMsgs(
 					FeeGranter: "",
 				}
 
+				authzInfo := types.AuthzInfo{
+					Grantee: grantee,
+				}
+
 				var execMsg []byte
 				if isAnte {
 					execMsg, err = json.Marshal(&types.AccountMsg{
 						PreExecuteTx: &types.PreExecuteTx{
-							Msgs:     msgsData,
-							CallInfo: callInfo,
-							IsAuthz:  true, // IsAuthz set to true, so smart contract can know that this message is executed using authz
+							Msgs:      msgsData,
+							CallInfo:  callInfo,
+							AuthzInfo: authzInfo,
 						},
 					})
 				} else {
 					execMsg, err = json.Marshal(&types.AccountMsg{
 						AfterExecuteTx: &types.AfterExecuteTx{
-							Msgs:     msgsData,
-							CallInfo: callInfo,
-							IsAuthz:  true,
+							Msgs:      msgsData,
+							CallInfo:  callInfo,
+							AuthzInfo: authzInfo,
 						},
 					})
 				}
@@ -507,7 +522,13 @@ func validateNestedSmartAccountMsgs(
 				return err
 			}
 
-			err = validateNestedSmartAccountMsgs(ctx, saKeeper, msgs, isAnte)
+			err = validateNestedSmartAccountMsgs(
+				ctx,
+				saKeeper,
+				msgs,
+				msgExec.Grantee,
+				isAnte,
+			)
 			if err != nil {
 				return err
 			}

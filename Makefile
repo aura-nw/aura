@@ -8,7 +8,8 @@ BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 COMMIT := $(shell git log -1 --format='%H')
 
 # library versions
-LIBWASM_VERSION = $(shell go list -m -f '{{ .Version }}' github.com/CosmWasm/wasmvm)
+# LIBWASM_VERSION = $(shell go list -m -f '{{ .Version }}' github.com/CosmWasm/wasmvm)
+LIBWASM_VERSION = "v1.4.3" # security patch
 
 # docker 
 DOCKER := $(shell which docker)

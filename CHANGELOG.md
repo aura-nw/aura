@@ -37,6 +37,13 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 ## Unreleased
 
+## [v0.7.3] - 2024-01-18
+### Improvements
+- Enhance flow of post handle verify tx from smart account module
+- Bump wasmd version to v0.42.0 to support long term
+- Wasm patch security, pump wasmvm version to v1.4.2
+  (https://github.com/CosmWasm/advisories/blob/main/CWAs/CWA-2023-004.md)
+
 ## [v0.7.2] - 2023-11-20
 
 ### Features

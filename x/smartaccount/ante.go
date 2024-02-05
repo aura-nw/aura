@@ -174,11 +174,15 @@ func handleSmartAccountTx(
 		FeeGranter: feeTx.FeeGranter().String(),
 	}
 
+	emptyAuthzInfo := types.AuthzInfo{
+		Grantee: "",
+	}
+
 	preExecuteMessage, err := json.Marshal(&types.AccountMsg{
 		PreExecuteTx: &types.PreExecuteTx{
-			Msgs:     msgsData,
-			CallInfo: callInfo,
-			IsAuthz:  false,
+			Msgs:      msgsData,
+			CallInfo:  callInfo,
+			AuthzInfo: emptyAuthzInfo,
 		},
 	})
 	if err != nil {
@@ -187,12 +191,30 @@ func handleSmartAccountTx(
 
 	params := saKeeper.GetParams(ctx)
 
+	// Call a contract's sudo with a gas limit
+	//
+	// using gas for validate SA msgs will not count to tx total used
+	//
+	// referenced from Osmosis' protorev posthandler:
+	// https://github.com/osmosis-labs/osmosis/blob/98025f185ab2ee1b060511ed22679112abcc08fa/x/protorev/keeper/posthandler.go#L42-L43
+	cacheCtx, write := ctx.CacheContext()
+	cacheCtx = cacheCtx.WithGasMeter(sdk.NewGasMeter(params.MaxGasExecute))
+
 	// execute SA contract for pre-execute transaction with limit gas
 	// will using cacheCtx instead of ctx to run contract execution
-	gasRemaining, err := sudoWithGasLimit(ctx, saKeeper.ContractKeeper, signerAcc.GetAddress(), preExecuteMessage, params.MaxGasExecute)
+	gasRemaining := sudoWithPanicRecover(
+		cacheCtx,
+		saKeeper.ContractKeeper,
+		signerAcc.GetAddress(),
+		preExecuteMessage,
+		&err,
+	)
 	if err != nil {
 		return err
 	}
+
+	write()
+	ctx.EventManager().EmitEvents(cacheCtx.EventManager().Events())
 
 	// free gas remaining after validate smartaccount msgs
 	saKeeper.SetGasRemaining(ctx, gasRemaining)
@@ -253,31 +275,37 @@ func handleSmartAccountActivate(
 	return nil
 }
 
-// Call a contract's sudo with a gas limit
-//
-// using gas for validate SA msgs will not count to tx total used
-//
-// referenced from Osmosis' protorev posthandler:
-// https://github.com/osmosis-labs/osmosis/blob/98025f185ab2ee1b060511ed22679112abcc08fa/x/protorev/keeper/posthandler.go#L42-L43
-func sudoWithGasLimit(
+// Call a contract's sudo with panic recover
+// In our case, the out of gas happened because there was too much logic on the linked smart contract
+// Resulting in consumption exceeding the amount of `MaxGasExecute` gas allowed to execute the sudo call
+// Must distinguish between sdk `out of gas` which is caused by too small tx' gasLimit
+func sudoWithPanicRecover(
 	ctx sdk.Context, contractKeeper *wasmkeeper.PermissionedKeeper,
-	contractAddr sdk.AccAddress, msg []byte, maxGas sdk.Gas,
-) (uint64, error) {
-	cacheCtx, write := ctx.CacheContext()
-	cacheCtx = cacheCtx.WithGasMeter(sdk.NewGasMeter(maxGas))
+	contractAddr sdk.AccAddress, msg []byte, err *error,
+) uint64 {
 
-	if _, err := contractKeeper.Sudo(
-		cacheCtx,
+	// Recover from panic, return error
+	//
+	// referenced from Juno:
+	// https://github.com/CosmosContracts/juno/blob/3a0bb93303772936362c93e3979d900a39cda68a/app/helpers/contracts.go
+	defer func() {
+		if recoveryError := recover(); recoveryError != nil {
+			// Determine error associated with panic
+			if isOutofGas, msg := types.IsOutOfGasError(recoveryError); isOutofGas {
+				*err = types.ErrOutOfGas.Wrapf("%s", msg)
+			} else {
+				*err = types.ErrContractExecutionPanic.Wrapf("%s", recoveryError)
+			}
+		}
+	}()
+
+	_, *err = contractKeeper.Sudo(
+		ctx,
 		contractAddr, // contract address
 		msg,
-	); err != nil {
-		return maxGas, err
-	}
+	)
 
-	write()
-	ctx.EventManager().EmitEvents(cacheCtx.EventManager().Events())
-
-	return cacheCtx.GasMeter().GasRemaining(), nil
+	return ctx.GasMeter().GasRemaining()
 }
 
 // ------------------------- SetPubKey Decorator ------------------------- \\
@@ -400,11 +428,17 @@ func (d *ValidateAuthzTxDecorator) AnteHandle(
 		d.SaKeeper.DeleteGasRemaining(ctx)
 	}
 
+	cacheCtx, write := ctx.CacheContext()
+	cacheCtx = cacheCtx.WithGasMeter(sdk.NewGasMeter(maxGas))
+
 	// using gas for validate authz will not count to tx total used
-	err = validateAuthzTx(ctx, d.SaKeeper, tx, maxGas, true)
+	err = validateAuthzTx(cacheCtx, d.SaKeeper, tx, true)
 	if err != nil {
 		return ctx, err
 	}
+
+	write()
+	ctx.EventManager().EmitEvents(cacheCtx.EventManager().Events())
 
 	return next(ctx, tx, simulate)
 }
@@ -413,12 +447,8 @@ func validateAuthzTx(
 	ctx sdk.Context,
 	saKeeper sakeeper.Keeper,
 	tx sdk.Tx,
-	maxGas uint64,
 	isAnte bool,
 ) error {
-	cacheCtx, write := ctx.CacheContext()
-	cacheCtx = cacheCtx.WithGasMeter(sdk.NewGasMeter(maxGas))
-
 	for _, msg := range tx.GetMsgs() {
 		if msgExec, ok := msg.(*authz.MsgExec); ok {
 			msgs, err := msgExec.GetMessages()
@@ -426,15 +456,18 @@ func validateAuthzTx(
 				return err
 			}
 
-			err = validateNestedSmartAccountMsgs(cacheCtx, saKeeper, msgs, isAnte)
+			err = validateNestedSmartAccountMsgs(
+				ctx,
+				saKeeper,
+				msgs,
+				msgExec.Grantee,
+				isAnte,
+			)
 			if err != nil {
 				return err
 			}
 		}
 	}
-
-	write()
-	ctx.EventManager().EmitEvents(cacheCtx.EventManager().Events())
 
 	return nil
 }
@@ -443,6 +476,7 @@ func validateNestedSmartAccountMsgs(
 	ctx sdk.Context,
 	saKeeper sakeeper.Keeper,
 	msgs []sdk.Msg,
+	grantee string,
 	isAnte bool,
 ) error {
 
@@ -470,21 +504,25 @@ func validateNestedSmartAccountMsgs(
 					FeeGranter: "",
 				}
 
+				authzInfo := types.AuthzInfo{
+					Grantee: grantee,
+				}
+
 				var execMsg []byte
 				if isAnte {
 					execMsg, err = json.Marshal(&types.AccountMsg{
 						PreExecuteTx: &types.PreExecuteTx{
-							Msgs:     msgsData,
-							CallInfo: callInfo,
-							IsAuthz:  true, // IsAuthz set to true, so smart contract can know that this message is executed using authz
+							Msgs:      msgsData,
+							CallInfo:  callInfo,
+							AuthzInfo: authzInfo,
 						},
 					})
 				} else {
 					execMsg, err = json.Marshal(&types.AccountMsg{
 						AfterExecuteTx: &types.AfterExecuteTx{
-							Msgs:     msgsData,
-							CallInfo: callInfo,
-							IsAuthz:  true,
+							Msgs:      msgsData,
+							CallInfo:  callInfo,
+							AuthzInfo: authzInfo,
 						},
 					})
 				}
@@ -492,10 +530,12 @@ func validateNestedSmartAccountMsgs(
 					return err
 				}
 
-				if _, err := saKeeper.ContractKeeper.Sudo(
+				if _ = sudoWithPanicRecover(
 					ctx,
+					saKeeper.ContractKeeper,
 					acc.GetAddress(),
 					execMsg,
+					&err,
 				); err != nil {
 					return err
 				}
@@ -508,7 +548,13 @@ func validateNestedSmartAccountMsgs(
 				return err
 			}
 
-			err = validateNestedSmartAccountMsgs(ctx, saKeeper, msgs, isAnte)
+			err = validateNestedSmartAccountMsgs(
+				ctx,
+				saKeeper,
+				msgs,
+				msgExec.Grantee,
+				isAnte,
+			)
 			if err != nil {
 				return err
 			}

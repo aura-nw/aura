@@ -140,6 +140,17 @@ import (
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/prometheus/client_golang/prometheus"
 
+	// evm module
+	srvflags "github.com/evmos/evmos/v16/server/flags"
+	// ethante "github.com/evmos/evmos/v16/app/ante/evm"
+	"github.com/evmos/evmos/v16/x/evm"
+	evmkeeper "github.com/evmos/evmos/v16/x/evm/keeper"
+	evmtypes "github.com/evmos/evmos/v16/x/evm/types"
+
+	"github.com/evmos/evmos/v16/x/feemarket"
+	feemarketkeeper "github.com/evmos/evmos/v16/x/feemarket/keeper"
+	feemarkettypes "github.com/evmos/evmos/v16/x/feemarket/types"
+
 	v0_3_0 "github.com/aura-nw/aura/app/upgrades/v0.3.0"
 	v0_3_1 "github.com/aura-nw/aura/app/upgrades/v0.3.1"
 	v0_3_2 "github.com/aura-nw/aura/app/upgrades/v0.3.2"
@@ -252,6 +263,8 @@ var (
 		samodule.AppModuleBasic{},
 		wasm.AppModuleBasic{},
 		ibc_hooks.AppModuleBasic{},
+		evm.AppModuleBasic{},
+		feemarket.AppModuleBasic{},
 		// this line is used by starport scaffolding # stargate/app/moduleBasic
 	)
 
@@ -335,6 +348,10 @@ type App struct {
 	// Middleware wrapper
 	Ics20WasmHooks   *ibc_hooks.WasmHooks
 	HooksICS4Wrapper ibc_hooks.ICS4Middleware
+
+	// Ethermint keepers
+	EvmKeeper       *evmkeeper.Keeper
+	FeeMarketKeeper feemarketkeeper.Keeper
 
 	// this line is used by starport scaffolding # stargate/app/keeperDeclaration
 
@@ -466,7 +483,22 @@ func New(
 	)
 	app.StakingKeeper = stakingKeeper
 
-	// ... other modules keepers
+	// Create Ethermint keepers
+	tracer := cast.ToString(appOpts.Get(srvflags.EVMTracer))
+	app.FeeMarketKeeper = feemarketkeeper.NewKeeper(
+		appCodec, authtypes.NewModuleAddress(govtypes.ModuleName),
+		keys[feemarkettypes.StoreKey],
+		tkeys[feemarkettypes.TransientKey],
+		app.GetSubspace(feemarkettypes.ModuleName),
+	)
+
+	evmKeeper := evmkeeper.NewKeeper(
+		appCodec, keys[evmtypes.StoreKey], tkeys[evmtypes.TransientKey], authtypes.NewModuleAddress(govtypes.ModuleName),
+		app.AccountKeeper, app.BankKeeper, stakingKeeper, app.FeeMarketKeeper,
+		tracer, app.GetSubspace(evmtypes.ModuleName),
+	)
+
+	app.EvmKeeper = evmKeeper
 
 	// Create IBC Keeper
 	app.IBCKeeper = ibckeeper.NewKeeper(
@@ -633,6 +665,9 @@ func New(
 		auraModule,
 		saModule,
 		wasm.NewAppModule(appCodec, &app.WasmKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.MsgServiceRouter(), app.GetSubspace(wasmtypes.ModuleName)),
+		// Ethermint app modules
+		evm.NewAppModule(app.EvmKeeper, app.AccountKeeper, app.GetSubspace(evmtypes.ModuleName)),
+		feemarket.NewAppModule(app.FeeMarketKeeper, app.GetSubspace(feemarkettypes.ModuleName)),
 		// this line is used by starport scaffolding # stargate/app/appModule
 	)
 
@@ -643,6 +678,9 @@ func New(
 	app.mm.SetOrderBeginBlockers(
 		upgradetypes.ModuleName,
 		capabilitytypes.ModuleName,
+		// ethermint module
+		feemarkettypes.ModuleName,
+		evmtypes.ModuleName,
 		minttypes.ModuleName,
 		distrtypes.ModuleName,
 		slashingtypes.ModuleName,
@@ -672,6 +710,9 @@ func New(
 		govtypes.ModuleName,
 		stakingtypes.ModuleName,
 		capabilitytypes.ModuleName,
+		// ethermint module
+		evmtypes.ModuleName,
+		feemarkettypes.ModuleName,
 		authtypes.ModuleName,
 		banktypes.ModuleName,
 		distrtypes.ModuleName,
@@ -710,6 +751,12 @@ func New(
 		minttypes.ModuleName,
 		crisistypes.ModuleName,
 		ibcexported.ModuleName,
+		// Ethermint modules
+		// evm module denomination is used by the revenue module, in AnteHandle
+		evmtypes.ModuleName,
+		// NOTE: feemarket module needs to be initialized before genutil module:
+		// gentx transactions use MinGasPriceDecorator.AnteHandle
+		feemarkettypes.ModuleName,
 		// samodule must occur before genutil so that DeliverGenTx can successfully pass the smart account ante handler
 		samoduletypes.ModuleName,
 		genutiltypes.ModuleName,
@@ -771,6 +818,7 @@ func New(
 	app.MountTransientStores(tkeys)
 	app.MountMemoryStores(memKeys)
 
+	// TODO: there is a switch between EVM and cosmos, we will add code later
 	anteHandler, err := NewAnteHandler(
 		HandlerOptions{
 			HandlerOptions: ante.HandlerOptions{
@@ -785,6 +833,7 @@ func New(
 			WasmConfig:         &wasmConfig,
 			TXCounterStoreKey:  keys[wasmtypes.StoreKey],
 			Codec:              app.appCodec,
+			EvmKeeper:          app.EvmKeeper,
 		},
 	)
 	if err != nil {
@@ -1028,6 +1077,9 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(auramoduletypes.ModuleName)
 	paramsKeeper.Subspace(samoduletypes.ModuleName)
 	paramsKeeper.Subspace(wasmtypes.ModuleName)
+	// ethermint subspaces
+	paramsKeeper.Subspace(evmtypes.ModuleName).WithKeyTable(evmtypes.ParamKeyTable()) //nolint:staticcheck
+	paramsKeeper.Subspace(feemarkettypes.ModuleName).WithKeyTable(feemarkettypes.ParamKeyTable())
 	// this line is used by starport scaffolding # stargate/app/paramSubspace
 
 	return paramsKeeper

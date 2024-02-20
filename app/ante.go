@@ -13,6 +13,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
 	ibcante "github.com/cosmos/ibc-go/v7/modules/core/ante"
 	keeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
+	evmkeeper "github.com/evmos/evmos/v16/x/evm/keeper"
 
 	// stargazeante "github.com/public-awesome/stargaze/v4/internal/ante"
 	smartaccount "github.com/aura-nw/aura/x/smartaccount"
@@ -28,6 +29,7 @@ type HandlerOptions struct {
 	WasmConfig         *wasmTypes.WasmConfig
 	TXCounterStoreKey  storetypes.StoreKey
 	Codec              codec.BinaryCodec
+	EvmKeeper          *evmkeeper.Keeper
 }
 
 // NewAnteHandler returns an AnteHandler that checks and increments sequence

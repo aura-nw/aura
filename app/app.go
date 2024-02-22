@@ -142,7 +142,7 @@ import (
 
 	// evm module
 	srvflags "github.com/evmos/evmos/v16/server/flags"
-	// ethante "github.com/evmos/evmos/v16/app/ante/evm"
+	evmostypes "github.com/evmos/evmos/v16/types"
 	"github.com/evmos/evmos/v16/x/evm"
 	evmkeeper "github.com/evmos/evmos/v16/x/evm/keeper"
 	evmtypes "github.com/evmos/evmos/v16/x/evm/types"
@@ -278,6 +278,7 @@ var (
 		govtypes.ModuleName:            {authtypes.Burner},
 		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
 		wasmtypes.ModuleName:           {authtypes.Burner},
+		evmtypes.ModuleName:            {authtypes.Minter, authtypes.Burner},
 		// this line is used by starport scaffolding # stargate/app/maccPerms
 	}
 )
@@ -399,9 +400,11 @@ func New(
 		authzkeeper.StoreKey,
 		wasmtypes.StoreKey,
 		ibchookstypes.StoreKey,
+		// ethermint keys
+		evmtypes.StoreKey, feemarkettypes.StoreKey,
 		// this line is used by starport scaffolding # stargate/app/storeKey
 	)
-	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
+	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey, evmtypes.TransientKey, feemarkettypes.TransientKey)
 	memKeys := sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
 
 	app := &App{
@@ -434,7 +437,11 @@ func New(
 	app.CapabilityKeeper.Seal()
 	// add keepers
 	app.AccountKeeper = authkeeper.NewAccountKeeper(
-		appCodec, keys[authtypes.StoreKey], authtypes.ProtoBaseAccount, maccPerms, AccountAddressPrefix,
+		appCodec, keys[authtypes.StoreKey],
+		// authtypes.ProtoBaseAccount,
+		evmostypes.ProtoAccount,
+		maccPerms,
+		AccountAddressPrefix,
 		govModAddress,
 	)
 
@@ -798,6 +805,8 @@ func New(
 		samoduletypes.ModuleName,
 		crisistypes.ModuleName,
 		ibchookstypes.ModuleName,
+		evmtypes.ModuleName,
+		feemarkettypes.ModuleName,
 	)
 
 	app.mm.RegisterInvariants(app.CrisisKeeper)

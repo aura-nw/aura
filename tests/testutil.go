@@ -14,6 +14,7 @@ import (
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	cmtypes "github.com/cometbft/cometbft/types"
 	tmtypes "github.com/cometbft/cometbft/types"
+	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
@@ -31,7 +32,7 @@ type EmptyAppOptions struct{}
 // Get implements AppOptions
 func (ao EmptyAppOptions) Get(o string) interface{} {
 	if o == flags.FlagChainID {
-		return "aura-testnet"
+		return "testnet_9000-1"
 	}
 
 	return nil
@@ -67,7 +68,9 @@ func Setup(t *testing.T, isCheckTx bool) *app.App {
 		app.DefaultNodeHome,
 		0,
 		app.MakeEncodingConfig(),
-		EmptyAppOptions{})
+		EmptyAppOptions{},
+		baseapp.SetChainID("testnet_9000-1"),
+	)
 
 	if !isCheckTx {
 
@@ -98,6 +101,7 @@ func Setup(t *testing.T, isCheckTx bool) *app.App {
 				Validators:      []abci.ValidatorUpdate{},
 				ConsensusParams: DefaultConsensusParams,
 				AppStateBytes:   stateBytes,
+				ChainId:         "testnet_9000-1",
 			},
 		)
 

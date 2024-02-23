@@ -41,7 +41,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/cosmos/cosmos-sdk/x/auth"
-	"github.com/cosmos/cosmos-sdk/x/auth/ante"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	"github.com/cosmos/cosmos-sdk/x/auth/posthandler"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
@@ -828,22 +827,10 @@ func New(
 	app.MountMemoryStores(memKeys)
 
 	// TODO: there is a switch between EVM and cosmos, we will add code later
-	anteHandler, err := NewAnteHandler(
-		HandlerOptions{
-			HandlerOptions: ante.HandlerOptions{
-				AccountKeeper:   app.AccountKeeper,
-				BankKeeper:      app.BankKeeper,
-				SignModeHandler: encodingConfig.TxConfig.SignModeHandler(),
-				FeegrantKeeper:  app.FeeGrantKeeper,
-				SigGasConsumer:  ante.DefaultSigVerificationGasConsumer},
-			WasmKeeper:         app.WasmKeeper,
-			SmartAccountKeeper: app.SaKeeper,
-			IBCKeeper:          app.IBCKeeper,
-			WasmConfig:         &wasmConfig,
-			TXCounterStoreKey:  keys[wasmtypes.StoreKey],
-			Codec:              app.appCodec,
-			EvmKeeper:          app.EvmKeeper,
-		},
+	anteHandler, err := app.NewAnteHandler(
+		encodingConfig.TxConfig,
+		wasmConfig,
+		keys[wasmtypes.StoreKey],
 	)
 	if err != nil {
 		panic(err)

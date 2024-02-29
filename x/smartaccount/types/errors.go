@@ -23,4 +23,6 @@ var (
 	ErrInvalidCodeID             = errorsmod.Register(ModuleName, 13, "invalid code id")
 	ErrNotSupported              = errorsmod.Register(ModuleName, 14, "not supported")
 	ErrNotAllowedMsg             = errorsmod.Register(ModuleName, 15, "not allowed message")
+	ErrOutOfGas                  = errorsmod.Register(ModuleName, 16, "contract sudo execution ran out of gas")
+	ErrContractExecutionPanic    = errorsmod.Register(ModuleName, 17, "contract sudo execution panicked")
 )

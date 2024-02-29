@@ -6,6 +6,7 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -35,4 +36,16 @@ func Instantiate2Address(
 	}
 
 	return contractAddress, nil
+}
+
+// Check if error is out of gas error
+func IsOutOfGasError(err any) (bool, string) {
+	switch e := err.(type) {
+	case storetypes.ErrorOutOfGas:
+		return true, e.Descriptor
+	case storetypes.ErrorGasOverflow:
+		return true, e.Descriptor
+	default:
+		return false, ""
+	}
 }

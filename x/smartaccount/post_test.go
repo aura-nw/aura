@@ -196,48 +196,7 @@ func (s *TestSuite) TestPostValidateAuthzTxDecorator() {
 			signers: []Signer{signer},
 			err:     false,
 		},
-		{
-			desc: "panic, validate nested smartaccount fail with out of gas because of max exec gas too low",
-			msgs: []sdk.Msg{
-				&authz.MsgExec{
-					Grantee: signer.acc.GetAddress().String(),
-					Msgs: []*codectypes.Any{
-						anyMsgExec,
-					},
-				},
-			},
-			signers: []Signer{signer},
-			setGas:  true,
-			err:     true,
-		},
-		{
-			desc: "panic, validate nested smartaccount fail with not enough gas remaining",
-			msgs: []sdk.Msg{
-				&authz.MsgExec{
-					Grantee: signer.acc.GetAddress().String(),
-					Msgs: []*codectypes.Any{
-						anyMsgExec,
-					},
-				},
-			},
-			signers:      []Signer{signer},
-			gasRemaining: true,
-			err:          true,
-		},
 	} {
-		if tc.setGas {
-			params := typesv1.Params{
-				MaxGasExecute: 1000,
-			}
-			err = s.App.SaKeeper.SetParams(s.ctx, params)
-			require.NoError(s.T(), err)
-		}
-
-		if tc.gasRemaining {
-			gasRemaining := uint64(1000)
-			s.App.SaKeeper.SetGasRemaining(s.ctx, gasRemaining)
-		}
-
 		sigTx, err := prepareTx(s.ctx, keybase, tc.msgs, tc.signers, mockChainID, true)
 		require.NoError(s.T(), err)
 

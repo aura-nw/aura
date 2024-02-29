@@ -18,15 +18,15 @@ type RecoverTx struct {
 }
 
 type PreExecuteTx struct {
-	Msgs     []Any    `json:"msgs"`
-	CallInfo CallInfo `json:"call_info"`
-	IsAuthz  bool     `json:"is_authz"`
+	Msgs      []Any     `json:"msgs"`
+	CallInfo  CallInfo  `json:"call_info"`
+	AuthzInfo AuthzInfo `json:"authz_info"`
 }
 
 type AfterExecuteTx struct {
-	Msgs     []Any    `json:"msgs"`
-	CallInfo CallInfo `json:"call_info"`
-	IsAuthz  bool     `json:"is_authz"`
+	Msgs      []Any     `json:"msgs"`
+	CallInfo  CallInfo  `json:"call_info"`
+	AuthzInfo AuthzInfo `json:"authz_info"`
 }
 
 type Any struct {
@@ -39,6 +39,10 @@ type CallInfo struct {
 	Gas        uint64    `json:"gas"`
 	FeePayer   string    `json:"fee_payer"`
 	FeeGranter string    `json:"fee_granter"`
+}
+
+type AuthzInfo struct {
+	Grantee string `json:"grantee"`
 }
 
 func ParseMessagesString(msgs []sdk.Msg) ([]Any, error) {

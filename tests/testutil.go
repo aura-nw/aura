@@ -24,6 +24,8 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
+
+	"github.com/evmos/evmos/v16/encoding"
 )
 
 // EmptyAppOptions is a stub implementing AppOptions
@@ -59,6 +61,7 @@ var DefaultConsensusParams = &tmproto.ConsensusParams{
 
 func Setup(t *testing.T, isCheckTx bool) *app.App {
 	db := db.NewMemDB()
+	encodingConfig := encoding.MakeConfig(app.ModuleBasics)
 	appObj := app.New(
 		log.NewNopLogger(),
 		db,
@@ -67,7 +70,7 @@ func Setup(t *testing.T, isCheckTx bool) *app.App {
 		map[int64]bool{},
 		app.DefaultNodeHome,
 		0,
-		app.MakeEncodingConfig(),
+		encodingConfig,
 		EmptyAppOptions{},
 		baseapp.SetChainID("testnet_9000-1"),
 	)

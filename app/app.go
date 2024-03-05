@@ -7,7 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	appparams "github.com/aura-nw/aura/app/params"
+	simappparams "cosmossdk.io/simapp/params"
+
 	v703 "github.com/aura-nw/aura/app/upgrades/v0.7.3"
 
 	v500 "github.com/aura-nw/aura/app/upgrades/v0.5.0"
@@ -371,14 +372,14 @@ func New(
 	skipUpgradeHeights map[int64]bool,
 	homePath string,
 	invCheckPeriod uint,
-	encodingConfig appparams.EncodingConfig,
+	encodingConfig simappparams.EncodingConfig,
 	appOpts servertypes.AppOptions,
 	baseAppOptions ...func(*baseapp.BaseApp),
 ) *App {
 
 	ChainID = GetChainID(appOpts)
 
-	appCodec := encodingConfig.Marshaler
+	appCodec := encodingConfig.Codec
 	cdc := encodingConfig.Amino
 	interfaceRegistry := encodingConfig.InterfaceRegistry
 	txConfig := encodingConfig.TxConfig

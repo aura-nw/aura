@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	simappparams "cosmossdk.io/simapp/params"
+
 	dbm "github.com/cometbft/cometbft-db"
 	tmcfg "github.com/cometbft/cometbft/config"
 	tmcli "github.com/cometbft/cometbft/libs/cli"
@@ -33,6 +35,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
+	"github.com/evmos/evmos/v16/encoding"
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -40,14 +43,13 @@ import (
 	// this line is used by starport scaffolding # root/moduleImport
 
 	"github.com/aura-nw/aura/app"
-	appparams "github.com/aura-nw/aura/app/params"
 )
 
 // NewRootCmd creates a new root command for a Cosmos SDK application
-func NewRootCmd() (*cobra.Command, appparams.EncodingConfig) {
-	encodingConfig := app.MakeEncodingConfig()
+func NewRootCmd() (*cobra.Command, simappparams.EncodingConfig) {
+	encodingConfig := encoding.MakeConfig(app.ModuleBasics)
 	initClientCtx := client.Context{}.
-		WithCodec(encodingConfig.Marshaler).
+		WithCodec(encodingConfig.Codec).
 		WithInterfaceRegistry(encodingConfig.InterfaceRegistry).
 		WithTxConfig(encodingConfig.TxConfig).
 		WithLegacyAmino(encodingConfig.Amino).
@@ -102,7 +104,7 @@ func initTendermintConfig() *tmcfg.Config {
 
 func initRootCmd(
 	rootCmd *cobra.Command,
-	encodingConfig appparams.EncodingConfig,
+	encodingConfig simappparams.EncodingConfig,
 ) {
 	// Set config
 	initSDKConfig()
@@ -222,7 +224,7 @@ func overwriteFlagDefaults(c *cobra.Command, defaults map[string]string) {
 }
 
 type appCreator struct {
-	encodingConfig appparams.EncodingConfig
+	encodingConfig simappparams.EncodingConfig
 }
 
 // newApp creates a new Cosmos SDK app

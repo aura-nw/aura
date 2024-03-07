@@ -43,6 +43,9 @@ import (
 	// this line is used by starport scaffolding # root/moduleImport
 
 	"github.com/aura-nw/aura/app"
+
+	// evmos signatures
+	evmoskr "github.com/evmos/evmos/v16/crypto/keyring"
 )
 
 // NewRootCmd creates a new root command for a Cosmos SDK application
@@ -56,6 +59,7 @@ func NewRootCmd() (*cobra.Command, simappparams.EncodingConfig) {
 		WithInput(os.Stdin).
 		WithAccountRetriever(types.AccountRetriever{}).
 		WithHomeDir(app.DefaultNodeHome).
+		WithKeyringOptions(evmoskr.Option()).
 		WithViper("")
 
 	rootCmd := &cobra.Command{

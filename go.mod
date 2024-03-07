@@ -6,6 +6,7 @@ require (
 	cosmossdk.io/api v0.3.1
 	cosmossdk.io/errors v1.0.1
 	cosmossdk.io/math v1.2.0
+	cosmossdk.io/simapp v0.0.0-20230608160436-666c345ad23d
 	github.com/CosmWasm/wasmd v0.42.0
 	github.com/armon/go-metrics v0.4.1
 	github.com/cometbft/cometbft v0.37.4
@@ -43,7 +44,6 @@ require (
 	cosmossdk.io/core v0.6.1 // indirect
 	cosmossdk.io/depinject v1.0.0-alpha.4 // indirect
 	cosmossdk.io/log v1.3.0 // indirect
-	cosmossdk.io/simapp v0.0.0-20230608160436-666c345ad23d // indirect
 	cosmossdk.io/tools/rosetta v0.2.1 // indirect
 	filippo.io/edwards25519 v1.0.0 // indirect
 	github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4 // indirect
@@ -57,7 +57,10 @@ require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bgentry/go-netrc v0.0.0-20140422174119-9fd32a8b3d3d // indirect
 	github.com/bgentry/speakeasy v0.1.1-0.20220910012023-760eaf8b6816 // indirect
+	github.com/btcsuite/btcd v0.23.3 // indirect
 	github.com/btcsuite/btcd/btcec/v2 v2.3.2 // indirect
+	github.com/btcsuite/btcd/btcutil v1.1.3 // indirect
+	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.1 // indirect
 	github.com/bytedance/sonic v1.11.0 // indirect
 	github.com/cenkalti/backoff/v4 v4.1.3 // indirect
 	github.com/cespare/xxhash v1.1.0 // indirect

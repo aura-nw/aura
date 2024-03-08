@@ -196,14 +196,14 @@ function setupNetwork({ runConfig, timeout }) {
 
   const spawnPromise = new Promise((resolve, reject) => {
     const serverStartedLog = 'Starting JSON-RPC server'
-    const serverStartedMsg = 'evmosd started'
+    const serverStartedMsg = 'aurad started'
 
     const evmosdProc = spawn('../init-node.sh', {
       cwd: __dirname,
       stdio: ['ignore', 'pipe', 'pipe']
     })
 
-    logger.info(`Starting evmosd process... timeout: ${timeout}ms`)
+    logger.info(`Starting aurad process... timeout: ${timeout}ms`)
     if (runConfig.verboseLog) {
       evmosdProc.stdout.pipe(process.stdout)
     }

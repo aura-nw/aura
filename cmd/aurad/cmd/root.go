@@ -44,8 +44,9 @@ import (
 
 	"github.com/aura-nw/aura/app"
 
-	// evmos signatures
+	// evmos
 	evmoskr "github.com/evmos/evmos/v16/crypto/keyring"
+	evmosserver "github.com/evmos/evmos/v16/server"
 )
 
 // NewRootCmd creates a new root command for a Cosmos SDK application
@@ -137,10 +138,17 @@ func initRootCmd(
 	}
 
 	// add server commands
-	server.AddCommands(
+	// server.AddCommands(
+	// 	rootCmd,
+	// 	app.DefaultNodeHome,
+	// 	a.newApp,
+	// 	a.appExport,
+	// 	addModuleInitFlags,
+	// )
+
+	evmosserver.AddCommands(
 		rootCmd,
-		app.DefaultNodeHome,
-		a.newApp,
+		evmosserver.NewDefaultStartOptions(a.newApp, app.DefaultNodeHome),
 		a.appExport,
 		addModuleInitFlags,
 	)

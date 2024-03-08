@@ -165,6 +165,7 @@ aurad validate-genesis
 # Start the node
 aurad start "$TRACE" \
   --log_level $LOGLEVEL \
-  --minimum-gas-prices=0.0001uaura
+  --minimum-gas-prices=0.0001uaura \
+  --json-rpc.api eth,txpool,personal,net,debug,web3 \
+  --json-rpc.enable
 # --chain-id "$CHAINID"
-# --json-rpc.api eth,txpool,personal,net,debug,web3 \

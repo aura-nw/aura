@@ -58,7 +58,7 @@ func (app *App) NewAnteHandler(txConfig client.TxConfig, wasmConfig wasmTypes.Wa
 		_, ok := tx.(authante.HasExtensionOptionsTx)
 		if ok {
 			// TODO: add config for max gas wanted
-			maxGasWanted := cast.ToUint64(1000000)
+			maxGasWanted := cast.ToUint64(100000000)
 			var evmosoptions = evmosante.HandlerOptions{
 				Cdc:                    app.appCodec,
 				AccountKeeper:          app.AccountKeeper,

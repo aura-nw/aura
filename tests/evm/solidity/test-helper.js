@@ -234,7 +234,7 @@ function setupNetwork({ runConfig, timeout }) {
   })
 
   const timeoutPromise = new Promise((resolve, reject) => {
-    setTimeout(() => reject(new Error('Start evmosd timeout!')), timeout)
+    setTimeout(() => reject(new Error('Start aurad timeout!')), timeout)
   })
   return Promise.race([spawnPromise, timeoutPromise])
 }

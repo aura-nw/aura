@@ -48,7 +48,7 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
 	// TODO: should recheck as we change to evmos
-	// vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
+	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -151,8 +151,6 @@ import (
 	"github.com/evmos/evmos/v16/x/evm"
 	evmkeeper "github.com/evmos/evmos/v16/x/evm/keeper"
 	evmtypes "github.com/evmos/evmos/v16/x/evm/types"
-	vestingkeeper "github.com/evmos/evmos/v16/x/vesting/keeper"
-	vestingtypes "github.com/evmos/evmos/v16/x/vesting/types"
 
 	// overide transfer for erc20
 	"github.com/evmos/evmos/v16/x/ibc/transfer"
@@ -368,7 +366,6 @@ type App struct {
 	Erc20Keeper     erc20keeper.Keeper
 	EvmKeeper       *evmkeeper.Keeper
 	FeeMarketKeeper feemarketkeeper.Keeper
-	VestingKeeper   vestingkeeper.Keeper
 
 	// this line is used by starport scaffolding # stargate/app/keeperDeclaration
 
@@ -417,8 +414,9 @@ func New(
 		wasmtypes.StoreKey,
 		ibchookstypes.StoreKey,
 		// ethermint keys
-		evmtypes.StoreKey, feemarkettypes.StoreKey,
-		erc20types.StoreKey, vestingtypes.StoreKey,
+		evmtypes.StoreKey,
+		feemarkettypes.StoreKey,
+		erc20types.StoreKey,
 		// this line is used by starport scaffolding # stargate/app/storeKey
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey, evmtypes.TransientKey, feemarkettypes.TransientKey)
@@ -524,11 +522,6 @@ func New(
 
 	app.EvmKeeper = evmKeeper
 
-	// Setup evm keeper with precompiles
-	app.VestingKeeper = vestingkeeper.NewKeeper(
-		keys[vestingtypes.StoreKey], authtypes.NewModuleAddress(govtypes.ModuleName), appCodec,
-		app.AccountKeeper, app.BankKeeper, app.DistrKeeper, app.StakingKeeper, app.GovKeeper, // NOTE: app.govKeeper not defined yet, use govKeeper
-	)
 	app.Erc20Keeper = erc20keeper.NewKeeper(
 		keys[erc20types.StoreKey], appCodec, authtypes.NewModuleAddress(govtypes.ModuleName),
 		app.AccountKeeper, app.BankKeeper, app.EvmKeeper, app.StakingKeeper,
@@ -605,13 +598,12 @@ func New(
 	// enable evm precompile, this need to be done after initialized ibc and transfer keeper
 	chainID := bApp.ChainID()
 	evmKeeper.WithPrecompiles(
-		evmkeeper.AvailablePrecompiles(
+		Precompiles(
 			chainID,
 			*stakingKeeper,
 			app.DistrKeeper,
 			app.BankKeeper,
 			app.Erc20Keeper,
-			app.VestingKeeper,
 			app.AuthzKeeper,
 			app.TransferKeeper,
 			app.IBCKeeper.ChannelKeeper,

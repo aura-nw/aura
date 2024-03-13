@@ -127,6 +127,9 @@ total_supply=100004000000000000000000000
 jq -r --arg total_supply "$total_supply" '.app_state.bank.supply[0].amount=$total_supply' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 jq -r '.app_state.bank.supply[0].denom="uaura"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 
+# set list of evm precompile contracts
+jq '.app_state.evm.params.active_precompiles=[ "0x0000000000000000000000000000000000000400", "0x0000000000000000000000000000000000000800", "0x0000000000000000000000000000000000000801", "0x0000000000000000000000000000000000000802" ]' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+
 # set custom pruning settings
 if [ "$PRUNING" = "custom" ]; then
   sed -i.bak 's/pruning = "default"/pruning = "custom"/g' "$APP_TOML"

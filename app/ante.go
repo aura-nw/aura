@@ -1,6 +1,8 @@
 package app
 
 import (
+	"fmt"
+
 	errorsmod "cosmossdk.io/errors"
 
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
@@ -55,9 +57,11 @@ func (app *App) NewAnteHandler(txConfig client.TxConfig, wasmConfig wasmTypes.Wa
 	) (newCtx sdk.Context, err error) {
 		var anteHandler sdk.AnteHandler
 
-		_, ok := tx.(authante.HasExtensionOptionsTx)
-		if ok {
+		ext, ok := tx.(authante.HasExtensionOptionsTx)
+		opts := ext.GetExtensionOptions()
+		if ok && len(opts) > 0 {
 			// TODO: add config for max gas wanted
+			ctx.Logger().Info(fmt.Sprintf("tx: %v", tx))
 			maxGasWanted := cast.ToUint64(100000000)
 			var evmosoptions = evmosante.HandlerOptions{
 				Cdc:                    app.appCodec,
@@ -162,7 +166,7 @@ func auraAnteHandler(options HandlerOptions) sdk.AnteHandler {
 		ibcante.NewRedundantRelayDecorator(options.IBCKeeper),
 
 		// ethermint ante
-		evmante.NewGasWantedDecorator(options.EvmKeeper, options.FeeMarketKeeper),
+		// evmante.NewGasWantedDecorator(options.EvmKeeper, options.FeeMarketKeeper),
 	}
 
 	return sdk.ChainAnteDecorators(anteDecorators...)

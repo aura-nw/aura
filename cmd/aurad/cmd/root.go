@@ -21,6 +21,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
+	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/cosmos/cosmos-sdk/server"
 	serverconfig "github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
@@ -35,7 +36,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
+	"github.com/evmos/evmos/v16/crypto/ethsecp256k1"
+	"github.com/evmos/evmos/v16/crypto/hd"
 	"github.com/evmos/evmos/v16/encoding"
+	"github.com/evmos/evmos/v16/wallets/ledger"
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -45,13 +49,46 @@ import (
 	"github.com/aura-nw/aura/app"
 
 	// evmos
-	evmoskr "github.com/evmos/evmos/v16/crypto/keyring"
+
+	cosmosLedger "github.com/cosmos/cosmos-sdk/crypto/ledger"
+	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	evmosserver "github.com/evmos/evmos/v16/server"
 )
+
+var (
+	// SupportedAlgorithms defines the list of signing algorithms used on Evmos:
+	//  - eth_secp256k1 (Ethereum)
+	SupportedAlgorithms = hd.SupportedAlgorithms
+	// SupportedAlgorithmsLedger defines the list of signing algorithms used on Evmos for the Ledger device:
+	//  - secp256k1 (in order to comply with Cosmos SDK)
+	// The Ledger derivation function is responsible for all signing and address generation.
+	SupportedAlgorithmsLedger = keyring.SigningAlgoList{hd.EthSecp256k1}
+	// LedgerDerivation defines the Evmos Ledger Go derivation (Ethereum app with EIP-712 signing)
+	LedgerDerivation = ledger.EvmosLedgerDerivation()
+	// CreatePubkey uses the ethsecp256k1 pubkey with Ethereum address generation and keccak hashing
+	CreatePubkey = func(key []byte) cryptotypes.PubKey { return &ethsecp256k1.PubKey{Key: key} }
+	// SkipDERConversion represents whether the signed Ledger output should skip conversion from DER to BER.
+	// This is set to true for signing performed by the Ledger Ethereum app.
+	SkipDERConversion = true
+)
+
+// EthSecp256k1Option defines a function keys options for the ethereum Secp256k1 curve.
+// It supports eth_secp256k1 keys for accounts.
+func KeyringOption() keyring.Option {
+	return func(options *keyring.Options) {
+		options.SupportedAlgos = SupportedAlgorithms
+		options.SupportedAlgosLedger = SupportedAlgorithmsLedger
+		options.LedgerDerivation = func() (cosmosLedger.SECP256K1, error) { return LedgerDerivation() }
+		options.LedgerCreateKey = CreatePubkey
+		options.LedgerAppName = "Ethereum"
+		options.LedgerSigSkipDERConv = SkipDERConversion
+	}
+}
 
 // NewRootCmd creates a new root command for a Cosmos SDK application
 func NewRootCmd() (*cobra.Command, simappparams.EncodingConfig) {
 	encodingConfig := encoding.MakeConfig(app.ModuleBasics)
+
 	initClientCtx := client.Context{}.
 		WithCodec(encodingConfig.Codec).
 		WithInterfaceRegistry(encodingConfig.InterfaceRegistry).
@@ -60,7 +97,7 @@ func NewRootCmd() (*cobra.Command, simappparams.EncodingConfig) {
 		WithInput(os.Stdin).
 		WithAccountRetriever(types.AccountRetriever{}).
 		WithHomeDir(app.DefaultNodeHome).
-		WithKeyringOptions(evmoskr.Option()).
+		WithKeyringOptions(KeyringOption()).
 		WithViper("")
 
 	rootCmd := &cobra.Command{

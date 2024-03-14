@@ -2,9 +2,9 @@
 
 CHAINID="${CHAIN_ID:-auratest_9000-1}"
 MONIKER="localtestnet"
-KEYRING="test"          # remember to change to other types of keyring like 'file' in-case exposing to outside world, otherwise your balance will be wiped quickly. The keyring test does not require private key to steal tokens from you
-KEYALGO="eth_secp256k1" #gitleaks:allow
-LOGLEVEL="info"
+KEYRING="test"      # remember to change to other types of keyring like 'file' in-case exposing to outside world, otherwise your balance will be wiped quickly. The keyring test does not require private key to steal tokens from you
+KEYALGO="secp256k1" #gitleaks:allow
+LOGLEVEL="debug"
 # to trace evm
 #TRACE="--trace"
 TRACE=""
@@ -120,10 +120,12 @@ aurad add-genesis-account "$(aurad keys show "$USER2_KEY" -a --keyring-backend "
 aurad add-genesis-account "$(aurad keys show "$USER3_KEY" -a --keyring-backend "$KEYRING")" 1000000000000000000000uaura --keyring-backend "$KEYRING"
 aurad add-genesis-account "$(aurad keys show "$USER4_KEY" -a --keyring-backend "$KEYRING")" 1000000000000000000000uaura --keyring-backend "$KEYRING"
 
+aurad add-genesis-account "aura1cml96vmptgw99syqrrz8az79xer2pcgp7z8pyz" 2000000000000000000000uaura
+
 # Update total supply with claim values
 # Bc is required to add this big numbers
 total_supply=$(bc <<<"$amount_to_claim+$validators_supply")
-total_supply=100004000000000000000000000
+total_supply=100006000000000000000000000
 jq -r --arg total_supply "$total_supply" '.app_state.bank.supply[0].amount=$total_supply' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 jq -r '.app_state.bank.supply[0].denom="uaura"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 
@@ -139,6 +141,7 @@ fi
 
 # make sure the localhost IP is 0.0.0.0
 sed -i.bak 's/localhost/0.0.0.0/g' "$CONFIG_TOML"
+sed -i.bak 's/127.0.0.1/0.0.0.0/g' "$CONFIG_TOML"
 sed -i.bak 's/127.0.0.1/0.0.0.0/g' "$APP_TOML"
 
 # use timeout_commit 1s to make test faster

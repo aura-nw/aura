@@ -1,0 +1,18 @@
+{
+  "name": "cosmjs",
+  "version": "1.0.0",
+  "description": "Aura Blockchain's cosmjs tests",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "test": "yarn run jest"
+  },
+  "dependencies": {
+    "@cosmjs/amino": "^0.32.3",
+    "@cosmjs/crypto": "^0.32.3",
+    "@cosmjs/stargate": "^0.32.3"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}

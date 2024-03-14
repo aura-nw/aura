@@ -2,7 +2,7 @@
 
 const Counter = artifacts.require('Counter')
 
-async function expectRevert (promise) {
+async function expectRevert(promise) {
   try {
     await promise
   } catch (error) {
@@ -19,10 +19,26 @@ async function expectRevert (promise) {
 
 contract('Counter', (accounts) => {
   const [one, two, three] = accounts
+  console.log('accounts', accounts)
   let counter
 
   beforeEach(async () => {
+    const balanceOne = await web3.eth.getBalance(one)
+    console.log('balanceOne', balanceOne)
+    // send eth from account one to account two
+    await web3.eth.sendTransaction({
+      from: one,
+      to: two,
+      value: web3.utils.toWei('1', 'ether')
+    })
+    await web3.eth.sendTransaction({
+      from: one,
+      to: three,
+      value: web3.utils.toWei('1', 'ether')
+    })
+
     counter = await Counter.new()
+    console.log(counter.address)
   })
 
   it('should add', async () => {

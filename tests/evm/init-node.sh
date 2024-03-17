@@ -1,6 +1,6 @@
 #!/bin/bash
 
-CHAINID="${CHAIN_ID:-auratest_9000-1}"
+CHAINID="${CHAIN_ID:-auradev_9000-1}"
 MONIKER="localtestnet"
 KEYRING="test"      # remember to change to other types of keyring like 'file' in-case exposing to outside world, otherwise your balance will be wiped quickly. The keyring test does not require private key to steal tokens from you
 KEYALGO="secp256k1" #gitleaks:allow
@@ -20,7 +20,7 @@ CONFIG_TOML="$CHAINDIR/config/config.toml"
 rm -r $CHAINDIR/*
 
 # feemarket params basefee
-BASEFEE=1000000000
+BASEFEE=1
 
 # myKey address 0x7cb61d4117ae31a12e393a1cfa3bac666481d02e
 VAL_KEY="mykey"
@@ -114,18 +114,18 @@ jq '.app_state["feemarket"]["params"]["base_fee"]="'${BASEFEE}'"' "$GENESIS" >"$
 sed -i.bak 's/create_empty_blocks = true/create_empty_blocks = false/g' "$CONFIG_TOML"
 
 # Allocate genesis accounts (cosmos formatted addresses)
-aurad add-genesis-account "$(aurad keys show "$VAL_KEY" -a --keyring-backend "$KEYRING")" 100000000000000000000000000uaura --keyring-backend "$KEYRING"
-aurad add-genesis-account "$(aurad keys show "$USER1_KEY" -a --keyring-backend "$KEYRING")" 1000000000000000000000uaura --keyring-backend "$KEYRING"
-aurad add-genesis-account "$(aurad keys show "$USER2_KEY" -a --keyring-backend "$KEYRING")" 1000000000000000000000uaura --keyring-backend "$KEYRING"
-aurad add-genesis-account "$(aurad keys show "$USER3_KEY" -a --keyring-backend "$KEYRING")" 1000000000000000000000uaura --keyring-backend "$KEYRING"
-aurad add-genesis-account "$(aurad keys show "$USER4_KEY" -a --keyring-backend "$KEYRING")" 1000000000000000000000uaura --keyring-backend "$KEYRING"
+aurad add-genesis-account "$(aurad keys show "$VAL_KEY" -a --keyring-backend "$KEYRING")" 100000000000000uaura --keyring-backend "$KEYRING"
+aurad add-genesis-account "$(aurad keys show "$USER1_KEY" -a --keyring-backend "$KEYRING")" 1000000000uaura --keyring-backend "$KEYRING"
+aurad add-genesis-account "$(aurad keys show "$USER2_KEY" -a --keyring-backend "$KEYRING")" 1000000000uaura --keyring-backend "$KEYRING"
+aurad add-genesis-account "$(aurad keys show "$USER3_KEY" -a --keyring-backend "$KEYRING")" 1000000000uaura --keyring-backend "$KEYRING"
+aurad add-genesis-account "$(aurad keys show "$USER4_KEY" -a --keyring-backend "$KEYRING")" 1000000000uaura --keyring-backend "$KEYRING"
 
-aurad add-genesis-account "aura1cml96vmptgw99syqrrz8az79xer2pcgp7z8pyz" 2000000000000000000000uaura
+aurad add-genesis-account "aura1cml96vmptgw99syqrrz8az79xer2pcgp7z8pyz" 2000000000uaura
 
 # Update total supply with claim values
 # Bc is required to add this big numbers
 total_supply=$(bc <<<"$amount_to_claim+$validators_supply")
-total_supply=100006000000000000000000000
+total_supply=100006000000000
 jq -r --arg total_supply "$total_supply" '.app_state.bank.supply[0].amount=$total_supply' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 jq -r '.app_state.bank.supply[0].denom="uaura"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 
@@ -148,7 +148,7 @@ sed -i.bak 's/127.0.0.1/0.0.0.0/g' "$APP_TOML"
 sed -i.bak 's/timeout_commit = "3s"/timeout_commit = "1s"/g' "$CONFIG_TOML"
 
 # Sign genesis transaction
-aurad gentx "$VAL_KEY" 1000000000000000000000uaura --gas-prices ${BASEFEE}uaura --keyring-backend "$KEYRING" --chain-id "$CHAINID"
+aurad gentx "$VAL_KEY" 1000000000uaura --gas-prices ${BASEFEE}uaura --keyring-backend "$KEYRING" --chain-id "$CHAINID"
 ## In case you want to create multiple validators at genesis
 ## 1. Back to `aurad keys add` step, init more keys
 ## 2. Back to `aurad add-genesis-account` step, add balance for those

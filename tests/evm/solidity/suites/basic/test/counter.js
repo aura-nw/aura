@@ -26,15 +26,20 @@ contract('Counter', (accounts) => {
     const balanceOne = await web3.eth.getBalance(one)
     console.log('balanceOne', balanceOne)
     // send eth from account one to account two
-    await web3.eth.sendTransaction({
+    const receipt = await web3.eth.sendTransaction({
       from: one,
       to: two,
-      value: web3.utils.toWei('1', 'ether')
+      // value: web3.utils.toWei('1', 'ether')
+      value: '1000000',
+      gasPrice: '1'
     })
+    console.log('receipt', receipt)
     await web3.eth.sendTransaction({
       from: one,
       to: three,
-      value: web3.utils.toWei('1', 'ether')
+      // value: web3.utils.toWei('1', 'ether')
+      value: '1000000',
+      gasPrice: '1'
     })
 
     counter = await Counter.new()

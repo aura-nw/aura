@@ -151,6 +151,11 @@ import (
 	evmkeeper "github.com/evmos/evmos/v16/x/evm/keeper"
 	evmtypes "github.com/evmos/evmos/v16/x/evm/types"
 
+	// evmutil from kava
+	evmutil "github.com/kava-labs/kava/x/evmutil"
+	evmutilkeeper "github.com/kava-labs/kava/x/evmutil/keeper"
+	evmutiltypes "github.com/kava-labs/kava/x/evmutil/types"
+
 	// overide transfer for erc20
 	"github.com/evmos/evmos/v16/x/ibc/transfer"
 	transferkeeper "github.com/evmos/evmos/v16/x/ibc/transfer/keeper"
@@ -275,6 +280,7 @@ var (
 		evm.AppModuleBasic{},
 		feemarket.AppModuleBasic{},
 		erc20.AppModuleBasic{},
+		evmutil.AppModuleBasic{},
 		// this line is used by starport scaffolding # stargate/app/moduleBasic
 	)
 
@@ -289,6 +295,7 @@ var (
 		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
 		wasmtypes.ModuleName:           {authtypes.Burner},
 		evmtypes.ModuleName:            {authtypes.Minter, authtypes.Burner},
+		evmutiltypes.ModuleName:        {authtypes.Minter, authtypes.Burner},
 		erc20types.ModuleName:          {authtypes.Minter, authtypes.Burner},
 		// this line is used by starport scaffolding # stargate/app/maccPerms
 	}
@@ -366,6 +373,9 @@ type App struct {
 	EvmKeeper       *evmkeeper.Keeper
 	FeeMarketKeeper feemarketkeeper.Keeper
 
+	// Evmutil keeper
+	evmutilKeeper evmutilkeeper.Keeper
+
 	// this line is used by starport scaffolding # stargate/app/keeperDeclaration
 
 	// the module manager
@@ -416,6 +426,7 @@ func New(
 		evmtypes.StoreKey,
 		feemarkettypes.StoreKey,
 		erc20types.StoreKey,
+		evmutiltypes.StoreKey,
 		// this line is used by starport scaffolding # stargate/app/storeKey
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey, evmtypes.TransientKey, feemarkettypes.TransientKey)
@@ -513,13 +524,27 @@ func New(
 		app.GetSubspace(feemarkettypes.ModuleName),
 	)
 
+	// evmutil keeper and evmBankeeper from Kava
+	// they create a wrapper bank keeper so that the evm module can use 18 decimal points
+	// while cosmos keeps 6 decimal points
+	app.evmutilKeeper = evmutilkeeper.NewKeeper(
+		app.appCodec,
+		keys[evmutiltypes.StoreKey],
+		app.GetSubspace(evmutiltypes.ModuleName),
+		app.BankKeeper,
+		app.AccountKeeper,
+	)
+
+	evmBankKeeper := evmutilkeeper.NewEvmBankKeeper(app.evmutilKeeper, app.BankKeeper, app.AccountKeeper)
+
 	evmKeeper := evmkeeper.NewKeeper(
 		appCodec, keys[evmtypes.StoreKey], tkeys[evmtypes.TransientKey], authtypes.NewModuleAddress(govtypes.ModuleName),
-		app.AccountKeeper, app.BankKeeper, stakingKeeper, app.FeeMarketKeeper,
+		app.AccountKeeper, evmBankKeeper, stakingKeeper, app.FeeMarketKeeper,
 		tracer, app.GetSubspace(evmtypes.ModuleName),
 	)
 
 	app.EvmKeeper = evmKeeper
+	app.evmutilKeeper.SetEvmKeeper(app.EvmKeeper)
 
 	app.Erc20Keeper = erc20keeper.NewKeeper(
 		keys[erc20types.StoreKey], appCodec, authtypes.NewModuleAddress(govtypes.ModuleName),
@@ -720,6 +745,7 @@ func New(
 		evm.NewAppModule(app.EvmKeeper, app.AccountKeeper, app.GetSubspace(evmtypes.ModuleName)),
 		feemarket.NewAppModule(app.FeeMarketKeeper, app.GetSubspace(feemarkettypes.ModuleName)),
 		erc20.NewAppModule(app.Erc20Keeper, app.AccountKeeper, app.GetSubspace(erc20types.ModuleName)),
+		evmutil.NewAppModule(app.evmutilKeeper, app.BankKeeper, app.AccountKeeper),
 		// this line is used by starport scaffolding # stargate/app/appModule
 	)
 
@@ -733,6 +759,7 @@ func New(
 		// ethermint module
 		feemarkettypes.ModuleName,
 		evmtypes.ModuleName,
+
 		minttypes.ModuleName,
 		distrtypes.ModuleName,
 		slashingtypes.ModuleName,
@@ -757,6 +784,8 @@ func New(
 		ibchookstypes.ModuleName,
 		// evmos module
 		erc20types.ModuleName,
+		// kava evmutil module
+		evmutiltypes.ModuleName,
 	)
 
 	app.mm.SetOrderEndBlockers(
@@ -789,6 +818,8 @@ func New(
 		ibchookstypes.ModuleName,
 		// evmos module
 		erc20types.ModuleName,
+		// kava evmutil module
+		evmutiltypes.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -829,6 +860,8 @@ func New(
 		ibchookstypes.ModuleName,
 		// evmos module
 		erc20types.ModuleName,
+		// kava evmutil module
+		evmutiltypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/initGenesis
 	)
 
@@ -859,6 +892,7 @@ func New(
 		evmtypes.ModuleName,
 		feemarkettypes.ModuleName,
 		erc20types.ModuleName,
+		evmutiltypes.ModuleName,
 	)
 
 	app.mm.RegisterInvariants(app.CrisisKeeper)
@@ -1130,6 +1164,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(evmtypes.ModuleName).WithKeyTable(evmtypes.ParamKeyTable()) //nolint:staticcheck
 	paramsKeeper.Subspace(feemarkettypes.ModuleName).WithKeyTable(feemarkettypes.ParamKeyTable())
 	paramsKeeper.Subspace(erc20types.ModuleName)
+	paramsKeeper.Subspace(evmutiltypes.ModuleName)
 	// this line is used by starport scaffolding # stargate/app/paramSubspace
 
 	return paramsKeeper

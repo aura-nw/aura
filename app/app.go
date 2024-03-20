@@ -152,9 +152,9 @@ import (
 	evmtypes "github.com/evmos/evmos/v16/x/evm/types"
 
 	// evmutil from kava
-	evmutil "github.com/kava-labs/kava/x/evmutil"
-	evmutilkeeper "github.com/kava-labs/kava/x/evmutil/keeper"
-	evmutiltypes "github.com/kava-labs/kava/x/evmutil/types"
+	evmutil "github.com/aura-nw/aura/x/evmutil"
+	evmutilkeeper "github.com/aura-nw/aura/x/evmutil/keeper"
+	evmutiltypes "github.com/aura-nw/aura/x/evmutil/types"
 
 	// overide transfer for erc20
 	"github.com/evmos/evmos/v16/x/ibc/transfer"

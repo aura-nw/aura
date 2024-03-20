@@ -19,8 +19,8 @@ CONFIG_TOML="$CHAINDIR/config/config.toml"
 
 rm -r $CHAINDIR/*
 
-# feemarket params basefee
-BASEFEE=1
+# feemarket params basefee: 10^8
+BASEFEE=100000000
 
 # myKey address 0x7cb61d4117ae31a12e393a1cfa3bac666481d02e
 VAL_KEY="mykey"
@@ -73,7 +73,7 @@ aurad init "$MONIKER" --chain-id "$CHAINID"
 jq '.app_state.staking.params.bond_denom="uaura"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 jq '.app_state.crisis.constant_fee.denom="uaura"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 jq '.app_state.gov.deposit_params.min_deposit[0].denom="uaura"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-jq '.app_state.evm.params.evm_denom="uaura"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+jq '.app_state.evm.params.evm_denom="aaura"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 jq '.app_state.inflation.params.mint_denom="uaura"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 
 # set gov proposing && voting period

@@ -29,17 +29,13 @@ contract('Counter', (accounts) => {
     const receipt = await web3.eth.sendTransaction({
       from: one,
       to: two,
-      // value: web3.utils.toWei('1', 'ether')
-      value: '1000000',
-      gasPrice: '1'
+      value: web3.utils.toWei('1', 'ether')
     })
     console.log('receipt', receipt)
     await web3.eth.sendTransaction({
       from: one,
       to: three,
-      // value: web3.utils.toWei('1', 'ether')
-      value: '1000000',
-      gasPrice: '1'
+      value: web3.utils.toWei('1', 'ether')
     })
 
     counter = await Counter.new()

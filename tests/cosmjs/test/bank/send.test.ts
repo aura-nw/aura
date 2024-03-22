@@ -2,9 +2,11 @@ import { GasPrice, SigningStargateClient } from '@cosmjs/stargate';
 import { Secp256k1HdWallet } from '@cosmjs/amino';
 import { stringToPath } from '@cosmjs/crypto';
 
-import { createWalletClient, http } from 'viem'
+import { createWalletClient, http, formatEther, WalletClient, PublicClient, createPublicClient, parseEther } from 'viem'
 import { localhost } from 'viem/chains'
 import { mnemonicToAccount, HDAccount } from 'viem/accounts'
+
+import { convertBech32AddressToEthAddress, convertEthAddressToBech32Address } from '../util/convert_address';
 
 
 const users = [
@@ -33,7 +35,11 @@ const users = [
 let cosmosWallets: Secp256k1HdWallet[];
 let cosmosClients: SigningStargateClient[];
 let evmAccounts: HDAccount[];
-let evmClient;
+let evmClients: WalletClient[];
+let publicClient = createPublicClient({
+  chain: localhost,
+  transport: http()
+});
 
 describe('Bank', () => {
   beforeAll(async () => {
@@ -55,9 +61,12 @@ describe('Bank', () => {
       return mnemonicToAccount(user.mnemonic)
     })
 
-    evmClient = createWalletClient({
-      chain: localhost,
-      transport: http()
+    evmClients = evmAccounts.map((account) => {
+      return createWalletClient({
+        account,
+        chain: localhost,
+        transport: http()
+      })
     })
   })
 
@@ -81,13 +90,38 @@ describe('Bank', () => {
       },
     ];
 
-    const result = await client.sendTokens(account.address, recipient, amount, 1.5);
-    console.log(result);
+    await client.sendTokens(account.address, recipient, amount, 1.5);
   }, 10000);
 
   it('should send tokens from a cosmos address to evm address', async () => {
     const [account] = await cosmosWallets[0].getAccounts();
     console.log(account.address)
 
+    const evmAccount = evmAccounts[1].address;
+
+    const recipient = convertEthAddressToBech32Address('aura', evmAccount);
+    console.log("EVM Recipient: ", evmAccount);
+    console.log("Recipient: ", recipient);
+
+    const prevBalance = await publicClient.getBalance({
+      address: evmAccount,
+    });
+
+    // 1 Aura, should see 1 eAura in the EVM account
+    const amount = [
+      {
+        denom: 'uaura',
+        amount: '1000000',
+      },
+    ];
+
+    const res = await cosmosClients[0].sendTokens(account.address, recipient, amount, 1.5);
+
+    const balance = await publicClient.getBalance({
+      address: evmAccount,
+      blockNumber: BigInt(res.height)
+    });
+    console.log(balance);
+    expect(balance).toEqual(prevBalance + parseEther('1'));
   })
 });

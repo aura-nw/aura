@@ -4,17 +4,27 @@
   "description": "Aura Blockchain's cosmjs tests",
   "main": "index.js",
   "license": "MIT",
+  "type": "module",
   "scripts": {
+    "jest": "NODE_OPTIONS='--loader ts-node/esm' jest",
     "test": "yarn run jest"
   },
   "dependencies": {
+    "@babel/preset-env": "^7.24.3",
     "@cosmjs/amino": "^0.32.3",
     "@cosmjs/crypto": "^0.32.3",
     "@cosmjs/stargate": "^0.32.3",
+    "@evmos/address-converter": "^0.1.9",
+    "@tsconfig/node18": "^18.2.2",
+    "jest-light-runner": "^0.6.0",
+    "ts-jest": "^29.1.2",
     "viem": "^2.8.16"
   },
   "devDependencies": {
+    "@babel/preset-typescript": "^7.24.1",
     "@types/jest": "^29.5.12",
-    "jest": "^29.7.0"
+    "jest": "^29.7.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.3"
   }
 }

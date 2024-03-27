@@ -151,6 +151,10 @@ import (
 	evmkeeper "github.com/evmos/evmos/v16/x/evm/keeper"
 	evmtypes "github.com/evmos/evmos/v16/x/evm/types"
 
+	// Force-load the tracer engines to trigger registration due to Go-Ethereum v1.10.15 changes
+	_ "github.com/ethereum/go-ethereum/eth/tracers/js"
+	_ "github.com/ethereum/go-ethereum/eth/tracers/native"
+	
 	// evmutil from kava
 	evmutil "github.com/aura-nw/aura/x/evmutil"
 	evmutilkeeper "github.com/aura-nw/aura/x/evmutil/keeper"

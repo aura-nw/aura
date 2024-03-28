@@ -1,0 +1,26 @@
+{
+  "extends": "@tsconfig/node18/tsconfig.json",
+  "compilerOptions": {
+    "allowJs": true,
+    "allowSyntheticDefaultImports": true,
+    "allowUnreachableCode": false,
+    "allowUnusedLabels": false,
+    "declaration": true,
+    "emitDeclarationOnly": false,
+    "emitDecoratorMetadata": true,
+    "declarationMap": false,
+    "experimentalDecorators": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitAny": true,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "removeComments": false,
+    "resolveJsonModule": true,
+    "skipDefaultLibCheck": true,
+    "sourceMap": true,
+    "strictNullChecks": true,
+    "stripInternal": true,
+    "suppressImplicitAnyIndexErrors": true,
+    "baseUrl": "."
+  }
+}

@@ -14,6 +14,7 @@ import (
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	cmtypes "github.com/cometbft/cometbft/types"
 	tmtypes "github.com/cometbft/cometbft/types"
+	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
@@ -23,6 +24,8 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
+
+	"github.com/evmos/evmos/v16/encoding"
 )
 
 // EmptyAppOptions is a stub implementing AppOptions
@@ -31,7 +34,7 @@ type EmptyAppOptions struct{}
 // Get implements AppOptions
 func (ao EmptyAppOptions) Get(o string) interface{} {
 	if o == flags.FlagChainID {
-		return "aura-testnet"
+		return "testnet_9000-1"
 	}
 
 	return nil
@@ -58,6 +61,7 @@ var DefaultConsensusParams = &tmproto.ConsensusParams{
 
 func Setup(t *testing.T, isCheckTx bool) *app.App {
 	db := db.NewMemDB()
+	encodingConfig := encoding.MakeConfig(app.ModuleBasics)
 	appObj := app.New(
 		log.NewNopLogger(),
 		db,
@@ -66,8 +70,10 @@ func Setup(t *testing.T, isCheckTx bool) *app.App {
 		map[int64]bool{},
 		app.DefaultNodeHome,
 		0,
-		app.MakeEncodingConfig(),
-		EmptyAppOptions{})
+		encodingConfig,
+		EmptyAppOptions{},
+		baseapp.SetChainID("testnet_9000-1"),
+	)
 
 	if !isCheckTx {
 
@@ -98,6 +104,7 @@ func Setup(t *testing.T, isCheckTx bool) *app.App {
 				Validators:      []abci.ValidatorUpdate{},
 				ConsensusParams: DefaultConsensusParams,
 				AppStateBytes:   stateBytes,
+				ChainId:         "testnet_9000-1",
 			},
 		)
 

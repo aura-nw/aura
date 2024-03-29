@@ -6,10 +6,11 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "jest": "NODE_OPTIONS='--loader ts-node/esm' jest",
-    "test": "yarn run jest"
+    "jest": "NODE_OPTIONS='--loader ts-node/esm' jest --runInBand",
+    "test": "npm run jest"
   },
   "dependencies": {
+    "@aura-nw/aurajs": "0.1.10",
     "@babel/preset-env": "^7.24.3",
     "@cosmjs/amino": "^0.32.3",
     "@cosmjs/crypto": "^0.32.3",

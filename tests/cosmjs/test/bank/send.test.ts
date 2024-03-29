@@ -1,12 +1,12 @@
 import { GasPrice, SigningStargateClient } from '@cosmjs/stargate';
 import { Secp256k1HdWallet } from '@cosmjs/amino';
-import { stringToPath } from '@cosmjs/crypto';
 
-import { createWalletClient, http, formatEther, WalletClient, PublicClient, createPublicClient, parseEther } from 'viem'
+import { http, WalletClient, createPublicClient, parseEther } from 'viem'
 import { localhost } from 'viem/chains'
-import { mnemonicToAccount, HDAccount } from 'viem/accounts'
+import { HDAccount } from 'viem/accounts'
 
-import { convertBech32AddressToEthAddress, convertEthAddressToBech32Address } from '../util/convert_address';
+import { convertEthAddressToBech32Address } from '../util/convert_address';
+import { setupClients } from '../util/test_setup';
 
 
 const users = [
@@ -32,7 +32,7 @@ const users = [
   }
 ];
 
-let cosmosWallets: Secp256k1HdWallet[];
+let cosmosAccounts: Secp256k1HdWallet[];
 let cosmosClients: SigningStargateClient[];
 let evmAccounts: HDAccount[];
 let evmClients: WalletClient[];
@@ -43,40 +43,19 @@ let publicClient = createPublicClient({
 
 describe('Bank', () => {
   beforeAll(async () => {
-    cosmosWallets = await Promise.all(users.map((user) => {
-      return Secp256k1HdWallet.fromMnemonic(user.mnemonic, { hdPaths: [stringToPath("m/44'/118'/0'/0/0")], prefix: 'aura' });
-    }))
-
-    cosmosClients = await Promise.all(cosmosWallets.map((wallet) => {
-      return SigningStargateClient.connectWithSigner(
-        'http://0.0.0.0.:26657',
-        wallet,
-        {
-          gasPrice: GasPrice.fromString('0.025uaura'),
-        }
-      )
-    }));
-
-    evmAccounts = users.map((user) => {
-      return mnemonicToAccount(user.mnemonic)
-    })
-
-    evmClients = evmAccounts.map((account) => {
-      return createWalletClient({
-        account,
-        chain: localhost,
-        transport: http()
-      })
-    })
+    const testClients = await setupClients();
+    cosmosAccounts = testClients.cosmosAccounts;
+    cosmosClients = testClients.cosmosClients;
+    evmAccounts = testClients.evmAccounts;
+    evmClients = testClients.evmClients;
   })
 
   it('should send tokens from a cosmos address to cosmos address', async () => {
-    const [account] = await cosmosWallets[0].getAccounts();
-    console.log(account.address)
+    const [account] = await cosmosAccounts[0].getAccounts();
 
     const client = await SigningStargateClient.connectWithSigner(
       'http://0.0.0.0:26657',
-      cosmosWallets[0],
+      cosmosAccounts[0],
       {
         gasPrice: GasPrice.fromString('0.025uaura'),
       }
@@ -94,7 +73,7 @@ describe('Bank', () => {
   }, 10000);
 
   it('should send tokens from a cosmos address to evm address', async () => {
-    const [account] = await cosmosWallets[0].getAccounts();
+    const [account] = await cosmosAccounts[0].getAccounts();
     console.log(account.address)
 
     const evmAccount = evmAccounts[1].address;

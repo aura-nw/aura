@@ -2,9 +2,22 @@ import { GasPrice, SigningStargateClient } from '@cosmjs/stargate';
 import { Secp256k1HdWallet } from '@cosmjs/amino';
 import { stringToPath } from '@cosmjs/crypto';
 
-import { createWalletClient, http, WalletClient } from 'viem'
-import { localhost } from 'viem/chains'
+import { createWalletClient, defineChain, http, WalletClient } from 'viem'
 import { mnemonicToAccount, HDAccount } from 'viem/accounts'
+import { log } from 'console';
+
+export const localaura = /*#__PURE__*/ defineChain({
+  id: 9_000,
+  name: 'Localhost',
+  nativeCurrency: {
+    decimals: 18,
+    name: 'Ether',
+    symbol: 'ETH',
+  },
+  rpcUrls: {
+    default: { http: ['http://127.0.0.1:8545'] },
+  },
+})
 
 
 export const USERS = [
@@ -54,10 +67,11 @@ export async function setupClients(): Promise<{
     return mnemonicToAccount(user.mnemonic)
   })
 
+
   const evmClients = evmAccounts.map((account) => {
     return createWalletClient({
       account,
-      chain: localhost,
+      chain: localaura,
       transport: http()
     })
   })

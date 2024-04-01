@@ -7,7 +7,7 @@ import { localhost } from 'viem/chains'
 import { mnemonicToAccount, HDAccount } from 'viem/accounts'
 
 
-const users = [
+export const USERS = [
   {
     key: "user1",
     mnemonic: "copper push brief egg scan entry inform record adjust fossil boss egg comic alien upon aspect dry avoid interest fury window hint race symptom",
@@ -36,7 +36,7 @@ export async function setupClients(): Promise<{
   evmAccounts: HDAccount[],
   evmClients: WalletClient[],
 }> {
-  const cosmosAccounts = await Promise.all(users.map((user) => {
+  const cosmosAccounts = await Promise.all(USERS.map((user) => {
     return Secp256k1HdWallet.fromMnemonic(user.mnemonic, { hdPaths: [stringToPath("m/44'/118'/0'/0/0")], prefix: 'aura' });
   }))
 
@@ -50,7 +50,7 @@ export async function setupClients(): Promise<{
     )
   }));
 
-  const evmAccounts = users.map((user) => {
+  const evmAccounts = USERS.map((user) => {
     return mnemonicToAccount(user.mnemonic)
   })
 

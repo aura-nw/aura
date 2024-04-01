@@ -5,6 +5,8 @@ import { http, WalletClient, createPublicClient, parseEther } from 'viem'
 import { localhost } from 'viem/chains'
 import { HDAccount } from 'viem/accounts'
 
+import { assert } from 'chai';
+
 import { convertEthAddressToBech32Address } from '../util/convert_address';
 import { USERS, setupClients } from '../util/test_setup';
 
@@ -19,7 +21,7 @@ let publicClient = createPublicClient({
 });
 
 describe('Bank', () => {
-  beforeAll(async () => {
+  before(async () => {
     const testClients = await setupClients();
     cosmosAccounts = testClients.cosmosAccounts;
     cosmosClients = testClients.cosmosClients;
@@ -38,24 +40,26 @@ describe('Bank', () => {
       },
     ];
 
+    const prevBalance = await cosmosClients[1].getBalance(recipient, 'uaura');
+
     await cosmosClients[0].sendTokens(account.address, recipient, amount, 1.5);
-  }, 10000);
+
+    const afterBalance = await cosmosClients[1].getBalance(recipient, 'uaura');
+
+    assert.equal(BigInt(afterBalance.amount), BigInt(prevBalance.amount) + 1000n, "Recipient balance should increase by 1000");
+  });
 
   it('should send tokens from a cosmos address to evm address', async () => {
     const [account] = await cosmosAccounts[0].getAccounts();
-    console.log(account.address)
 
     const evmAccount = evmAccounts[1].address;
-
     const recipient = convertEthAddressToBech32Address('aura', evmAccount);
-    console.log("EVM Recipient: ", evmAccount);
-    console.log("Recipient: ", recipient);
 
     const prevBalance = await publicClient.getBalance({
       address: evmAccount,
     });
 
-    // 1 Aura, should see 1 eAura in the EVM account
+    // 1 Aura, should see 1 Aura in the EVM account
     const amount = [
       {
         denom: 'uaura',
@@ -63,13 +67,14 @@ describe('Bank', () => {
       },
     ];
 
+    // send from cosmos to evm
     const res = await cosmosClients[0].sendTokens(account.address, recipient, amount, 1.5);
 
-    const balance = await publicClient.getBalance({
+    const afterBalance = await publicClient.getBalance({
       address: evmAccount,
       blockNumber: BigInt(res.height)
     });
-    console.log(balance);
-    expect(balance).toEqual(prevBalance + parseEther('1'));
+
+    assert.equal(afterBalance, prevBalance + parseEther('1'), "Recipient balance should increase by 1 Ether");
   })
 });

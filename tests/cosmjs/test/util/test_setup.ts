@@ -1,10 +1,10 @@
 import { GasPrice, SigningStargateClient } from '@cosmjs/stargate';
-import { Secp256k1HdWallet } from '@cosmjs/amino';
+import { DirectSecp256k1HdWallet } from '@cosmjs/proto-signing';
 import { stringToPath } from '@cosmjs/crypto';
+import { getSigningCosmosClient } from '@aura-nw/aurajs';
 
 import { createWalletClient, defineChain, http, WalletClient } from 'viem'
 import { mnemonicToAccount, HDAccount } from 'viem/accounts'
-import { log } from 'console';
 
 export const localaura = /*#__PURE__*/ defineChain({
   id: 9_000,
@@ -44,23 +44,25 @@ export const USERS = [
 ];
 
 export async function setupClients(): Promise<{
-  cosmosAccounts: Secp256k1HdWallet[],
+  cosmosAccounts: DirectSecp256k1HdWallet[],
   cosmosClients: SigningStargateClient[],
   evmAccounts: HDAccount[],
   evmClients: WalletClient[],
 }> {
   const cosmosAccounts = await Promise.all(USERS.map((user) => {
-    return Secp256k1HdWallet.fromMnemonic(user.mnemonic, { hdPaths: [stringToPath("m/44'/118'/0'/0/0")], prefix: 'aura' });
+    return DirectSecp256k1HdWallet.fromMnemonic(user.mnemonic, { prefix: 'aura' });
   }))
 
   const cosmosClients = await Promise.all(cosmosAccounts.map((wallet) => {
-    return SigningStargateClient.connectWithSigner(
-      'http://0.0.0.0.:26657',
-      wallet,
-      {
-        gasPrice: GasPrice.fromString('0.025uaura'),
-      }
-    )
+    // return SigningStargateClient.connectWithSigner(
+    //   'http://0.0.0.0:26657',
+    //   wallet,
+    //   { gasPrice: GasPrice.fromString('0.025uauras') }
+    // )
+    return getSigningCosmosClient({
+      rpcEndpoint: 'http://0.0.0.0:26657',
+      signer: wallet,
+    })
   }));
 
   const evmAccounts = USERS.map((user) => {

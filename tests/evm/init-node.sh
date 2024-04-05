@@ -73,6 +73,9 @@ aurad init "$MONIKER" --chain-id "$CHAINID"
 jq '.app_state.staking.params.bond_denom="uaura"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 jq '.app_state.crisis.constant_fee.denom="uaura"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 jq '.app_state.gov.deposit_params.min_deposit[0].denom="uaura"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+jq '.app_state.gov.deposit_params.min_deposit[0].amount="1000000"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+jq '.app_state.gov.params.min_deposit[0].denom="uaura"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+jq '.app_state.gov.params.min_deposit[0].amount="1000000"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 jq '.app_state.evm.params.evm_denom="aaura"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 jq '.app_state.inflation.params.mint_denom="uaura"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 
@@ -137,6 +140,7 @@ if [ "$PRUNING" = "custom" ]; then
   sed -i.bak 's/pruning = "default"/pruning = "custom"/g' "$APP_TOML"
   sed -i.bak 's/pruning-keep-recent = "0"/pruning-keep-recent = "2"/g' "$APP_TOML"
   sed -i.bak 's/pruning-interval = "0"/pruning-interval = "10"/g' "$APP_TOML"
+  sed -i.bak 's/swagger = false/swagger = true/g' "$APP_TOML"
 fi
 
 # make sure the localhost IP is 0.0.0.0

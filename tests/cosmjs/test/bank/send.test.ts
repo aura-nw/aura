@@ -1,5 +1,5 @@
 import { GasPrice, SigningStargateClient } from '@cosmjs/stargate';
-import { Secp256k1HdWallet } from '@cosmjs/amino';
+import { Secp256k1HdWallet, StdFee } from '@cosmjs/amino';
 
 import { http, WalletClient, createPublicClient, parseEther } from 'viem'
 import { localhost } from 'viem/chains'
@@ -42,7 +42,11 @@ describe('Bank', () => {
 
     const prevBalance = await cosmosClients[1].getBalance(recipient, 'uaura');
 
-    await cosmosClients[0].sendTokens(account.address, recipient, amount, 1.5);
+    const fee = {
+      amount: [{ amount: '100000', denom: 'uaura' }],
+      gas: '200000'
+    } as StdFee
+    await cosmosClients[0].sendTokens(account.address, recipient, amount, fee);
 
     const afterBalance = await cosmosClients[1].getBalance(recipient, 'uaura');
 
@@ -67,8 +71,12 @@ describe('Bank', () => {
       },
     ];
 
+    const fee = {
+      amount: [{ amount: '100000', denom: 'uaura' }],
+      gas: '200000'
+    } as StdFee
     // send from cosmos to evm
-    const res = await cosmosClients[0].sendTokens(account.address, recipient, amount, 1.5);
+    const res = await cosmosClients[0].sendTokens(account.address, recipient, amount, fee);
 
     const afterBalance = await publicClient.getBalance({
       address: evmAccount,

@@ -1,11 +1,11 @@
-import { GasPrice, SigningStargateClient } from '@cosmjs/stargate';
-import { Secp256k1HdWallet } from '@cosmjs/amino';
+import { StdFee, SigningStargateClient } from '@cosmjs/stargate';
+import { Secp256k1HdWallet, StdFee } from '@cosmjs/amino';
 
 import { http, WalletClient, createPublicClient, parseEther, getContract } from 'viem'
 import { localhost } from 'viem/chains'
 import { HDAccount } from 'viem/accounts'
 
-import { evmos } from '@aura-nw/aurajs';
+import { evmos, cosmos, getSigningCosmosClient } from '@aura-nw/aurajs';
 
 import hre from "hardhat";
 import { assert } from 'chai';
@@ -37,7 +37,7 @@ describe('Should work with ERC20 tokens', () => {
     const TestErc20Code = await hre.ethers.getContractFactory("TestERC20");
     // console.log(await evmAccounts[0].signMessage({ message: 'hello world' }))
     const TestErc20Abi = JSON.parse(TestErc20Code.interface.formatJson()),
-    const TestErc20Address = await evmClients[0].deployContract({
+    const txHash = await evmClients[0].deployContract({
       abi: TestErc20Abi,
       account: evmAccounts[0],
       bytecode: TestErc20Code.bytecode as `0x${string}`,
@@ -45,24 +45,68 @@ describe('Should work with ERC20 tokens', () => {
       chain: undefined
     })
 
-    erc20Contract = getContract({
-      address: TestErc20Address,
-      abi: TestErc20Abi,
-      client: publicClient,
-    })
+    const txReceipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
+
+    if (txReceipt.contractAddress) {
+      erc20Contract = getContract({
+        address: txReceipt.contractAddress,
+        abi: TestErc20Abi,
+        client: publicClient,
+      })
+    }
   })
 
   it('can register an ERC20 token', async () => {
     const [account] = await cosmosAccounts[0].getAccounts();
 
-    console.log(aurajs)
-    const registerMsg = aurajs.evmos.erc20.v1.RegisterERC20Proposal.fromPartial({
+    const registerMsg = evmos.erc20.v1.RegisterERC20Proposal.fromPartial({
       erc20addresses: [
+        erc20Contract.address
       ],
       description: "Register an TestErc20 token",
       title: "Register TestErc20"
     })
+    const registerMsgRaw = evmos.erc20.v1.RegisterERC20Proposal.encode(registerMsg).finish();
 
+    const proposalMsg = cosmos.gov.v1beta1.MsgSubmitProposal.fromPartial({
+      content: {
+        typeUrl: evmos.erc20.v1.RegisterERC20Proposal.typeUrl,
+        value: registerMsgRaw
+      },
+      initialDeposit: [
+        {
+          amount: '1000000',
+          denom: 'uaura'
+        }
+      ],
+      proposer: account.address,
+      // authority: "aura10d07y265gmmuvt4z0w9aw880jnsr700jp5y852"
+    })
+
+    const fee = {
+      amount: [{ amount: '200000', denom: 'uaura' }],
+      gas: '400000'
+    } as StdFee
+    // await cosmosClients[0].sendTokens(account.address,  "aura10d07y265gmmuvt4z0w9aw880jnsr700jp5y852", [{ denom: 'uaura', amount: '1000000' }], fee)
+
+
+    console.log(account);
+    console.log(await cosmosClients[0].getAccount(account.address));
+
+    console.log(await cosmosClients[0].getBlock());
+    const tx = await cosmosClients[0].signAndBroadcast(account.address, [{
+      // typeUrl: cosmos.gov.v1.MsgExecLegacyContent.typeUrl,
+      typeUrl: cosmos.gov.v1beta1.MsgSubmitProposal.typeUrl,
+      value: proposalMsg
+    }], fee, 'Register TestErc20');
+    console.log(tx);
+    // decode authInfoBytes
+    // const authInfo = cosmos.tx.v1beta1.AuthInfo.decode(tx.authInfoBytes);
+    // console.log(JSON.stringify(authInfo, null, 2));
+
+    // const body = cosmos.tx.v1beta1.TxBody.decode(tx.bodyBytes);
+    // console.log(JSON.stringify(body, null, 2));
+
+    // await cosmosClients[0].sendTokens(account.address, account.address, [{ denom: 'uaura', amount: '1000000' }], fee);
   });
-
 });

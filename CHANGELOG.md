@@ -37,6 +37,10 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 ## Unreleased
 
+## [v0.8.0] - 2024-04-06
+### Features
+- Add EVM module 
+
 ## [v0.7.2] - 2024-01-18
 ### Improvements
 - Enhance flow of post handle verify tx from smart account module

@@ -40,6 +40,10 @@ export const USERS = [
     key: "user4",
     mnemonic: "doll midnight silk carpet brush boring pluck office gown inquiry duck chief aim exit gain never tennis crime fragile ship cloud surface exotic patch",
     address: "aura1rfn972g75dhyp586jmyda7vpsuqa4w0syh099q"
+  },
+  {
+    key: "validator",
+    mnemonic: "gesture inject test cycle original hollow east ridge hen combine junk child bacon zero hope comfort vacuum milk pitch cage oppose unhappy lunar seat",
   }
 ];
 

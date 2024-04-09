@@ -18,9 +18,9 @@ function makeBech32Decoder(currentPrefix: string) {
 export function convertBech32AddressToEthAddress(
   prefix: string,
   bech32Address: string
-) {
+): `0x${string}` {
   const data = makeBech32Decoder(prefix)(bech32Address);
-  return ETH.encoder(data);
+  return ETH.encoder(data) as `0x${string}`;
 }
 
 export function convertEthAddressToBech32Address(

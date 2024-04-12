@@ -52,7 +52,6 @@ import (
 	cosmosLedger "github.com/cosmos/cosmos-sdk/crypto/ledger"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	evmosserver "github.com/evmos/evmos/v16/server"
-	evmosclient "github.com/evmos/evmos/v16/client"
 )
 
 var (
@@ -132,7 +131,7 @@ func NewRootCmd() (*cobra.Command, simappparams.EncodingConfig) {
 	// set default chain-id and keyring
 	overwriteFlagDefaults(rootCmd, map[string]string{
 		flags.FlagChainID:        "aura_6322-2",
-		flags.FlagKeyringBackend: "test",
+		flags.FlagKeyringBackend: "os",
 	})
 
 	return rootCmd, encodingConfig
@@ -154,10 +153,7 @@ func initRootCmd(
 
 	gentxModule := app.ModuleBasics[genutiltypes.ModuleName].(genutil.AppModuleBasic)
 	rootCmd.AddCommand(
-		//Validate ChainID format
-		evmosclient.ValidateChainID(
-			genutilcli.InitCmd(app.ModuleBasics, app.DefaultNodeHome),
-		),
+		genutilcli.InitCmd(app.ModuleBasics, app.DefaultNodeHome),
 		genutilcli.CollectGenTxsCmd(banktypes.GenesisBalancesIterator{}, app.DefaultNodeHome, gentxModule.GenTxValidator),
 		genutilcli.MigrateGenesisCmd(),
 		genutilcli.GenTxCmd(

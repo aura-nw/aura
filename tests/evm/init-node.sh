@@ -147,6 +147,7 @@ fi
 sed -i.bak 's/localhost/0.0.0.0/g' "$CONFIG_TOML"
 sed -i.bak 's/127.0.0.1/0.0.0.0/g' "$CONFIG_TOML"
 sed -i.bak 's/127.0.0.1/0.0.0.0/g' "$APP_TOML"
+sed -i.bak 's/localhost/0.0.0.0/g' "$APP_TOML"
 
 # use timeout_commit 1s to make test faster
 sed -i.bak 's/timeout_commit = "3s"/timeout_commit = "1s"/g' "$CONFIG_TOML"
@@ -161,7 +162,8 @@ aurad gentx "$VAL_KEY" 1000000000uaura --gas-prices ${BASEFEE}uaura --keyring-ba
 ## 5. Copy the `gentx-*` folders under `~/.clonedaurad/config/gentx/` folders into the original `~/.aurad/config/gentx`
 
 # Enable the APIs for the tests to be successful
-sed -i.bak 's/enable = false/enable = true/g' "$APP_TOML"
+sed -i.bak '119s/enable = false/enable = true/g' "$APP_TOML"
+sed -i.bak 's/swagger = false/swagger = true/g' "$APP_TOML"
 
 # Don't enable memiavl by default
 grep -q -F '[memiavl]' "$APP_TOML" && sed -i.bak '/\[memiavl\]/,/^\[/ s/enable = true/enable = false/' "$APP_TOML"

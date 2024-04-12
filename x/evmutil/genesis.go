@@ -23,7 +23,9 @@ func InitGenesis(ctx sdk.Context, keeper keeper.Keeper, gs *types.GenesisState, 
 	}
 
 	for _, account := range gs.Accounts {
-		keeper.SetAccount(ctx, account)
+		if err := keeper.SetAccount(ctx, account); err != nil {
+			panic(fmt.Sprintf("failed to set account: %s", err))
+		}
 	}
 }
 

@@ -1,7 +1,7 @@
 import { SigningStargateClient } from '@cosmjs/stargate';
 import { Secp256k1HdWallet, StdFee } from '@cosmjs/amino';
 
-import { http, WalletClient, createPublicClient, parseEther, getAddress } from 'viem'
+import { http, WalletClient, createPublicClient, parseEther, getAddress, PublicClient } from 'viem'
 import { localhost } from 'viem/chains'
 import { HDAccount } from 'viem/accounts'
 
@@ -11,26 +11,24 @@ import hre from "hardhat";
 import { assert } from 'chai';
 
 import { convertBech32AddressToEthAddress } from '../util/convert_address';
-import { USERS, setupClients, localaura } from '../util/test_setup';
+import { USERS, setupClients, localaura, auradev } from '../util/test_setup';
 
 
 let cosmosAccounts: Secp256k1HdWallet[];
 let cosmosClients: SigningStargateClient[];
 let evmAccounts: HDAccount[];
 let evmClients: WalletClient[];
-let publicClient = createPublicClient({
-  chain: localhost,
-  transport: http()
-});
+let publicClient: PublicClient;
 let erc20ContractAddr: `0x${string}`;
 
 describe('Should work with ERC20 tokens', () => {
   before(async () => {
-    const testClients = await setupClients();
+    const testClients = await setupClients('auradev');
     cosmosAccounts = testClients.cosmosAccounts;
     cosmosClients = testClients.cosmosClients;
     evmAccounts = testClients.evmAccounts;
     evmClients = testClients.evmClients;
+    publicClient = testClients.publicClient;
 
     const TestErc20Code = await hre.ethers.getContractFactory("TestERC20");
     // console.log(await evmAccounts[0].signMessage({ message: 'hello world' }))
@@ -40,15 +38,17 @@ describe('Should work with ERC20 tokens', () => {
       account: evmAccounts[0],
       bytecode: TestErc20Code.bytecode as `0x${string}`,
       args: ['TestToken', 'TTT', parseEther('1000000')],
-      chain: undefined
+      chain: auradev
     })
 
     const txReceipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
+    console.log(txReceipt)
 
     if (!txReceipt.contractAddress) {
       throw new Error('Contract address not found');
     }
     erc20ContractAddr = txReceipt.contractAddress;
+    console.log(erc20ContractAddr)
 
     // send some token to the a cosmos account
     const [cosmosAccount] = await cosmosAccounts[0].getAccounts();
@@ -61,7 +61,7 @@ describe('Should work with ERC20 tokens', () => {
       functionName: 'transfer',
       args: [receiver, sendAmt],
       account: evmAccounts[0],
-      chain: localaura
+      chain: auradev
     })
 
     console.log(transferTx)
@@ -77,6 +77,7 @@ describe('Should work with ERC20 tokens', () => {
       description: "Register an TestErc20 token",
       title: "Register TestErc20"
     })
+    console.log(registerMsg)
     const registerMsgRaw = evmos.erc20.v1.RegisterERC20Proposal.encode(registerMsg).finish();
 
     const proposalMsg = cosmos.gov.v1beta1.MsgSubmitProposal.fromPartial({
@@ -99,11 +100,14 @@ describe('Should work with ERC20 tokens', () => {
       gas: '400000'
     } as StdFee
 
+    console.log(account.address)
     const submitTx = await cosmosClients[0].signAndBroadcast(account.address, [{
       // typeUrl: cosmos.gov.v1.MsgExecLegacyContent.typeUrl,
       typeUrl: cosmos.gov.v1beta1.MsgSubmitProposal.typeUrl,
       value: proposalMsg
     }], fee, 'Register TestErc20')
+
+    console.log(submitTx)
 
     const proposalId = submitTx?.events.find(
       (event: any) => event.type === 'submit_proposal'
@@ -149,7 +153,7 @@ describe('Should work with ERC20 tokens', () => {
 
     // convert erc20 to coin
     const convertFee = {
-      amount: [{ amount: '500000', denom: 'uaura' }],
+      amount: [{ amount: '500000', denom: 'utaura' }],
       gas: '1000000'
     } as StdFee
     const sender = convertBech32AddressToEthAddress('aura', account.address)

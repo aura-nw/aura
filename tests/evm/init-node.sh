@@ -19,6 +19,8 @@ CONFIG_TOML="$CHAINDIR/config/config.toml"
 
 rm -r $CHAINDIR/*
 
+IBC_DENOM="ibc/939F7D594BF0C04D914C711F39DA67073B68D39F9619513A752EA4DBC63CA631"
+
 # feemarket params basefee: 10^8
 BASEFEE=100000000
 
@@ -118,7 +120,7 @@ sed -i.bak 's/create_empty_blocks = true/create_empty_blocks = false/g' "$CONFIG
 
 # Allocate genesis accounts (cosmos formatted addresses)
 aurad add-genesis-account "$(aurad keys show "$VAL_KEY" -a --keyring-backend "$KEYRING")" 100000000000000uaura --keyring-backend "$KEYRING"
-aurad add-genesis-account "$(aurad keys show "$USER1_KEY" -a --keyring-backend "$KEYRING")" 1000000000uaura --keyring-backend "$KEYRING"
+aurad add-genesis-account "$(aurad keys show "$USER1_KEY" -a --keyring-backend "$KEYRING")" "1000000000uaura,100000000$IBC_DENOM" --keyring-backend "$KEYRING"
 aurad add-genesis-account "$(aurad keys show "$USER2_KEY" -a --keyring-backend "$KEYRING")" 1000000000uaura --keyring-backend "$KEYRING"
 aurad add-genesis-account "$(aurad keys show "$USER3_KEY" -a --keyring-backend "$KEYRING")" 1000000000uaura --keyring-backend "$KEYRING"
 aurad add-genesis-account "$(aurad keys show "$USER4_KEY" -a --keyring-backend "$KEYRING")" 1000000000uaura --keyring-backend "$KEYRING"
@@ -129,8 +131,10 @@ aurad add-genesis-account "aura1cml96vmptgw99syqrrz8az79xer2pcgp7z8pyz" 20000000
 # Bc is required to add this big numbers
 total_supply=$(bc <<<"$amount_to_claim+$validators_supply")
 total_supply=100006000000000
-jq -r --arg total_supply "$total_supply" '.app_state.bank.supply[0].amount=$total_supply' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-jq -r '.app_state.bank.supply[0].denom="uaura"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+jq -r --arg total_supply "$total_supply" '.app_state.bank.supply[1].amount=$total_supply' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+jq -r '.app_state.bank.supply[1].denom="uaura"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+jq -r '.app_state.bank.supply[0].amount="100000000"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+jq -r --arg ibc_denom "$IBC_DENOM" '.app_state.bank.supply[0].denom=$ibc_denom' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 
 # set list of evm precompile contracts
 jq '.app_state.evm.params.active_precompiles=[ "0x0000000000000000000000000000000000000400", "0x0000000000000000000000000000000000000800", "0x0000000000000000000000000000000000000801", "0x0000000000000000000000000000000000000802" ]' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"

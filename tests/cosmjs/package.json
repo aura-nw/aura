@@ -8,7 +8,7 @@
     "test": "npx hardhat test"
   },
   "dependencies": {
-    "@aura-nw/aurajs": "0.1.10",
+    "@aura-nw/aurajs": "0.2.1",
     "@babel/preset-env": "^7.24.3",
     "@cosmjs/amino": "^0.32.3",
     "@cosmjs/crypto": "^0.32.3",

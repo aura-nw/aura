@@ -3,8 +3,10 @@ import { DirectSecp256k1HdWallet } from '@cosmjs/proto-signing';
 import { stringToPath } from '@cosmjs/crypto';
 import { getSigningCosmosClient } from '@aura-nw/aurajs';
 
-import { createWalletClient, defineChain, http, WalletClient } from 'viem'
+import { createPublicClient, createWalletClient, defineChain, http, PublicClient, WalletClient } from 'viem'
 import { mnemonicToAccount, HDAccount } from 'viem/accounts'
+
+export type ChainName = 'localaura' | 'auradev';
 
 export const localaura = /*#__PURE__*/ defineChain({
   id: 9_000,
@@ -16,6 +18,19 @@ export const localaura = /*#__PURE__*/ defineChain({
   },
   rpcUrls: {
     default: { http: ['http://127.0.0.1:8545'] },
+  },
+})
+
+export const auradev = /*#__PURE__*/ defineChain({
+  id: 1_235,
+  name: 'AuraDev',
+  nativeCurrency: {
+    decimals: 18,
+    name: 'Ether',
+    symbol: 'ETH',
+  },
+  rpcUrls: {
+    default: { http: ['https://jsonrpc.dev.aura.network:443'] },
   },
 })
 
@@ -40,27 +55,32 @@ export const USERS = [
     key: "user4",
     mnemonic: "doll midnight silk carpet brush boring pluck office gown inquiry duck chief aim exit gain never tennis crime fragile ship cloud surface exotic patch",
     address: "aura1rfn972g75dhyp586jmyda7vpsuqa4w0syh099q"
+  },
+  {
+    key: "validator",
+    mnemonic: "gesture inject test cycle original hollow east ridge hen combine junk child bacon zero hope comfort vacuum milk pitch cage oppose unhappy lunar seat",
   }
 ];
 
-export async function setupClients(): Promise<{
+export const RPC_ENDPOINTS = {
+  'auradev': 'https://rpc.dev.aura.network:443',
+  'localaura': 'http://0.0.0.0:26657',
+}
+
+export async function setupClients(chainName: ChainName = 'localaura'): Promise<{
   cosmosAccounts: DirectSecp256k1HdWallet[],
   cosmosClients: SigningStargateClient[],
   evmAccounts: HDAccount[],
   evmClients: WalletClient[],
+  publicClient: PublicClient
 }> {
   const cosmosAccounts = await Promise.all(USERS.map((user) => {
     return DirectSecp256k1HdWallet.fromMnemonic(user.mnemonic, { prefix: 'aura' });
   }))
 
   const cosmosClients = await Promise.all(cosmosAccounts.map((wallet) => {
-    // return SigningStargateClient.connectWithSigner(
-    //   'http://0.0.0.0:26657',
-    //   wallet,
-    //   { gasPrice: GasPrice.fromString('0.025uauras') }
-    // )
     return getSigningCosmosClient({
-      rpcEndpoint: 'http://0.0.0.0:26657',
+      rpcEndpoint: RPC_ENDPOINTS[chainName],
       signer: wallet,
     })
   }));
@@ -73,15 +93,21 @@ export async function setupClients(): Promise<{
   const evmClients = evmAccounts.map((account) => {
     return createWalletClient({
       account,
-      chain: localaura,
+      chain: chainName === 'localaura' ? localaura : auradev,
       transport: http()
     })
   })
+
+  const publicClient = createPublicClient({
+    chain: chainName === 'localaura' ? localaura : auradev,
+    transport: http()
+  });
 
   return {
     cosmosAccounts,
     cosmosClients,
     evmAccounts,
     evmClients,
+    publicClient,
   }
 }

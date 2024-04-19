@@ -5,7 +5,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"strings"
+	"fmt"
 
 	simappparams "cosmossdk.io/simapp/params"
 
@@ -21,9 +21,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
-	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/cosmos/cosmos-sdk/server"
-	serverconfig "github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	"github.com/cosmos/cosmos-sdk/snapshots"
 	snapshottypes "github.com/cosmos/cosmos-sdk/snapshots/types"
@@ -36,10 +34,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
-	"github.com/evmos/evmos/v16/crypto/ethsecp256k1"
-	"github.com/evmos/evmos/v16/crypto/hd"
 	"github.com/evmos/evmos/v16/encoding"
-	"github.com/evmos/evmos/v16/wallets/ledger"
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -49,41 +44,9 @@ import (
 	"github.com/aura-nw/aura/app"
 
 	// evmos
-
-	cosmosLedger "github.com/cosmos/cosmos-sdk/crypto/ledger"
-	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
+	serverconfig "github.com/evmos/evmos/v16/server/config"
 	evmosserver "github.com/evmos/evmos/v16/server"
 )
-
-var (
-	// SupportedAlgorithms defines the list of signing algorithms used on Evmos:
-	//  - eth_secp256k1 (Ethereum)
-	SupportedAlgorithms = hd.SupportedAlgorithms
-	// SupportedAlgorithmsLedger defines the list of signing algorithms used on Evmos for the Ledger device:
-	//  - secp256k1 (in order to comply with Cosmos SDK)
-	// The Ledger derivation function is responsible for all signing and address generation.
-	SupportedAlgorithmsLedger = keyring.SigningAlgoList{hd.EthSecp256k1}
-	// LedgerDerivation defines the Evmos Ledger Go derivation (Ethereum app with EIP-712 signing)
-	LedgerDerivation = ledger.EvmosLedgerDerivation()
-	// CreatePubkey uses the ethsecp256k1 pubkey with Ethereum address generation and keccak hashing
-	CreatePubkey = func(key []byte) cryptotypes.PubKey { return &ethsecp256k1.PubKey{Key: key} }
-	// SkipDERConversion represents whether the signed Ledger output should skip conversion from DER to BER.
-	// This is set to true for signing performed by the Ledger Ethereum app.
-	SkipDERConversion = true
-)
-
-// EthSecp256k1Option defines a function keys options for the ethereum Secp256k1 curve.
-// It supports eth_secp256k1 keys for accounts.
-func KeyringOption() keyring.Option {
-	return func(options *keyring.Options) {
-		options.SupportedAlgos = SupportedAlgorithms
-		options.SupportedAlgosLedger = SupportedAlgorithmsLedger
-		options.LedgerDerivation = func() (cosmosLedger.SECP256K1, error) { return LedgerDerivation() }
-		options.LedgerCreateKey = CreatePubkey
-		options.LedgerAppName = "Ethereum"
-		options.LedgerSigSkipDERConv = SkipDERConversion
-	}
-}
 
 // NewRootCmd creates a new root command for a Cosmos SDK application
 func NewRootCmd() (*cobra.Command, simappparams.EncodingConfig) {
@@ -97,7 +60,6 @@ func NewRootCmd() (*cobra.Command, simappparams.EncodingConfig) {
 		WithInput(os.Stdin).
 		WithAccountRetriever(types.AccountRetriever{}).
 		WithHomeDir(app.DefaultNodeHome).
-		WithKeyringOptions(KeyringOption()).
 		WithViper("")
 
 	rootCmd := &cobra.Command{
@@ -129,9 +91,10 @@ func NewRootCmd() (*cobra.Command, simappparams.EncodingConfig) {
 	}
 
 	initRootCmd(rootCmd, encodingConfig)
+	// set default chain-id and keyring
 	overwriteFlagDefaults(rootCmd, map[string]string{
-		flags.FlagChainID:        strings.ReplaceAll(app.Name, "-", ""),
-		flags.FlagKeyringBackend: "test",
+		flags.FlagChainID:        "aura_6322-2",
+		flags.FlagKeyringBackend: "os",
 	})
 
 	return rootCmd, encodingConfig
@@ -245,6 +208,9 @@ func txCommand() *cobra.Command {
 		authcmd.GetDecodeCommand(),
 	)
 
+	//Set DefaultGasAdjustment
+	flags.DefaultGasAdjustment = 1.4
+	
 	app.ModuleBasics.AddTxCommands(cmd)
 	cmd.PersistentFlags().String(flags.FlagChainID, "", "The network chain ID")
 
@@ -391,33 +357,17 @@ func (a appCreator) appExport(
 // initAppConfig helps to override default appConfig template and configs.
 // return "", nil if no custom configuration is required for the application.
 func initAppConfig() (string, interface{}) {
-	// The following code snippet is just for reference.
+	customAppTemplate, customAppConfig := serverconfig.AppConfig("uaura")
 
-	type CustomAppConfig struct {
-		serverconfig.Config
+	srvCfg, ok := customAppConfig.(serverconfig.Config)
+	if !ok {
+		panic(fmt.Errorf("unknown app config type %T", customAppConfig))
 	}
 
-	// Optionally allow the chain developer to overwrite the SDK's default
-	// server config.
-	srvCfg := serverconfig.DefaultConfig()
-	// The SDK's default minimum gas price is set to "" (empty value) inside
-	// app.toml. If left empty by validators, the node will halt on startup.
-	// However, the chain developer can set a default app.toml value for their
-	// validators here.
-	//
-	// In summary:
-	// - if you leave srvCfg.MinGasPrices = "", all validators MUST tweak their
-	//   own app.toml config,
-	// - if you set srvCfg.MinGasPrices non-empty, validators CAN tweak their
-	//   own app.toml to override, or use this default value.
-	//
-	// In simapp, we set the min gas prices to 0.
-	srvCfg.MinGasPrices = "0uaura"
+	srvCfg.StateSync.SnapshotInterval = 1000
+	srvCfg.StateSync.SnapshotKeepRecent = 2
+	srvCfg.IAVLDisableFastNode = false
+	srvCfg.Config.MinGasPrices = "0.001uaura" 
 
-	customAppConfig := CustomAppConfig{
-		Config: *srvCfg,
-	}
-	customAppTemplate := serverconfig.DefaultConfigTemplate
-
-	return customAppTemplate, customAppConfig
+	return customAppTemplate, srvCfg
 }

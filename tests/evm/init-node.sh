@@ -19,6 +19,8 @@ CONFIG_TOML="$CHAINDIR/config/config.toml"
 
 rm -r $CHAINDIR/*
 
+IBC_DENOM="ibc/939F7D594BF0C04D914C711F39DA67073B68D39F9619513A752EA4DBC63CA631"
+
 # feemarket params basefee: 10^8
 BASEFEE=100000000
 
@@ -118,7 +120,7 @@ sed -i.bak 's/create_empty_blocks = true/create_empty_blocks = false/g' "$CONFIG
 
 # Allocate genesis accounts (cosmos formatted addresses)
 aurad add-genesis-account "$(aurad keys show "$VAL_KEY" -a --keyring-backend "$KEYRING")" 100000000000000uaura --keyring-backend "$KEYRING"
-aurad add-genesis-account "$(aurad keys show "$USER1_KEY" -a --keyring-backend "$KEYRING")" 1000000000uaura --keyring-backend "$KEYRING"
+aurad add-genesis-account "$(aurad keys show "$USER1_KEY" -a --keyring-backend "$KEYRING")" "1000000000uaura,100000000$IBC_DENOM" --keyring-backend "$KEYRING"
 aurad add-genesis-account "$(aurad keys show "$USER2_KEY" -a --keyring-backend "$KEYRING")" 1000000000uaura --keyring-backend "$KEYRING"
 aurad add-genesis-account "$(aurad keys show "$USER3_KEY" -a --keyring-backend "$KEYRING")" 1000000000uaura --keyring-backend "$KEYRING"
 aurad add-genesis-account "$(aurad keys show "$USER4_KEY" -a --keyring-backend "$KEYRING")" 1000000000uaura --keyring-backend "$KEYRING"
@@ -129,8 +131,10 @@ aurad add-genesis-account "aura1cml96vmptgw99syqrrz8az79xer2pcgp7z8pyz" 20000000
 # Bc is required to add this big numbers
 total_supply=$(bc <<<"$amount_to_claim+$validators_supply")
 total_supply=100006000000000
-jq -r --arg total_supply "$total_supply" '.app_state.bank.supply[0].amount=$total_supply' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-jq -r '.app_state.bank.supply[0].denom="uaura"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+jq -r --arg total_supply "$total_supply" '.app_state.bank.supply[1].amount=$total_supply' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+jq -r '.app_state.bank.supply[1].denom="uaura"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+jq -r '.app_state.bank.supply[0].amount="100000000"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+jq -r --arg ibc_denom "$IBC_DENOM" '.app_state.bank.supply[0].denom=$ibc_denom' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 
 # set list of evm precompile contracts
 jq '.app_state.evm.params.active_precompiles=[ "0x0000000000000000000000000000000000000400", "0x0000000000000000000000000000000000000800", "0x0000000000000000000000000000000000000801", "0x0000000000000000000000000000000000000802" ]' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
@@ -147,6 +151,7 @@ fi
 sed -i.bak 's/localhost/0.0.0.0/g' "$CONFIG_TOML"
 sed -i.bak 's/127.0.0.1/0.0.0.0/g' "$CONFIG_TOML"
 sed -i.bak 's/127.0.0.1/0.0.0.0/g' "$APP_TOML"
+sed -i.bak 's/localhost/0.0.0.0/g' "$APP_TOML"
 
 # use timeout_commit 1s to make test faster
 sed -i.bak 's/timeout_commit = "3s"/timeout_commit = "1s"/g' "$CONFIG_TOML"
@@ -161,7 +166,8 @@ aurad gentx "$VAL_KEY" 1000000000uaura --gas-prices ${BASEFEE}uaura --keyring-ba
 ## 5. Copy the `gentx-*` folders under `~/.clonedaurad/config/gentx/` folders into the original `~/.aurad/config/gentx`
 
 # Enable the APIs for the tests to be successful
-sed -i.bak 's/enable = false/enable = true/g' "$APP_TOML"
+sed -i.bak '119s/enable = false/enable = true/g' "$APP_TOML"
+sed -i.bak 's/swagger = false/swagger = true/g' "$APP_TOML"
 
 # Don't enable memiavl by default
 grep -q -F '[memiavl]' "$APP_TOML" && sed -i.bak '/\[memiavl\]/,/^\[/ s/enable = true/enable = false/' "$APP_TOML"

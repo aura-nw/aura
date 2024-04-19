@@ -143,7 +143,6 @@ import (
 
 	// evm module
 	srvflags "github.com/evmos/evmos/v16/server/flags"
-	evmostypes "github.com/evmos/evmos/v16/types"
 	"github.com/evmos/evmos/v16/x/erc20"
 	erc20client "github.com/evmos/evmos/v16/x/erc20/client"
 	erc20keeper "github.com/evmos/evmos/v16/x/erc20/keeper"
@@ -472,8 +471,8 @@ func New(
 	// add keepers
 	app.AccountKeeper = authkeeper.NewAccountKeeper(
 		appCodec, keys[authtypes.StoreKey],
-		// authtypes.ProtoBaseAccount,
-		evmostypes.ProtoAccount,
+		authtypes.ProtoBaseAccount,
+		// evmostypes.ProtoAccount,
 		maccPerms,
 		AccountAddressPrefix,
 		govModAddress,

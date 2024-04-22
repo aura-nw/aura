@@ -5,7 +5,9 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"strings"
+	"fmt"
+
+	simappparams "cosmossdk.io/simapp/params"
 
 	dbm "github.com/cometbft/cometbft-db"
 	tmcfg "github.com/cometbft/cometbft/config"
@@ -20,7 +22,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
 	"github.com/cosmos/cosmos-sdk/server"
-	serverconfig "github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	"github.com/cosmos/cosmos-sdk/snapshots"
 	snapshottypes "github.com/cosmos/cosmos-sdk/snapshots/types"
@@ -33,6 +34,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
+	"github.com/evmos/evmos/v16/encoding"
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -40,14 +42,18 @@ import (
 	// this line is used by starport scaffolding # root/moduleImport
 
 	"github.com/aura-nw/aura/app"
-	appparams "github.com/aura-nw/aura/app/params"
+
+	// evmos
+	serverconfig "github.com/evmos/evmos/v16/server/config"
+	evmosserver "github.com/evmos/evmos/v16/server"
 )
 
 // NewRootCmd creates a new root command for a Cosmos SDK application
-func NewRootCmd() (*cobra.Command, appparams.EncodingConfig) {
-	encodingConfig := app.MakeEncodingConfig()
+func NewRootCmd() (*cobra.Command, simappparams.EncodingConfig) {
+	encodingConfig := encoding.MakeConfig(app.ModuleBasics)
+
 	initClientCtx := client.Context{}.
-		WithCodec(encodingConfig.Marshaler).
+		WithCodec(encodingConfig.Codec).
 		WithInterfaceRegistry(encodingConfig.InterfaceRegistry).
 		WithTxConfig(encodingConfig.TxConfig).
 		WithLegacyAmino(encodingConfig.Amino).
@@ -85,9 +91,10 @@ func NewRootCmd() (*cobra.Command, appparams.EncodingConfig) {
 	}
 
 	initRootCmd(rootCmd, encodingConfig)
+	// set default chain-id and keyring
 	overwriteFlagDefaults(rootCmd, map[string]string{
-		flags.FlagChainID:        strings.ReplaceAll(app.Name, "-", ""),
-		flags.FlagKeyringBackend: "test",
+		flags.FlagChainID:        "aura_6322-2",
+		flags.FlagKeyringBackend: "os",
 	})
 
 	return rootCmd, encodingConfig
@@ -102,7 +109,7 @@ func initTendermintConfig() *tmcfg.Config {
 
 func initRootCmd(
 	rootCmd *cobra.Command,
-	encodingConfig appparams.EncodingConfig,
+	encodingConfig simappparams.EncodingConfig,
 ) {
 	// Set config
 	initSDKConfig()
@@ -131,10 +138,17 @@ func initRootCmd(
 	}
 
 	// add server commands
-	server.AddCommands(
+	// server.AddCommands(
+	// 	rootCmd,
+	// 	app.DefaultNodeHome,
+	// 	a.newApp,
+	// 	a.appExport,
+	// 	addModuleInitFlags,
+	// )
+
+	evmosserver.AddCommands(
 		rootCmd,
-		app.DefaultNodeHome,
-		a.newApp,
+		evmosserver.NewDefaultStartOptions(a.newApp, app.DefaultNodeHome),
 		a.appExport,
 		addModuleInitFlags,
 	)
@@ -194,6 +208,9 @@ func txCommand() *cobra.Command {
 		authcmd.GetDecodeCommand(),
 	)
 
+	//Set DefaultGasAdjustment
+	flags.DefaultGasAdjustment = 1.4
+	
 	app.ModuleBasics.AddTxCommands(cmd)
 	cmd.PersistentFlags().String(flags.FlagChainID, "", "The network chain ID")
 
@@ -222,7 +239,7 @@ func overwriteFlagDefaults(c *cobra.Command, defaults map[string]string) {
 }
 
 type appCreator struct {
-	encodingConfig appparams.EncodingConfig
+	encodingConfig simappparams.EncodingConfig
 }
 
 // newApp creates a new Cosmos SDK app
@@ -340,33 +357,17 @@ func (a appCreator) appExport(
 // initAppConfig helps to override default appConfig template and configs.
 // return "", nil if no custom configuration is required for the application.
 func initAppConfig() (string, interface{}) {
-	// The following code snippet is just for reference.
+	customAppTemplate, customAppConfig := serverconfig.AppConfig("uaura")
 
-	type CustomAppConfig struct {
-		serverconfig.Config
+	srvCfg, ok := customAppConfig.(serverconfig.Config)
+	if !ok {
+		panic(fmt.Errorf("unknown app config type %T", customAppConfig))
 	}
 
-	// Optionally allow the chain developer to overwrite the SDK's default
-	// server config.
-	srvCfg := serverconfig.DefaultConfig()
-	// The SDK's default minimum gas price is set to "" (empty value) inside
-	// app.toml. If left empty by validators, the node will halt on startup.
-	// However, the chain developer can set a default app.toml value for their
-	// validators here.
-	//
-	// In summary:
-	// - if you leave srvCfg.MinGasPrices = "", all validators MUST tweak their
-	//   own app.toml config,
-	// - if you set srvCfg.MinGasPrices non-empty, validators CAN tweak their
-	//   own app.toml to override, or use this default value.
-	//
-	// In simapp, we set the min gas prices to 0.
-	srvCfg.MinGasPrices = "0uaura"
+	srvCfg.StateSync.SnapshotInterval = 1000
+	srvCfg.StateSync.SnapshotKeepRecent = 2
+	srvCfg.IAVLDisableFastNode = false
+	srvCfg.Config.MinGasPrices = "0.001uaura" 
 
-	customAppConfig := CustomAppConfig{
-		Config: *srvCfg,
-	}
-	customAppTemplate := serverconfig.DefaultConfigTemplate
-
-	return customAppTemplate, customAppConfig
+	return customAppTemplate, srvCfg
 }

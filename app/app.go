@@ -7,7 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	appparams "github.com/aura-nw/aura/app/params"
+	simappparams "cosmossdk.io/simapp/params"
+
 	v703 "github.com/aura-nw/aura/app/upgrades/v0.7.3"
 
 	v500 "github.com/aura-nw/aura/app/upgrades/v0.5.0"
@@ -41,12 +42,13 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/cosmos/cosmos-sdk/x/auth"
-	"github.com/cosmos/cosmos-sdk/x/auth/ante"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	"github.com/cosmos/cosmos-sdk/x/auth/posthandler"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
+
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/cosmos-sdk/x/capability"
@@ -91,8 +93,7 @@ import (
 	autocliv1 "cosmossdk.io/api/cosmos/autocli/v1"
 	reflectionv1 "cosmossdk.io/api/cosmos/reflection/v1"
 
-	"github.com/cosmos/ibc-go/v7/modules/apps/transfer"
-	ibctransferkeeper "github.com/cosmos/ibc-go/v7/modules/apps/transfer/keeper"
+	ibctransfer "github.com/cosmos/ibc-go/v7/modules/apps/transfer"
 	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	ibc "github.com/cosmos/ibc-go/v7/modules/core"
 	ibcclient "github.com/cosmos/ibc-go/v7/modules/core/02-client"
@@ -139,6 +140,33 @@ import (
 
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/prometheus/client_golang/prometheus"
+
+	// evm module
+	srvflags "github.com/evmos/evmos/v16/server/flags"
+	"github.com/evmos/evmos/v16/x/erc20"
+	erc20client "github.com/evmos/evmos/v16/x/erc20/client"
+	erc20keeper "github.com/evmos/evmos/v16/x/erc20/keeper"
+	erc20types "github.com/evmos/evmos/v16/x/erc20/types"
+	"github.com/evmos/evmos/v16/x/evm"
+	evmkeeper "github.com/evmos/evmos/v16/x/evm/keeper"
+	evmtypes "github.com/evmos/evmos/v16/x/evm/types"
+
+	// Force-load the tracer engines to trigger registration due to Go-Ethereum v1.10.15 changes
+	_ "github.com/ethereum/go-ethereum/eth/tracers/js"
+	_ "github.com/ethereum/go-ethereum/eth/tracers/native"
+
+	// evmutil from kava
+	evmutil "github.com/aura-nw/aura/x/evmutil"
+	evmutilkeeper "github.com/aura-nw/aura/x/evmutil/keeper"
+	evmutiltypes "github.com/aura-nw/aura/x/evmutil/types"
+
+	// overide transfer for erc20
+	"github.com/evmos/evmos/v16/x/ibc/transfer"
+	transferkeeper "github.com/evmos/evmos/v16/x/ibc/transfer/keeper"
+
+	"github.com/evmos/evmos/v16/x/feemarket"
+	feemarketkeeper "github.com/evmos/evmos/v16/x/feemarket/keeper"
+	feemarkettypes "github.com/evmos/evmos/v16/x/feemarket/types"
 
 	v0_3_0 "github.com/aura-nw/aura/app/upgrades/v0.3.0"
 	v0_3_1 "github.com/aura-nw/aura/app/upgrades/v0.3.1"
@@ -207,6 +235,10 @@ func getGovProposalHandlers() []govclient.ProposalHandler {
 		upgradeclient.LegacyCancelProposalHandler,
 		ibcclientclient.UpdateClientProposalHandler,
 		ibcclientclient.UpgradeProposalHandler,
+		// Evmos proposal types
+		erc20client.RegisterCoinProposalHandler,
+		erc20client.RegisterERC20ProposalHandler,
+		erc20client.ToggleTokenConversionProposalHandler,
 		// this line is used by starport scaffolding # stargate/app/govProposalHandler
 	)
 	return govProposalHandlers
@@ -247,12 +279,17 @@ var (
 		ibctm.AppModuleBasic{},
 		upgrade.AppModuleBasic{},
 		evidence.AppModuleBasic{},
-		transfer.AppModuleBasic{},
+		// transfer.AppModuleBasic{},
+		transfer.AppModuleBasic{AppModuleBasic: &ibctransfer.AppModuleBasic{}},
 		authvesting.AppModuleBasic{},
 		auramodule.AppModuleBasic{},
 		samodule.AppModuleBasic{},
 		wasm.AppModuleBasic{},
 		ibc_hooks.AppModuleBasic{},
+		evm.AppModuleBasic{},
+		feemarket.AppModuleBasic{},
+		erc20.AppModuleBasic{},
+		evmutil.AppModuleBasic{},
 		// this line is used by starport scaffolding # stargate/app/moduleBasic
 	)
 
@@ -266,6 +303,9 @@ var (
 		govtypes.ModuleName:            {authtypes.Burner},
 		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
 		wasmtypes.ModuleName:           {authtypes.Burner},
+		evmtypes.ModuleName:            {authtypes.Minter, authtypes.Burner},
+		evmutiltypes.ModuleName:        {authtypes.Minter, authtypes.Burner},
+		erc20types.ModuleName:          {authtypes.Minter, authtypes.Burner},
 		// this line is used by starport scaffolding # stargate/app/maccPerms
 	}
 )
@@ -318,7 +358,7 @@ type App struct {
 	IBCKeeper             *ibckeeper.Keeper // IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
 	IBCHooksKeeper        *ibchookskeeper.Keeper
 	EvidenceKeeper        evidencekeeper.Keeper
-	TransferKeeper        ibctransferkeeper.Keeper
+	TransferKeeper        transferkeeper.Keeper
 	FeeGrantKeeper        feegrantkeeper.Keeper
 	AuthzKeeper           authzkeeper.Keeper
 	WasmKeeper            wasmkeeper.Keeper
@@ -336,6 +376,14 @@ type App struct {
 	// Middleware wrapper
 	Ics20WasmHooks   *ibc_hooks.WasmHooks
 	HooksICS4Wrapper ibc_hooks.ICS4Middleware
+
+	// Ethermint keepers
+	Erc20Keeper     erc20keeper.Keeper
+	EvmKeeper       *evmkeeper.Keeper
+	FeeMarketKeeper feemarketkeeper.Keeper
+
+	// Evmutil keeper
+	evmutilKeeper evmutilkeeper.Keeper
 
 	// this line is used by starport scaffolding # stargate/app/keeperDeclaration
 
@@ -355,14 +403,14 @@ func New(
 	skipUpgradeHeights map[int64]bool,
 	homePath string,
 	invCheckPeriod uint,
-	encodingConfig appparams.EncodingConfig,
+	encodingConfig simappparams.EncodingConfig,
 	appOpts servertypes.AppOptions,
 	baseAppOptions ...func(*baseapp.BaseApp),
 ) *App {
 
 	ChainID = GetChainID(appOpts)
 
-	appCodec := encodingConfig.Marshaler
+	appCodec := encodingConfig.Codec
 	cdc := encodingConfig.Amino
 	interfaceRegistry := encodingConfig.InterfaceRegistry
 	txConfig := encodingConfig.TxConfig
@@ -383,9 +431,14 @@ func New(
 		authzkeeper.StoreKey,
 		wasmtypes.StoreKey,
 		ibchookstypes.StoreKey,
+		// ethermint keys
+		evmtypes.StoreKey,
+		feemarkettypes.StoreKey,
+		erc20types.StoreKey,
+		evmutiltypes.StoreKey,
 		// this line is used by starport scaffolding # stargate/app/storeKey
 	)
-	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
+	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey, evmtypes.TransientKey, feemarkettypes.TransientKey)
 	memKeys := sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
 
 	app := &App{
@@ -418,7 +471,11 @@ func New(
 	app.CapabilityKeeper.Seal()
 	// add keepers
 	app.AccountKeeper = authkeeper.NewAccountKeeper(
-		appCodec, keys[authtypes.StoreKey], authtypes.ProtoBaseAccount, maccPerms, AccountAddressPrefix,
+		appCodec, keys[authtypes.StoreKey],
+		authtypes.ProtoBaseAccount,
+		// evmostypes.ProtoAccount,
+		maccPerms,
+		AccountAddressPrefix,
 		govModAddress,
 	)
 
@@ -467,7 +524,42 @@ func New(
 	)
 	app.StakingKeeper = stakingKeeper
 
-	// ... other modules keepers
+	// Create Ethermint keepers
+	tracer := cast.ToString(appOpts.Get(srvflags.EVMTracer))
+	app.FeeMarketKeeper = feemarketkeeper.NewKeeper(
+		appCodec, authtypes.NewModuleAddress(govtypes.ModuleName),
+		keys[feemarkettypes.StoreKey],
+		tkeys[feemarkettypes.TransientKey],
+		app.GetSubspace(feemarkettypes.ModuleName),
+	)
+
+	// evmutil keeper and evmBankeeper from Kava
+	// they create a wrapper bank keeper so that the evm module can use 18 decimal points
+	// while cosmos keeps 6 decimal points
+	app.evmutilKeeper = evmutilkeeper.NewKeeper(
+		app.appCodec,
+		keys[evmutiltypes.StoreKey],
+		app.GetSubspace(evmutiltypes.ModuleName),
+		app.BankKeeper,
+		app.AccountKeeper,
+	)
+
+	evmBankKeeper := evmutilkeeper.NewEvmBankKeeper(app.evmutilKeeper, app.BankKeeper, app.AccountKeeper)
+
+	evmKeeper := evmkeeper.NewKeeper(
+		appCodec, keys[evmtypes.StoreKey], tkeys[evmtypes.TransientKey], authtypes.NewModuleAddress(govtypes.ModuleName),
+		app.AccountKeeper, evmBankKeeper, stakingKeeper, app.FeeMarketKeeper,
+		tracer, app.GetSubspace(evmtypes.ModuleName),
+	)
+
+	app.EvmKeeper = evmKeeper
+	app.evmutilKeeper.SetEvmKeeper(app.EvmKeeper)
+
+	app.Erc20Keeper = erc20keeper.NewKeeper(
+		keys[erc20types.StoreKey], appCodec, authtypes.NewModuleAddress(govtypes.ModuleName),
+		app.AccountKeeper, app.BankKeeper, app.EvmKeeper, app.StakingKeeper,
+		app.AuthzKeeper, &app.TransferKeeper,
+	)
 
 	// Create IBC Keeper
 	app.IBCKeeper = ibckeeper.NewKeeper(
@@ -479,7 +571,18 @@ func New(
 	govRouter.AddRoute(govtypes.RouterKey, govv1beta.ProposalHandler).
 		AddRoute(paramproposal.RouterKey, params.NewParamChangeProposalHandler(app.ParamsKeeper)).
 		AddRoute(upgradetypes.RouterKey, upgrade.NewSoftwareUpgradeProposalHandler(app.UpgradeKeeper)).
-		AddRoute(ibcclienttypes.RouterKey, ibcclient.NewClientProposalHandler(app.IBCKeeper.ClientKeeper))
+		AddRoute(ibcclienttypes.RouterKey, ibcclient.NewClientProposalHandler(app.IBCKeeper.ClientKeeper)).
+		AddRoute(erc20types.RouterKey, erc20.NewErc20ProposalHandler(&app.Erc20Keeper))
+
+	// Create evidence Keeper for to register the IBC light client misbehaviour evidence route
+	evidenceKeeper := evidencekeeper.NewKeeper(
+		appCodec, keys[evidencetypes.StoreKey], app.StakingKeeper, app.SlashingKeeper,
+	)
+	// If evidence needs to be handled for the app, set routes in router here and seal
+	app.EvidenceKeeper = *evidenceKeeper
+
+	auraModule := auramodule.NewAppModule(appCodec, app.AuraKeeper)
+	// this line is used by starport scaffolding # stargate/app/keeperDefinition
 
 	// Configure the hooks keeper
 	hooksKeeper := ibchookskeeper.NewKeeper(
@@ -496,17 +599,24 @@ func New(
 	)
 
 	// Create Transfer Keepers
-	app.TransferKeeper = ibctransferkeeper.NewKeeper(
-		appCodec,
-		keys[ibctransfertypes.StoreKey],
-		app.GetSubspace(ibctransfertypes.ModuleName),
-		// The ICS4Wrapper is replaced by the ICS4Wrapper middleware instead of the channel
-		app.HooksICS4Wrapper,
-		app.IBCKeeper.ChannelKeeper,
-		&app.IBCKeeper.PortKeeper,
-		app.AccountKeeper,
-		app.BankKeeper,
-		scopedTransferKeeper,
+	// app.TransferKeeper = transferkeeper.NewKeeper(
+	// 	appCodec,
+	// 	keys[ibctransfertypes.StoreKey],
+	// 	app.GetSubspace(ibctransfertypes.ModuleName),
+	// 	// The ICS4Wrapper is replaced by the ICS4Wrapper middleware instead of the channel
+	// 	app.HooksICS4Wrapper,
+	// 	app.IBCKeeper.ChannelKeeper,
+	// 	&app.IBCKeeper.PortKeeper,
+	// 	app.AccountKeeper,
+	// 	app.BankKeeper,
+	// 	scopedTransferKeeper,
+	// )
+	app.TransferKeeper = transferkeeper.NewKeeper(
+		appCodec, keys[ibctransfertypes.StoreKey], app.GetSubspace(ibctransfertypes.ModuleName),
+		app.IBCKeeper.ChannelKeeper, // ICS4 Wrapper: claims IBC middleware
+		app.IBCKeeper.ChannelKeeper, &app.IBCKeeper.PortKeeper,
+		app.AccountKeeper, app.BankKeeper, scopedTransferKeeper,
+		app.Erc20Keeper, // Add ERC20 Keeper for ERC20 transfers
 	)
 	transferIBCModule := transfer.NewIBCModule(app.TransferKeeper)
 	middlewareTransferModule := ibc_hooks.NewIBCMiddleware(
@@ -514,19 +624,30 @@ func New(
 		&app.HooksICS4Wrapper,
 	)
 
-	// Create evidence Keeper for to register the IBC light client misbehaviour evidence route
-	evidenceKeeper := evidencekeeper.NewKeeper(
-		appCodec, keys[evidencetypes.StoreKey], app.StakingKeeper, app.SlashingKeeper,
-	)
-	// If evidence needs to be handled for the app, set routes in router here and seal
-	app.EvidenceKeeper = *evidenceKeeper
-
-	auraModule := auramodule.NewAppModule(appCodec, app.AuraKeeper)
-	// this line is used by starport scaffolding # stargate/app/keeperDefinition
-
 	// Create static IBC router, add transfer route, then set and seal it
 	ibcRouter := ibcporttypes.NewRouter()
 	ibcRouter.AddRoute(ibctransfertypes.ModuleName, middlewareTransferModule)
+
+	// enable evm precompile, this need to be done after initialized ibc and transfer keeper
+	chainID := bApp.ChainID()
+	evmKeeper.WithPrecompiles(
+		Precompiles(
+			chainID,
+			*stakingKeeper,
+			app.DistrKeeper,
+			app.BankKeeper,
+			app.Erc20Keeper,
+			app.AuthzKeeper,
+			app.TransferKeeper,
+			app.IBCKeeper.ChannelKeeper,
+		),
+	)
+
+	app.EvmKeeper = app.EvmKeeper.SetHooks(
+		evmkeeper.NewMultiEvmHooks(
+			app.Erc20Keeper.Hooks(),
+		),
+	)
 
 	// ------ CosmWasm setup ------
 	wasmDir := filepath.Join(homePath, "wasm")
@@ -634,6 +755,12 @@ func New(
 		auraModule,
 		saModule,
 		wasm.NewAppModule(appCodec, &app.WasmKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.MsgServiceRouter(), app.GetSubspace(wasmtypes.ModuleName)),
+
+		// Ethermint app modules
+		evm.NewAppModule(app.EvmKeeper, app.AccountKeeper, app.GetSubspace(evmtypes.ModuleName)),
+		feemarket.NewAppModule(app.FeeMarketKeeper, app.GetSubspace(feemarkettypes.ModuleName)),
+		erc20.NewAppModule(app.Erc20Keeper, app.AccountKeeper, app.GetSubspace(erc20types.ModuleName)),
+		evmutil.NewAppModule(app.evmutilKeeper, app.BankKeeper, app.AccountKeeper),
 		// this line is used by starport scaffolding # stargate/app/appModule
 	)
 
@@ -644,6 +771,10 @@ func New(
 	app.mm.SetOrderBeginBlockers(
 		upgradetypes.ModuleName,
 		capabilitytypes.ModuleName,
+		// ethermint module
+		feemarkettypes.ModuleName,
+		evmtypes.ModuleName,
+
 		minttypes.ModuleName,
 		distrtypes.ModuleName,
 		slashingtypes.ModuleName,
@@ -666,6 +797,10 @@ func New(
 		wasmtypes.ModuleName,
 		samoduletypes.ModuleName,
 		ibchookstypes.ModuleName,
+		// evmos module
+		erc20types.ModuleName,
+		// kava evmutil module
+		evmutiltypes.ModuleName,
 	)
 
 	app.mm.SetOrderEndBlockers(
@@ -673,6 +808,9 @@ func New(
 		govtypes.ModuleName,
 		stakingtypes.ModuleName,
 		capabilitytypes.ModuleName,
+		// ethermint module
+		evmtypes.ModuleName,
+		feemarkettypes.ModuleName,
 		authtypes.ModuleName,
 		banktypes.ModuleName,
 		distrtypes.ModuleName,
@@ -693,6 +831,10 @@ func New(
 		wasmtypes.ModuleName,
 		samoduletypes.ModuleName,
 		ibchookstypes.ModuleName,
+		// evmos module
+		erc20types.ModuleName,
+		// kava evmutil module
+		evmutiltypes.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -711,6 +853,12 @@ func New(
 		minttypes.ModuleName,
 		crisistypes.ModuleName,
 		ibcexported.ModuleName,
+		// Ethermint modules
+		// evm module denomination is used by the revenue module, in AnteHandle
+		evmtypes.ModuleName,
+		// NOTE: feemarket module needs to be initialized before genutil module:
+		// gentx transactions use MinGasPriceDecorator.AnteHandle
+		feemarkettypes.ModuleName,
 		// samodule must occur before genutil so that DeliverGenTx can successfully pass the smart account ante handler
 		samoduletypes.ModuleName,
 		genutiltypes.ModuleName,
@@ -725,6 +873,10 @@ func New(
 		upgradetypes.ModuleName,
 		wasmtypes.ModuleName,
 		ibchookstypes.ModuleName,
+		// evmos module
+		erc20types.ModuleName,
+		// kava evmutil module
+		evmutiltypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/initGenesis
 	)
 
@@ -752,6 +904,10 @@ func New(
 		samoduletypes.ModuleName,
 		crisistypes.ModuleName,
 		ibchookstypes.ModuleName,
+		evmtypes.ModuleName,
+		feemarkettypes.ModuleName,
+		erc20types.ModuleName,
+		evmutiltypes.ModuleName,
 	)
 
 	app.mm.RegisterInvariants(app.CrisisKeeper)
@@ -772,21 +928,11 @@ func New(
 	app.MountTransientStores(tkeys)
 	app.MountMemoryStores(memKeys)
 
-	anteHandler, err := NewAnteHandler(
-		HandlerOptions{
-			HandlerOptions: ante.HandlerOptions{
-				AccountKeeper:   app.AccountKeeper,
-				BankKeeper:      app.BankKeeper,
-				SignModeHandler: encodingConfig.TxConfig.SignModeHandler(),
-				FeegrantKeeper:  app.FeeGrantKeeper,
-				SigGasConsumer:  ante.DefaultSigVerificationGasConsumer},
-			WasmKeeper:         app.WasmKeeper,
-			SmartAccountKeeper: app.SaKeeper,
-			IBCKeeper:          app.IBCKeeper,
-			WasmConfig:         &wasmConfig,
-			TXCounterStoreKey:  keys[wasmtypes.StoreKey],
-			Codec:              app.appCodec,
-		},
+	// TODO: there is a switch between EVM and cosmos, we will add code later
+	anteHandler, err := app.NewAnteHandler(
+		encodingConfig.TxConfig,
+		wasmConfig,
+		keys[wasmtypes.StoreKey],
 	)
 	if err != nil {
 		panic(err)
@@ -1029,6 +1175,11 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(auramoduletypes.ModuleName)
 	paramsKeeper.Subspace(samoduletypes.ModuleName)
 	paramsKeeper.Subspace(wasmtypes.ModuleName)
+	// ethermint subspaces
+	paramsKeeper.Subspace(evmtypes.ModuleName).WithKeyTable(evmtypes.ParamKeyTable()) //nolint:staticcheck
+	paramsKeeper.Subspace(feemarkettypes.ModuleName).WithKeyTable(feemarkettypes.ParamKeyTable())
+	paramsKeeper.Subspace(erc20types.ModuleName)
+	paramsKeeper.Subspace(evmutiltypes.ModuleName)
 	// this line is used by starport scaffolding # stargate/app/paramSubspace
 
 	return paramsKeeper

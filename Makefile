@@ -74,7 +74,7 @@ BUILD_FLAGS := -tags "$(BUILD_TAGS)" -ldflags '$(ldflags)' -trimpath
 GO_MAJOR_VERSION = $(shell go version | cut -c 14- | cut -d' ' -f1 | cut -d'.' -f1)
 GO_MINOR_VERSION = $(shell go version | cut -c 14- | cut -d' ' -f1 | cut -d'.' -f2)
 MINIMUM_SUPPORTED_GO_MAJOR_VERSION = 1
-MINIMUM_SUPPORTED_GO_MINOR_VERSION = 19
+MINIMUM_SUPPORTED_GO_MINOR_VERSION = 20
 GO_VERSION_VALIDATION_ERR_MSG = Golang version is not supported, please update to at least $(MINIMUM_SUPPORTED_GO_MAJOR_VERSION).$(MINIMUM_SUPPORTED_GO_MINOR_VERSION)
 
 GORELEASER_VERSION = v1.20.0

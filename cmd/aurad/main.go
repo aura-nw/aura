@@ -1,8 +1,9 @@
 package main
 
 import (
-	"github.com/cosmos/cosmos-sdk/server"
 	"os"
+
+	"github.com/cosmos/cosmos-sdk/server"
 
 	"github.com/aura-nw/aura/app"
 	"github.com/aura-nw/aura/cmd/aurad/cmd"

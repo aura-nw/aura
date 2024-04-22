@@ -176,6 +176,7 @@ import (
 	v0_4_1 "github.com/aura-nw/aura/app/upgrades/v0.4.1"
 	v0_4_2 "github.com/aura-nw/aura/app/upgrades/v0.4.2"
 	v0_4_4 "github.com/aura-nw/aura/app/upgrades/v0.4.4"
+	v0_4_5 "github.com/aura-nw/aura/app/upgrades/v0.4.5"
 
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	authvesting "github.com/cosmos/cosmos-sdk/x/auth/vesting"
@@ -1231,6 +1232,10 @@ func (app *App) setupUpgradeHandlers() {
 	app.UpgradeKeeper.SetUpgradeHandler(
 		v0_4_4.UpgradeName,
 		v0_4_4.CreateUpgradeHandler(app.mm, app.configurator),
+	)
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v0_4_5.UpgradeName,
+		v0_4_5.CreateUpgradeHandler(app.mm, app.configurator),
 	)
 
 	// v0.5.0 upgrade handler add new module

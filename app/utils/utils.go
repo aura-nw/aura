@@ -7,7 +7,7 @@ import (
 
 const (
 	AuraExponent = 6
-	BaseCoinUnit = "uaura"
+	BaseCoinUnit = "ueaura"
 )
 
 var (

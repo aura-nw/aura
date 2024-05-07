@@ -234,7 +234,7 @@ replace (
 	github.com/CosmWasm/wasmvm => github.com/CosmWasm/wasmvm v1.4.3
 	// use Cosmos-SDK fork to enable Ledger functionality
 	github.com/cosmos/cosmos-sdk => github.com/evmos/cosmos-sdk v0.47.8-evmos
-	github.com/cometbft/cometbft => github.com/aura-nw/cometbft v0.37.4-aura.1
+	github.com/cometbft/cometbft => github.com/aura-nw/cometbft v0.37.4-aura.2
 	// Ledger Nano S+ support
 	github.com/cosmos/ledger-go => github.com/cosmos/ledger-go v0.9.3
 	// use Evmos geth fork

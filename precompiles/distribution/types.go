@@ -14,6 +14,8 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	cmn "github.com/evmos/evmos/v16/precompiles/common"
+
+	"github.com/aura-nw/aura/precompiles/util"
 )
 
 // EventSetWithdrawAddress defines the event data for the SetWithdrawAddress transaction.
@@ -301,8 +303,8 @@ func (o *ValidatorDistributionInfoOutput) FromResponse(res *distributiontypes.Qu
 	return ValidatorDistributionInfoOutput{
 		DistributionInfo: ValidatorDistributionInfo{
 			OperatorAddress: res.OperatorAddress,
-			SelfBondRewards: cmn.NewDecCoinsResponse(res.SelfBondRewards),
-			Commission:      cmn.NewDecCoinsResponse(res.Commission),
+			SelfBondRewards: util.NewDecCoinsResponseEVM(res.SelfBondRewards),
+			Commission:      util.NewDecCoinsResponseEVM(res.Commission),
 		},
 	}
 }
@@ -376,10 +378,10 @@ func (dtr *DelegationTotalRewardsOutput) FromResponse(res *distributiontypes.Que
 	for i, r := range res.Rewards {
 		dtr.Rewards[i] = DelegationDelegatorReward{
 			ValidatorAddress: r.ValidatorAddress,
-			Reward:           cmn.NewDecCoinsResponse(r.Reward),
+			Reward:           util.NewDecCoinsResponseEVM(r.Reward),
 		}
 	}
-	dtr.Total = cmn.NewDecCoinsResponse(res.Total)
+	dtr.Total = util.NewDecCoinsResponseEVM(res.Total)
 	return dtr
 }
 

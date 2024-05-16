@@ -19,6 +19,8 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	cmn "github.com/evmos/evmos/v16/precompiles/common"
+
+	"github.com/aura-nw/aura/precompiles/util"
 )
 
 // EventCreateValidator defines the event data for the staking CreateValidator transaction.
@@ -513,8 +515,8 @@ func (do *UnbondingDelegationOutput) FromResponse(res *stakingtypes.QueryUnbondi
 			UnbondingOnHoldRefCount: entry.UnbondingOnHoldRefCount,
 			CreationHeight:          entry.CreationHeight,
 			CompletionTime:          entry.CompletionTime.UTC().Unix(),
-			InitialBalance:          entry.InitialBalance.BigInt(),
-			Balance:                 entry.Balance.BigInt(),
+			InitialBalance:          util.AuraToEvmBigInt(entry.InitialBalance.BigInt()),
+			Balance:                 util.AuraToEvmBigInt(entry.Balance.BigInt()),
 		}
 	}
 	return do
@@ -532,7 +534,7 @@ func (do *DelegationOutput) FromResponse(res *stakingtypes.QueryDelegationRespon
 	do.Shares = res.DelegationResponse.Delegation.Shares.BigInt()
 	do.Balance = cmn.Coin{
 		Denom:  res.DelegationResponse.Balance.Denom,
-		Amount: res.DelegationResponse.Balance.Amount.BigInt(),
+		Amount: util.AuraToEvmBigInt(res.DelegationResponse.Balance.Amount.BigInt()),
 	}
 	return do
 }
@@ -589,14 +591,14 @@ func (vo *ValidatorOutput) FromResponse(res *stakingtypes.QueryValidatorResponse
 			ConsensusPubkey: FormatConsensusPubkey(res.Validator.ConsensusPubkey),
 			Jailed:          res.Validator.Jailed,
 			Status:          uint8(stakingtypes.BondStatus_value[res.Validator.Status.String()]),
-			Tokens:          res.Validator.Tokens.BigInt(),
+			Tokens:          util.AuraToEvmBigInt(res.Validator.Tokens.BigInt()),
 			DelegatorShares: res.Validator.DelegatorShares.BigInt(), // TODO: Decimal
 			// TODO: create description type,
 			Description:       res.Validator.Description.Details,
 			UnbondingHeight:   res.Validator.UnbondingHeight,
 			UnbondingTime:     res.Validator.UnbondingTime.UTC().Unix(),
 			Commission:        res.Validator.Commission.CommissionRates.Rate.BigInt(),
-			MinSelfDelegation: res.Validator.MinSelfDelegation.BigInt(),
+			MinSelfDelegation: util.AuraToEvmBigInt(res.Validator.MinSelfDelegation.BigInt()),
 		},
 	}
 }
@@ -624,13 +626,13 @@ func (vo *ValidatorsOutput) FromResponse(res *stakingtypes.QueryValidatorsRespon
 			ConsensusPubkey:   FormatConsensusPubkey(v.ConsensusPubkey),
 			Jailed:            v.Jailed,
 			Status:            uint8(stakingtypes.BondStatus_value[v.Status.String()]),
-			Tokens:            v.Tokens.BigInt(),
+			Tokens:            util.AuraToEvmBigInt(v.Tokens.BigInt()),
 			DelegatorShares:   v.DelegatorShares.BigInt(),
 			Description:       v.Description.Details,
 			UnbondingHeight:   v.UnbondingHeight,
 			UnbondingTime:     v.UnbondingTime.UTC().Unix(),
 			Commission:        v.Commission.CommissionRates.Rate.BigInt(),
-			MinSelfDelegation: v.MinSelfDelegation.BigInt(),
+			MinSelfDelegation: util.AuraToEvmBigInt(v.MinSelfDelegation.BigInt()),
 		}
 	}
 
@@ -680,7 +682,7 @@ func (ro *RedelegationOutput) FromResponse(res stakingtypes.Redelegation) *Redel
 		ro.Redelegation.Entries[i] = RedelegationEntry{
 			CreationHeight: entry.CreationHeight,
 			CompletionTime: entry.CompletionTime.UTC().Unix(),
-			InitialBalance: entry.InitialBalance.BigInt(),
+			InitialBalance: util.AuraToEvmBigInt(entry.InitialBalance.BigInt()),
 			SharesDst:      entry.SharesDst.BigInt(),
 		}
 	}
@@ -740,10 +742,10 @@ func (ro *RedelegationsOutput) FromResponse(res *stakingtypes.QueryRedelegations
 				RedelegationEntry: RedelegationEntry{
 					CreationHeight: e.RedelegationEntry.CreationHeight,
 					CompletionTime: e.RedelegationEntry.CompletionTime.Unix(),
-					InitialBalance: e.RedelegationEntry.InitialBalance.BigInt(),
+					InitialBalance: util.AuraToEvmBigInt(e.RedelegationEntry.InitialBalance.BigInt()),
 					SharesDst:      e.RedelegationEntry.SharesDst.BigInt(),
 				},
-				Balance: e.Balance.BigInt(),
+				Balance: util.AuraToEvmBigInt(e.Balance.BigInt()),
 			}
 		}
 
@@ -753,7 +755,7 @@ func (ro *RedelegationsOutput) FromResponse(res *stakingtypes.QueryRedelegations
 			redelEntries[j] = RedelegationEntry{
 				CreationHeight: e.CreationHeight,
 				CompletionTime: e.CompletionTime.Unix(),
-				InitialBalance: e.InitialBalance.BigInt(),
+				InitialBalance: util.AuraToEvmBigInt(e.InitialBalance.BigInt()),
 				SharesDst:      e.SharesDst.BigInt(),
 			}
 		}

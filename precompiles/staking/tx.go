@@ -5,6 +5,7 @@ package staking
 
 import (
 	"fmt"
+	"math/big"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -149,6 +150,7 @@ func (p Precompile) Delegate(
 	// Execute the transaction using the message server
 	msgSrv := stakingkeeper.NewMsgServerImpl(&p.stakingKeeper)
 	if _, err = msgSrv.Delegate(sdk.WrapSDKContext(ctx), msg); err != nil {
+		p.Logger(ctx).Error("failed to delegate", "error", err)
 		return nil, err
 	}
 
@@ -159,15 +161,19 @@ func (p Precompile) Delegate(
 		}
 	}
 
+	// TODO: recheck whether this is necessary
 	// Emit the event for the delegate transaction
-	if err = p.EmitDelegateEvent(ctx, stateDB, msg, delegatorHexAddr); err != nil {
-		return nil, err
-	}
+	// if err = p.EmitDelegateEvent(ctx, stateDB, msg, delegatorHexAddr); err != nil {
+	// 	return nil, err
+	// }
 
 	// NOTE: This ensures that the changes in the bank keeper are correctly mirrored to the EVM stateDB.
 	// This prevents the stateDB from overwriting the changed balance in the bank keeper when committing the EVM state.
 	if isCallerDelegator {
-		stateDB.(*statedb.StateDB).SubBalance(contract.CallerAddress, msg.Amount.Amount.BigInt())
+		var convertedAmount big.Int
+		convertedAmount.Mul(msg.Amount.Amount.BigInt(), big.NewInt(1e12))
+		p.Logger(ctx).Info("Subtracting balance from the delegator", "address", contract.CallerAddress, "amount", convertedAmount)
+		stateDB.(*statedb.StateDB).SubBalance(contract.CallerAddress, &convertedAmount)
 	}
 
 	return method.Outputs.Pack(true)
@@ -245,10 +251,11 @@ func (p Precompile) Undelegate(
 		}
 	}
 
+	// TODO: recheck whether this is necessary
 	// Emit the event for the undelegate transaction
-	if err = p.EmitUnbondEvent(ctx, stateDB, msg, delegatorHexAddr, res.CompletionTime.UTC().Unix()); err != nil {
-		return nil, err
-	}
+	// if err = p.EmitUnbondEvent(ctx, stateDB, msg, delegatorHexAddr, res.CompletionTime.UTC().Unix()); err != nil {
+	// 	return nil, err
+	// }
 
 	return method.Outputs.Pack(res.CompletionTime.UTC().Unix())
 }
@@ -326,9 +333,10 @@ func (p Precompile) Redelegate(
 		}
 	}
 
-	if err = p.EmitRedelegateEvent(ctx, stateDB, msg, delegatorHexAddr, res.CompletionTime.UTC().Unix()); err != nil {
-		return nil, err
-	}
+	// TODO: recheck whether this is necessary
+	// if err = p.EmitRedelegateEvent(ctx, stateDB, msg, delegatorHexAddr, res.CompletionTime.UTC().Unix()); err != nil {
+	// 	return nil, err
+	// }
 
 	return method.Outputs.Pack(res.CompletionTime.UTC().Unix())
 }
@@ -405,9 +413,10 @@ func (p Precompile) CancelUnbondingDelegation(
 		}
 	}
 
-	if err = p.EmitCancelUnbondingDelegationEvent(ctx, stateDB, msg, delegatorHexAddr); err != nil {
-		return nil, err
-	}
+	// TODO: recheck whether this is necessary
+	// if err = p.EmitCancelUnbondingDelegationEvent(ctx, stateDB, msg, delegatorHexAddr); err != nil {
+	// 	return nil, err
+	// }
 
 	return method.Outputs.Pack(true)
 }

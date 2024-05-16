@@ -5,6 +5,7 @@ package distribution
 
 import (
 	"fmt"
+	"math/big"
 
 	"github.com/evmos/evmos/v16/x/evm/statedb"
 
@@ -145,7 +146,11 @@ func (p Precompile) WithdrawDelegatorRewards(
 	// NOTE: This ensures that the changes in the bank keeper are correctly mirrored to the EVM stateDB.
 	// This prevents the stateDB from overwriting the changed balance in the bank keeper when committing the EVM state.
 	if isContractDelegator {
-		stateDB.(*statedb.StateDB).AddBalance(contract.CallerAddress, res.Amount[0].Amount.BigInt())
+		// the responsed amount is from cosmos module, which has 6 decimal points
+		// convert it to the EVM amount which has 18 decimal points
+		convertedAmount := res.Amount[0].Amount.BigInt()
+		convertedAmount.Mul(convertedAmount, big.NewInt(1e12))
+		stateDB.(*statedb.StateDB).AddBalance(contract.CallerAddress, convertedAmount)
 	}
 
 	return method.Outputs.Pack(cmn.NewCoinsResponse(res.Amount))

@@ -158,10 +158,33 @@ func NewMsgCreateValidator(args []interface{}, denom string) (*stakingtypes.MsgC
 	return msg, delegatorAddress, nil
 }
 
+// convertAmountForAura converts the given amount to a valid amount for Aura.
+// Aura has a decimal of 6, while Evmos has a decimal of 18.
+// So we need to convert the amount to a valid amount for Aura.
+// The amount must be divisible by 10^12.
+func convertAmountForAura(amount *big.Int) (math.Int, error) {
+	var m big.Int
+	// check if amount is divisible by 10^12
+	m.Mod(amount, big.NewInt(1e12))
+	if m.Cmp(big.NewInt(0)) != 0 {
+		return math.NewInt(0), fmt.Errorf("Amount should be divisible by 10^12: %s", amount)
+	}
+
+	var newAmount big.Int
+	newAmount.Div(amount, big.NewInt(1e12))
+
+	return math.NewIntFromBigInt(&newAmount), nil
+}
+
 // NewMsgDelegate creates a new MsgDelegate instance and does sanity checks
 // on the given arguments before populating the message.
 func NewMsgDelegate(args []interface{}, denom string) (*stakingtypes.MsgDelegate, common.Address, error) {
 	delegatorAddr, validatorAddress, amount, err := checkDelegationUndelegationArgs(args)
+	if err != nil {
+		return nil, common.Address{}, err
+	}
+
+	msgAmount, err := convertAmountForAura(amount)
 	if err != nil {
 		return nil, common.Address{}, err
 	}
@@ -171,7 +194,7 @@ func NewMsgDelegate(args []interface{}, denom string) (*stakingtypes.MsgDelegate
 		ValidatorAddress: validatorAddress,
 		Amount: sdk.Coin{
 			Denom:  denom,
-			Amount: math.NewIntFromBigInt(amount),
+			Amount: msgAmount,
 		},
 	}
 
@@ -190,12 +213,17 @@ func NewMsgUndelegate(args []interface{}, denom string) (*stakingtypes.MsgUndele
 		return nil, common.Address{}, err
 	}
 
+	msgAmount, err := convertAmountForAura(amount)
+	if err != nil {
+		return nil, common.Address{}, err
+	}
+
 	msg := &stakingtypes.MsgUndelegate{
 		DelegatorAddress: sdk.AccAddress(delegatorAddr.Bytes()).String(),
 		ValidatorAddress: validatorAddress,
 		Amount: sdk.Coin{
 			Denom:  denom,
-			Amount: math.NewIntFromBigInt(amount),
+			Amount: msgAmount,
 		},
 	}
 
@@ -233,13 +261,18 @@ func NewMsgRedelegate(args []interface{}, denom string) (*stakingtypes.MsgBeginR
 		return nil, common.Address{}, fmt.Errorf(cmn.ErrInvalidAmount, args[3])
 	}
 
+	msgAmount, err := convertAmountForAura(amount)
+	if err != nil {
+		return nil, common.Address{}, err
+	}
+
 	msg := &stakingtypes.MsgBeginRedelegate{
 		DelegatorAddress:    sdk.AccAddress(delegatorAddr.Bytes()).String(), // bech32 formatted
 		ValidatorSrcAddress: validatorSrcAddress,
 		ValidatorDstAddress: validatorDstAddress,
 		Amount: sdk.Coin{
 			Denom:  denom,
-			Amount: math.NewIntFromBigInt(amount),
+			Amount: msgAmount,
 		},
 	}
 
@@ -272,6 +305,11 @@ func NewMsgCancelUnbondingDelegation(args []interface{}, denom string) (*staking
 		return nil, common.Address{}, fmt.Errorf(cmn.ErrInvalidAmount, args[2])
 	}
 
+	msgAmount, err := convertAmountForAura(amount)
+	if err != nil {
+		return nil, common.Address{}, err
+	}
+
 	creationHeight, ok := args[3].(*big.Int)
 	if !ok {
 		return nil, common.Address{}, fmt.Errorf("invalid creation height")
@@ -282,7 +320,7 @@ func NewMsgCancelUnbondingDelegation(args []interface{}, denom string) (*staking
 		ValidatorAddress: validatorAddress,
 		Amount: sdk.Coin{
 			Denom:  denom,
-			Amount: math.NewIntFromBigInt(amount),
+			Amount: msgAmount,
 		},
 		CreationHeight: creationHeight.Int64(),
 	}

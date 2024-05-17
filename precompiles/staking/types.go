@@ -533,6 +533,9 @@ type DelegationOutput struct {
 func (do *DelegationOutput) FromResponse(res *stakingtypes.QueryDelegationResponse) *DelegationOutput {
 	do.Shares = res.DelegationResponse.Delegation.Shares.BigInt()
 	do.Balance = cmn.Coin{
+		// TODO: for consistency, we will change type of balance to BigInt
+		// the unit will be the same as the token unit with 18 decimals
+		// the denom here is just for compatibility with the current implementation and should not be used
 		Denom:  res.DelegationResponse.Balance.Denom,
 		Amount: util.AuraToEvmBigInt(res.DelegationResponse.Balance.Amount.BigInt()),
 	}

@@ -239,7 +239,7 @@ replace (
 	// use Evmos geth fork
 	github.com/ethereum/go-ethereum => github.com/evmos/go-ethereum v1.10.26-evmos-rc2
 
-	github.com/evmos/evmos/v16 => github.com/aura-nw/evmos/v16 v16.0.3-aura-2
+	github.com/evmos/evmos/v16 => github.com/aura-nw/evmos/v16 v16.0.3-aura.3
 
 	// https://github.com/cosmos/cosmos-sdk/issues/14949
 	// pin the version of goleveldb to v1.0.1-0.20210819022825-2ae1ddf74ef7 required by SDK v47 upgrade guide.

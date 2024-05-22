@@ -16,11 +16,11 @@ func AuraToEvmBigInt(amount *big.Int) *big.Int {
 	return new(big.Int).Mul(amount, big.NewInt(1e12))
 }
 
-func EvmToAuraInt(amount types.Int) types.Int {
+func EvmToAuraInt(amount math.Int) math.Int {
 	return amount.Quo(types.NewInt(1e12))
 }
 
-func AuraToEvmInt(amount types.Int) types.Int {
+func AuraToEvmInt(amount math.Int) math.Int {
 	return amount.Mul(types.NewInt(1e12))
 }
 

@@ -1,5 +1,7 @@
 import { SigningStargateClient } from '@cosmjs/stargate';
-import { Secp256k1HdWallet, StdFee } from '@cosmjs/amino';
+import { StdFee } from '@cosmjs/amino';
+import { DirectSecp256k1HdWallet } from '@cosmjs/proto-signing';
+
 
 import { http, WalletClient, createPublicClient, parseEther, getAddress } from 'viem'
 import { localhost } from 'viem/chains'
@@ -14,7 +16,7 @@ import { convertBech32AddressToEthAddress } from '../util/convert_address';
 import { USERS, setupClients, localaura } from '../util/test_setup';
 
 
-let cosmosAccounts: Secp256k1HdWallet[];
+let cosmosAccounts: DirectSecp256k1HdWallet[];
 let cosmosClients: SigningStargateClient[];
 let evmAccounts: HDAccount[];
 let evmClients: WalletClient[];
@@ -26,7 +28,7 @@ let erc20ContractAddr: `0x${string}`;
 
 describe('Should work with ERC20 tokens', () => {
   before(async () => {
-    const testClients = await setupClients('auradev');
+    const testClients = await setupClients('localaura');
     cosmosAccounts = testClients.cosmosAccounts;
     cosmosClients = testClients.cosmosClients;
     evmAccounts = testClients.evmAccounts;

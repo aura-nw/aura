@@ -9,16 +9,17 @@ import (
 	"github.com/ethereum/go-ethereum/core/vm"
 	"golang.org/x/exp/maps"
 
+	// staking and distribution precompiles
+	distprecompile "github.com/aura-nw/aura/precompiles/distribution"
+	stakingprecompile "github.com/aura-nw/aura/precompiles/staking"
+
 	authzkeeper "github.com/cosmos/cosmos-sdk/x/authz/keeper"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	distributionkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	channelkeeper "github.com/cosmos/ibc-go/v7/modules/core/04-channel/keeper"
-	bankprecompile "github.com/evmos/evmos/v16/precompiles/bank"
-	distprecompile "github.com/evmos/evmos/v16/precompiles/distribution"
 	ics20precompile "github.com/evmos/evmos/v16/precompiles/ics20"
 	"github.com/evmos/evmos/v16/precompiles/p256"
-	stakingprecompile "github.com/evmos/evmos/v16/precompiles/staking"
 	erc20Keeper "github.com/evmos/evmos/v16/x/erc20/keeper"
 	transferkeeper "github.com/evmos/evmos/v16/x/ibc/transfer/keeper"
 )
@@ -59,11 +60,6 @@ func Precompiles(
 		panic(fmt.Errorf("failed to instantiate ICS20 precompile: %w", err))
 	}
 
-	bankPrecompile, err := bankprecompile.NewPrecompile(bankKeeper, erc20Keeper)
-	if err != nil {
-		panic(fmt.Errorf("failed to instantiate bank precompile: %w", err))
-	}
-
 	// Stateless precompiles
 	precompiles[bech32Precompile.Address()] = bech32Precompile
 	precompiles[p256Precompile.Address()] = p256Precompile
@@ -72,7 +68,6 @@ func Precompiles(
 	precompiles[stakingPrecompile.Address()] = stakingPrecompile
 	precompiles[distributionPrecompile.Address()] = distributionPrecompile
 	precompiles[ibcTransferPrecompile.Address()] = ibcTransferPrecompile
-	precompiles[bankPrecompile.Address()] = bankPrecompile
 
 	return precompiles
 }

@@ -8,7 +8,7 @@ Aura Network is a NFT-centric blockchain platform that provides infrastructure a
 
 ## Prerequisite
 
-- Go 1.18
+- Go 1.20
 
 ## Install Aura daemon
 
@@ -85,4 +85,11 @@ The Aurad is still in development by the Aura Network team. For more information
 
 ## License
 
-Aurad project source code files are made available under Apache-2.0 License, located in the LICENSE file. Basically, you can do whatever you want as long as you include the original copyright and license notice in any copy of the software/source.
+Aura project source code files are made available under Apache-2.0 License, located in the LICENSE file. Basically, you can do whatever you want as long as you include the original copyright and license notice in any copy of the software/source.
+
+## Acknowledgments
+
+Aura project is built using [Cosmos SDK](https://github.com/cosmos/cosmos-sdk) and uses additional modules:
+- ```github.com/evmos/evmos/v16``` by Tharsis Labs Ltd.(Evmos). This EVM library is distributed under [ENCL-1.0](https://github.com/evmos/evmos/blob/v16.0.3/LICENSE).
+
+- ```x/evmutil``` by Kava Labs, Inc. This module is distributed under [Apache v2 License](https://github.com/Kava-Labs/kava/blob/master/LICENSE.md).

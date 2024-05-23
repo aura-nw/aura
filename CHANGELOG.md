@@ -37,7 +37,17 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 ## Unreleased
 
-## [v0.7.3] - 2024-01-18
+## [v0.8.1] - 2024-05-22
+### Improvements
+- Clean unused code in evmutil module 
+- Adapt Evmos precompiles 
+
+## [v0.8.0] - 2024-04-06
+### Features
+- Add EVM module 
+
+## [v0.7.2] - 2024-01-18
+
 ### Improvements
 - Enhance flow of post handle verify tx from smart account module
 - Bump wasmd version to v0.42.0 to support long term

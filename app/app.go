@@ -18,7 +18,9 @@ import (
 	v700 "github.com/aura-nw/aura/app/upgrades/v0.7.0"
 	v701 "github.com/aura-nw/aura/app/upgrades/v0.7.1"
 	v702 "github.com/aura-nw/aura/app/upgrades/v0.7.2"
-
+	
+	v081 "github.com/aura-nw/aura/app/upgrades/v0.8.1"
+	
 	"github.com/aura-nw/aura/app/internal"
 
 	"github.com/aura-nw/aura/app/utils"
@@ -1293,6 +1295,11 @@ func (app *App) setupUpgradeHandlers() {
 		v703.CreateUpgradeHandler(app.mm, app.configurator),
 	)
 
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v081.UpgradeName,
+		v081.CreateUpgradeHandler(app.mm, app.configurator),
+	)
+
 	// When a planned update height is reached, the old binary will panic
 	// writing on disk the height and name of the update that triggered it
 	// This will read that value, and execute the preparations for the upgrade.
@@ -1308,69 +1315,72 @@ func (app *App) setupUpgradeHandlers() {
 	var storeUpgrades *storetypes.StoreUpgrades
 
 	switch upgradeInfo.Name {
-	case v0_3_0.UpgradeName:
-		// no store upgrades in v0.3.0
+		case v0_3_0.UpgradeName:
+			// no store upgrades in v0.3.0
 
-	case v0_3_1.UpgradeName:
-		// no store upgrades in v0.3.1
+		case v0_3_1.UpgradeName:
+			// no store upgrades in v0.3.1
 
-	case v0_3_2.UpgradeName:
-		// no store upgrades in v0.3.2
+		case v0_3_2.UpgradeName:
+			// no store upgrades in v0.3.2
 
-	case v0_3_3.UpgradeName:
-		// no store upgrades in v0.3.3
+		case v0_3_3.UpgradeName:
+			// no store upgrades in v0.3.3
 
-	case v0_4_0.UpgradeName:
-		// no store upgrades in v0.4.0
+		case v0_4_0.UpgradeName:
+			// no store upgrades in v0.4.0
 
-	case v0_4_1.UpgradeName:
-		// no store upgrades in v0.4.1
+		case v0_4_1.UpgradeName:
+			// no store upgrades in v0.4.1
 
-	case v0_4_2.UpgradeName:
-		// no store upgrades in v0.4.2
+		case v0_4_2.UpgradeName:
+			// no store upgrades in v0.4.2
 
-	case v0_4_4.UpgradeName:
-	// no store upgrades in v0.4.4
+		case v0_4_4.UpgradeName:
+		// no store upgrades in v0.4.4
 
-	case v500.UpgradeName:
-	// no store upgrades in v0.5.0
+		case v500.UpgradeName:
+		// no store upgrades in v0.5.0
 
-	case v501.UpgradeName:
-		storeUpgrades = &storetypes.StoreUpgrades{
-			//Added: []string{ibcmiddlewaretypes.StoreKey},
-		}
-	case v600.UpgradeName:
-		storeUpgrades = &storetypes.StoreUpgrades{
-			Added: []string{samoduletypes.StoreKey},
-		}
+		case v501.UpgradeName:
+			storeUpgrades = &storetypes.StoreUpgrades{
+				//Added: []string{ibcmiddlewaretypes.StoreKey},
+			}
+		case v600.UpgradeName:
+			storeUpgrades = &storetypes.StoreUpgrades{
+				Added: []string{samoduletypes.StoreKey},
+			}
 
-	case v601.UpgradeName:
-		// no store upgrades in v0.6.
+		case v601.UpgradeName:
+			// no store upgrades in v0.6.
 
-	case v700.UpgradeName:
-		storeUpgrades = &storetypes.StoreUpgrades{
-			Added: []string{
-				consensusparamtypes.StoreKey,
-				crisistypes.StoreKey,
-			},
-		}
-
-	case v701.UpgradeName:
-		if ChainID == "xstaxy-1" {
+		case v700.UpgradeName:
 			storeUpgrades = &storetypes.StoreUpgrades{
 				Added: []string{
-					ibchookstypes.StoreKey,
-					samoduletypes.StoreKey,
 					consensusparamtypes.StoreKey,
 					crisistypes.StoreKey,
 				},
 			}
-		}
 
-	case v702.UpgradeName:
-	// no store upgrades in v0.7.2
-	case v703.UpgradeName:
-		// no store upgrades in v0.7.3
+		case v701.UpgradeName:
+			if ChainID == "xstaxy-1" {
+				storeUpgrades = &storetypes.StoreUpgrades{
+					Added: []string{
+						ibchookstypes.StoreKey,
+						samoduletypes.StoreKey,
+						consensusparamtypes.StoreKey,
+						crisistypes.StoreKey,
+					},
+				}
+			}
+
+		case v702.UpgradeName:
+		// no store upgrades in v0.7.2
+		case v703.UpgradeName:
+			// no store upgrades in v0.7.3
+
+		case v081.UpgradeName:
+			// no store upgrades in v0.8.1
 
 	}
 

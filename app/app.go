@@ -20,6 +20,7 @@ import (
 	v702 "github.com/aura-nw/aura/app/upgrades/v0.7.2"
 	
 	v081 "github.com/aura-nw/aura/app/upgrades/v0.8.1"
+	ibcupgrade "github.com/aura-nw/aura/app/upgrades/ibcupgrade"
 	
 	"github.com/aura-nw/aura/app/internal"
 
@@ -1300,6 +1301,11 @@ func (app *App) setupUpgradeHandlers() {
 		v081.CreateUpgradeHandler(app.mm, app.configurator),
 	)
 
+	app.UpgradeKeeper.SetUpgradeHandler(
+		ibcupgrade.UpgradeName,
+		ibcupgrade.CreateUpgradeHandler(app.mm, app.configurator),
+	)
+
 	// When a planned update height is reached, the old binary will panic
 	// writing on disk the height and name of the update that triggered it
 	// This will read that value, and execute the preparations for the upgrade.
@@ -1381,7 +1387,8 @@ func (app *App) setupUpgradeHandlers() {
 
 		case v081.UpgradeName:
 			// no store upgrades in v0.8.1
-
+		case ibcupgrade.UpgradeName:
+			// no store upgrades in ibcupgrade
 	}
 
 	if storeUpgrades != nil {

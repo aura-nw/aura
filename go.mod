@@ -136,7 +136,7 @@ require (
 	github.com/gtank/merlin v0.1.1 // indirect
 	github.com/gtank/ristretto255 v0.1.2 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
-	github.com/hashicorp/go-getter v1.7.1 // indirect
+	github.com/hashicorp/go-getter v1.7.5 // indirect
 	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect
 	github.com/hashicorp/go-safetemp v1.0.0 // indirect
 	github.com/hashicorp/go-version v1.6.0 // indirect
@@ -238,9 +238,9 @@ require (
 replace (
 	github.com/99designs/keyring => github.com/cosmos/keyring v1.2.0
 	github.com/CosmWasm/wasmvm => github.com/CosmWasm/wasmvm v1.4.3
+	github.com/cometbft/cometbft => github.com/aura-nw/cometbft v0.37.4-aura.2
 	// use Cosmos-SDK fork to enable Ledger functionality
 	github.com/cosmos/cosmos-sdk => github.com/evmos/cosmos-sdk v0.47.8-evmos
-	github.com/cometbft/cometbft => github.com/aura-nw/cometbft v0.37.4-aura.2
 	// Ledger Nano S+ support
 	github.com/cosmos/ledger-go => github.com/cosmos/ledger-go v0.9.3
 	// use Evmos geth fork

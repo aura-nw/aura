@@ -90,6 +90,6 @@ Aura project source code files are made available under Apache-2.0 License, loca
 ## Acknowledgments
 
 Aura project is built using [Cosmos SDK](https://github.com/cosmos/cosmos-sdk) and uses additional modules:
-- ```github.com/evmos/evmos/v16``` by Tharsis Labs Ltd.(Evmos). This EVM library is distributed under [ENCL-1.0](https://github.com/evmos/evmos/blob/v16.0.3/LICENSE).
+- ```github.com/evmos/evmos/v18``` by Tharsis Labs Ltd.(Evmos). This EVM library is distributed under [ENCL-1.0](https://github.com/evmos/evmos/blob/v16.0.3/LICENSE).
 
 - ```x/evmutil``` by Kava Labs, Inc. This module is distributed under [Apache v2 License](https://github.com/Kava-Labs/kava/blob/master/LICENSE.md).

@@ -15,9 +15,9 @@ require (
 	github.com/cosmos/cosmos-sdk v0.47.8
 	github.com/cosmos/gogoproto v1.4.10
 	github.com/cosmos/ibc-apps/modules/ibc-hooks/v7 v7.0.0-20230803181732-7c8f814d3b79
-	github.com/cosmos/ibc-go/v7 v7.3.1
+	github.com/cosmos/ibc-go/v7 v7.4.0
 	github.com/ethereum/go-ethereum v1.11.5
-	github.com/evmos/evmos/v16 v16.0.3
+	github.com/evmos/evmos/v18 v18.1.0
 	github.com/gogo/protobuf v1.3.2
 	github.com/golang/mock v1.6.0
 	github.com/golang/protobuf v1.5.3
@@ -65,7 +65,6 @@ require (
 	github.com/btcsuite/btcd/btcec/v2 v2.3.2 // indirect
 	github.com/btcsuite/btcd/btcutil v1.1.3 // indirect
 	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.1 // indirect
-	github.com/bytedance/sonic v1.11.0 // indirect
 	github.com/cenkalti/backoff/v4 v4.1.3 // indirect
 	github.com/cespare/xxhash v1.1.0 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
@@ -238,15 +237,15 @@ require (
 replace (
 	github.com/99designs/keyring => github.com/cosmos/keyring v1.2.0
 	github.com/CosmWasm/wasmvm => github.com/CosmWasm/wasmvm v1.4.3
+	github.com/cometbft/cometbft => github.com/aura-nw/cometbft v0.37.4-aura.2
 	// use Cosmos-SDK fork to enable Ledger functionality
 	github.com/cosmos/cosmos-sdk => github.com/evmos/cosmos-sdk v0.47.8-evmos
-	github.com/cometbft/cometbft => github.com/aura-nw/cometbft v0.37.4-aura.2
 	// Ledger Nano S+ support
 	github.com/cosmos/ledger-go => github.com/cosmos/ledger-go v0.9.3
 	// use Evmos geth fork
 	github.com/ethereum/go-ethereum => github.com/evmos/go-ethereum v1.10.26-evmos-rc2
 
-	github.com/evmos/evmos/v16 => github.com/aura-nw/evmos/v16 v16.0.3-aura.3
+	github.com/evmos/evmos/v18 => github.com/aura-nw/evmos/v18 v18.1.0-aura.1
 
 	// https://github.com/cosmos/cosmos-sdk/issues/14949
 	// pin the version of goleveldb to v1.0.1-0.20210819022825-2ae1ddf74ef7 required by SDK v47 upgrade guide.

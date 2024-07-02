@@ -2,10 +2,10 @@ package cmd
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
-	"fmt"
 
 	simappparams "cosmossdk.io/simapp/params"
 
@@ -34,7 +34,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
-	"github.com/evmos/evmos/v16/encoding"
+	"github.com/evmos/evmos/v18/encoding"
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -44,8 +44,8 @@ import (
 	"github.com/aura-nw/aura/app"
 
 	// evmos
-	serverconfig "github.com/evmos/evmos/v16/server/config"
-	evmosserver "github.com/evmos/evmos/v16/server"
+	evmosserver "github.com/evmos/evmos/v18/server"
+	serverconfig "github.com/evmos/evmos/v18/server/config"
 )
 
 // NewRootCmd creates a new root command for a Cosmos SDK application
@@ -210,7 +210,7 @@ func txCommand() *cobra.Command {
 
 	//Set DefaultGasAdjustment
 	flags.DefaultGasAdjustment = 1.4
-	
+
 	app.ModuleBasics.AddTxCommands(cmd)
 	cmd.PersistentFlags().String(flags.FlagChainID, "", "The network chain ID")
 
@@ -367,7 +367,7 @@ func initAppConfig() (string, interface{}) {
 	srvCfg.StateSync.SnapshotInterval = 1000
 	srvCfg.StateSync.SnapshotKeepRecent = 2
 	srvCfg.IAVLDisableFastNode = false
-	srvCfg.Config.MinGasPrices = "0.001uaura" 
+	srvCfg.Config.MinGasPrices = "0.001uaura"
 
 	return customAppTemplate, srvCfg
 }

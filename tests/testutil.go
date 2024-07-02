@@ -25,7 +25,7 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/evmos/evmos/v16/encoding"
+	"github.com/evmos/evmos/v18/encoding"
 )
 
 // EmptyAppOptions is a stub implementing AppOptions

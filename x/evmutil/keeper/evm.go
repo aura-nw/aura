@@ -24,8 +24,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
-	"github.com/evmos/evmos/v16/server/config"
-	evmtypes "github.com/evmos/evmos/v16/x/evm/types"
+	"github.com/evmos/evmos/v18/server/config"
+	evmtypes "github.com/evmos/evmos/v18/x/evm/types"
 
 	"github.com/aura-nw/aura/x/evmutil/types"
 )

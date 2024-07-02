@@ -21,7 +21,7 @@ import (
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/common"
-	evmtypes "github.com/evmos/evmos/v16/x/evm/types"
+	evmtypes "github.com/evmos/evmos/v18/x/evm/types"
 )
 
 var (

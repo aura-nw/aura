@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/evmos/evmos/v16/x/evm/statedb"
+	"github.com/evmos/evmos/v18/x/evm/statedb"
 
-	cmn "github.com/evmos/evmos/v16/precompiles/common"
+	cmn "github.com/evmos/evmos/v18/precompiles/common"
 
 	"github.com/ethereum/go-ethereum/common"
 

@@ -18,10 +18,10 @@ import (
 	v700 "github.com/aura-nw/aura/app/upgrades/v0.7.0"
 	v701 "github.com/aura-nw/aura/app/upgrades/v0.7.1"
 	v702 "github.com/aura-nw/aura/app/upgrades/v0.7.2"
-	
-	v081 "github.com/aura-nw/aura/app/upgrades/v0.8.1"
+
 	ibcupgrade "github.com/aura-nw/aura/app/upgrades/ibcupgrade"
-	
+	v081 "github.com/aura-nw/aura/app/upgrades/v0.8.1"
+
 	"github.com/aura-nw/aura/app/internal"
 
 	"github.com/aura-nw/aura/app/utils"
@@ -145,14 +145,14 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 
 	// evm module
-	srvflags "github.com/evmos/evmos/v16/server/flags"
-	"github.com/evmos/evmos/v16/x/erc20"
-	erc20client "github.com/evmos/evmos/v16/x/erc20/client"
-	erc20keeper "github.com/evmos/evmos/v16/x/erc20/keeper"
-	erc20types "github.com/evmos/evmos/v16/x/erc20/types"
-	"github.com/evmos/evmos/v16/x/evm"
-	evmkeeper "github.com/evmos/evmos/v16/x/evm/keeper"
-	evmtypes "github.com/evmos/evmos/v16/x/evm/types"
+	srvflags "github.com/evmos/evmos/v18/server/flags"
+	"github.com/evmos/evmos/v18/x/erc20"
+	erc20client "github.com/evmos/evmos/v18/x/erc20/client"
+	erc20keeper "github.com/evmos/evmos/v18/x/erc20/keeper"
+	erc20types "github.com/evmos/evmos/v18/x/erc20/types"
+	"github.com/evmos/evmos/v18/x/evm"
+	evmkeeper "github.com/evmos/evmos/v18/x/evm/keeper"
+	evmtypes "github.com/evmos/evmos/v18/x/evm/types"
 
 	// Force-load the tracer engines to trigger registration due to Go-Ethereum v1.10.15 changes
 	_ "github.com/ethereum/go-ethereum/eth/tracers/js"
@@ -164,12 +164,12 @@ import (
 	evmutiltypes "github.com/aura-nw/aura/x/evmutil/types"
 
 	// overide transfer for erc20
-	"github.com/evmos/evmos/v16/x/ibc/transfer"
-	transferkeeper "github.com/evmos/evmos/v16/x/ibc/transfer/keeper"
+	"github.com/evmos/evmos/v18/x/ibc/transfer"
+	transferkeeper "github.com/evmos/evmos/v18/x/ibc/transfer/keeper"
 
-	"github.com/evmos/evmos/v16/x/feemarket"
-	feemarketkeeper "github.com/evmos/evmos/v16/x/feemarket/keeper"
-	feemarkettypes "github.com/evmos/evmos/v16/x/feemarket/types"
+	"github.com/evmos/evmos/v18/x/feemarket"
+	feemarketkeeper "github.com/evmos/evmos/v18/x/feemarket/keeper"
+	feemarkettypes "github.com/evmos/evmos/v18/x/feemarket/types"
 
 	v0_3_0 "github.com/aura-nw/aura/app/upgrades/v0.3.0"
 	v0_3_1 "github.com/aura-nw/aura/app/upgrades/v0.3.1"
@@ -1321,74 +1321,74 @@ func (app *App) setupUpgradeHandlers() {
 	var storeUpgrades *storetypes.StoreUpgrades
 
 	switch upgradeInfo.Name {
-		case v0_3_0.UpgradeName:
-			// no store upgrades in v0.3.0
+	case v0_3_0.UpgradeName:
+		// no store upgrades in v0.3.0
 
-		case v0_3_1.UpgradeName:
-			// no store upgrades in v0.3.1
+	case v0_3_1.UpgradeName:
+		// no store upgrades in v0.3.1
 
-		case v0_3_2.UpgradeName:
-			// no store upgrades in v0.3.2
+	case v0_3_2.UpgradeName:
+		// no store upgrades in v0.3.2
 
-		case v0_3_3.UpgradeName:
-			// no store upgrades in v0.3.3
+	case v0_3_3.UpgradeName:
+		// no store upgrades in v0.3.3
 
-		case v0_4_0.UpgradeName:
-			// no store upgrades in v0.4.0
+	case v0_4_0.UpgradeName:
+		// no store upgrades in v0.4.0
 
-		case v0_4_1.UpgradeName:
-			// no store upgrades in v0.4.1
+	case v0_4_1.UpgradeName:
+		// no store upgrades in v0.4.1
 
-		case v0_4_2.UpgradeName:
-			// no store upgrades in v0.4.2
+	case v0_4_2.UpgradeName:
+		// no store upgrades in v0.4.2
 
-		case v0_4_4.UpgradeName:
-		// no store upgrades in v0.4.4
+	case v0_4_4.UpgradeName:
+	// no store upgrades in v0.4.4
 
-		case v500.UpgradeName:
-		// no store upgrades in v0.5.0
+	case v500.UpgradeName:
+	// no store upgrades in v0.5.0
 
-		case v501.UpgradeName:
-			storeUpgrades = &storetypes.StoreUpgrades{
-				//Added: []string{ibcmiddlewaretypes.StoreKey},
-			}
-		case v600.UpgradeName:
-			storeUpgrades = &storetypes.StoreUpgrades{
-				Added: []string{samoduletypes.StoreKey},
-			}
+	case v501.UpgradeName:
+		storeUpgrades = &storetypes.StoreUpgrades{
+			//Added: []string{ibcmiddlewaretypes.StoreKey},
+		}
+	case v600.UpgradeName:
+		storeUpgrades = &storetypes.StoreUpgrades{
+			Added: []string{samoduletypes.StoreKey},
+		}
 
-		case v601.UpgradeName:
-			// no store upgrades in v0.6.
+	case v601.UpgradeName:
+		// no store upgrades in v0.6.
 
-		case v700.UpgradeName:
+	case v700.UpgradeName:
+		storeUpgrades = &storetypes.StoreUpgrades{
+			Added: []string{
+				consensusparamtypes.StoreKey,
+				crisistypes.StoreKey,
+			},
+		}
+
+	case v701.UpgradeName:
+		if ChainID == "xstaxy-1" {
 			storeUpgrades = &storetypes.StoreUpgrades{
 				Added: []string{
+					ibchookstypes.StoreKey,
+					samoduletypes.StoreKey,
 					consensusparamtypes.StoreKey,
 					crisistypes.StoreKey,
 				},
 			}
+		}
 
-		case v701.UpgradeName:
-			if ChainID == "xstaxy-1" {
-				storeUpgrades = &storetypes.StoreUpgrades{
-					Added: []string{
-						ibchookstypes.StoreKey,
-						samoduletypes.StoreKey,
-						consensusparamtypes.StoreKey,
-						crisistypes.StoreKey,
-					},
-				}
-			}
+	case v702.UpgradeName:
+	// no store upgrades in v0.7.2
+	case v703.UpgradeName:
+		// no store upgrades in v0.7.3
 
-		case v702.UpgradeName:
-		// no store upgrades in v0.7.2
-		case v703.UpgradeName:
-			// no store upgrades in v0.7.3
-
-		case v081.UpgradeName:
-			// no store upgrades in v0.8.1
-		case ibcupgrade.UpgradeName:
-			// no store upgrades in ibcupgrade
+	case v081.UpgradeName:
+		// no store upgrades in v0.8.1
+	case ibcupgrade.UpgradeName:
+		// no store upgrades in ibcupgrade
 	}
 
 	if storeUpgrades != nil {

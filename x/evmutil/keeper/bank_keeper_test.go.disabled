@@ -11,7 +11,7 @@ import (
 
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	vesting "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
-	evmtypes "github.com/evmos/evmos/v16/x/evm/types"
+	evmtypes "github.com/evmos/evmos/v18/x/evm/types"
 
 	"github.com/aura-nw/aura/x/evmutil/keeper"
 	"github.com/aura-nw/aura/x/evmutil/testutil"

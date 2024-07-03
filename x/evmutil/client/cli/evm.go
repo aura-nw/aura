@@ -13,11 +13,11 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
-	"github.com/evmos/evmos/v16/crypto/hd"
-	"github.com/evmos/evmos/v16/server/config"
-	etherminttypes "github.com/evmos/evmos/v16/types"
-	evmtypes "github.com/evmos/evmos/v16/x/evm/types"
-	feemarkettypes "github.com/evmos/evmos/v16/x/feemarket/types"
+	"github.com/evmos/evmos/v18/crypto/hd"
+	"github.com/evmos/evmos/v18/server/config"
+	etherminttypes "github.com/evmos/evmos/v18/types"
+	evmtypes "github.com/evmos/evmos/v18/x/evm/types"
+	feemarkettypes "github.com/evmos/evmos/v18/x/feemarket/types"
 )
 
 // CanSignEthTx returns an error if the signing key algorithm is not eth_secp256k1.

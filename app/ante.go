@@ -22,12 +22,12 @@ import (
 
 	// ethermint ante
 	sdkvesting "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
-	evmosante "github.com/evmos/evmos/v16/app/ante"
-	cosmosante "github.com/evmos/evmos/v16/app/ante/cosmos"
-	"github.com/evmos/evmos/v16/app/ante/evm"
-	evmante "github.com/evmos/evmos/v16/app/ante/evm"
-	evmostypes "github.com/evmos/evmos/v16/types"
-	evmtypes "github.com/evmos/evmos/v16/x/evm/types"
+	evmosante "github.com/evmos/evmos/v18/app/ante"
+	cosmosante "github.com/evmos/evmos/v18/app/ante/cosmos"
+	"github.com/evmos/evmos/v18/app/ante/evm"
+	evmante "github.com/evmos/evmos/v18/app/ante/evm"
+	evmostypes "github.com/evmos/evmos/v18/types"
+	evmtypes "github.com/evmos/evmos/v18/x/evm/types"
 
 	smartaccount "github.com/aura-nw/aura/x/smartaccount"
 	smartaccountkeeper "github.com/aura-nw/aura/x/smartaccount/keeper"

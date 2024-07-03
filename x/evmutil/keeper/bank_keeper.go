@@ -7,7 +7,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	evmtypes "github.com/evmos/evmos/v16/x/evm/types"
+	evmtypes "github.com/evmos/evmos/v18/x/evm/types"
 
 	"github.com/aura-nw/aura/x/evmutil/types"
 )

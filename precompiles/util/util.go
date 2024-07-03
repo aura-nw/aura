@@ -5,7 +5,7 @@ import (
 
 	"cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/types"
-	cmn "github.com/evmos/evmos/v16/precompiles/common"
+	cmn "github.com/evmos/evmos/v18/precompiles/common"
 )
 
 func EvmToAuraBigInt(amount *big.Int) *big.Int {

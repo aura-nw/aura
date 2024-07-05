@@ -185,7 +185,7 @@ require (
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
 	github.com/rjeczalik/notify v0.9.3 // indirect
 	github.com/rogpeppe/go-internal v1.11.0 // indirect
-	github.com/rs/cors v1.10.1 // indirect
+	github.com/rs/cors v1.11.0 // indirect
 	github.com/rs/zerolog v1.31.0 // indirect
 	github.com/sasha-s/go-deadlock v0.3.1 // indirect
 	github.com/shirou/gopsutil v3.21.4-0.20210419000835-c7a38de76ee5+incompatible // indirect
@@ -238,9 +238,9 @@ require (
 replace (
 	github.com/99designs/keyring => github.com/cosmos/keyring v1.2.0
 	github.com/CosmWasm/wasmvm => github.com/CosmWasm/wasmvm v1.4.3
+	github.com/cometbft/cometbft => github.com/aura-nw/cometbft v0.37.4-aura.2
 	// use Cosmos-SDK fork to enable Ledger functionality
 	github.com/cosmos/cosmos-sdk => github.com/evmos/cosmos-sdk v0.47.8-evmos
-	github.com/cometbft/cometbft => github.com/aura-nw/cometbft v0.37.4-aura.2
 	// Ledger Nano S+ support
 	github.com/cosmos/ledger-go => github.com/cosmos/ledger-go v0.9.3
 	// use Evmos geth fork

@@ -621,15 +621,19 @@ func New(
 		app.AccountKeeper, app.BankKeeper, scopedTransferKeeper,
 		app.Erc20Keeper, // Add ERC20 Keeper for ERC20 transfers
 	)
-	transferIBCModule := transfer.NewIBCModule(app.TransferKeeper)
-	middlewareTransferModule := ibc_hooks.NewIBCMiddleware(
-		transferIBCModule,
-		&app.HooksICS4Wrapper,
-	)
+
+	var transferIBCModule ibcporttypes.IBCModule
+	transferIBCModule = transfer.NewIBCModule(app.TransferKeeper)
+	transferIBCModule = erc20.NewIBCMiddleware(app.Erc20Keeper, transferIBCModule)
+
+	// middlewareTransferModule := ibc_hooks.NewIBCMiddleware(
+	// 	transferIBCModule,
+	// 	&app.HooksICS4Wrapper,
+	// )
 
 	// Create static IBC router, add transfer route, then set and seal it
 	ibcRouter := ibcporttypes.NewRouter()
-	ibcRouter.AddRoute(ibctransfertypes.ModuleName, middlewareTransferModule)
+	ibcRouter.AddRoute(ibctransfertypes.ModuleName, transferIBCModule)
 
 	// enable evm precompile, this need to be done after initialized ibc and transfer keeper
 	chainID := bApp.ChainID()

@@ -593,13 +593,12 @@ func New(
 	)
 	app.IBCHooksKeeper = &hooksKeeper
 
-	auraPrefix := sdk.GetConfig().GetBech32AccountAddrPrefix()
-	wasmHooks := ibc_hooks.NewWasmHooks(app.IBCHooksKeeper, &app.WasmKeeper, auraPrefix) // The contract keeper needs to be set later
-	app.Ics20WasmHooks = &wasmHooks
-	app.HooksICS4Wrapper = ibc_hooks.NewICS4Middleware(
-		app.IBCKeeper.ChannelKeeper,
-		app.Ics20WasmHooks,
-	)
+	// auraPrefix := sdk.GetConfig().GetBech32AccountAddrPrefix()
+	// wasmHooks := ibc_hooks.NewWasmHooks(app.IBCHooksKeeper, &app.WasmKeeper, auraPrefix) // The contract keeper needs to be set later
+	// app.Ics20WasmHooks = &wasmHooks
+	// app.HooksICS4Wrapper = ibc_hooks.NewICS4Middleware(
+	// 	app.IBCKeeper.ChannelKeeper,
+	// )
 
 	// Create Transfer Keepers
 	// app.TransferKeeper = transferkeeper.NewKeeper(

@@ -37,6 +37,14 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 ## Unreleased
 
+## [v0.9.3] - 2024-08-05
+### Improvements
+- Upgrade to evmos v18.1.0
+- Use erc20 module to automatically convert ibc tokens to registered erc20 tokens
+- Remove precompiles as they are not compatible with evmos v18.1.0
+- Remove ibc-hooks
+- Update dependencies
+
 ## [v0.8.1] - 2024-05-22
 ### Improvements
 - Clean unused code in evmutil module 

@@ -703,7 +703,7 @@ func New(
 	saModule := samodule.NewAppModule(appCodec, app.SaKeeper, app.ContractKeeper, app.AccountKeeper)
 
 	// Pass the contract keeper to ICS4Wrappers for ibc middlewares
-	app.Ics20WasmHooks.ContractKeeper = &app.WasmKeeper
+	// app.Ics20WasmHooks.ContractKeeper = &app.WasmKeeper
 
 	// The gov proposal types can be individually enabled
 	enabledProposals := GetEnabledProposals()

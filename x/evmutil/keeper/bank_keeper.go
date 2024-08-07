@@ -7,17 +7,17 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	evmtypes "github.com/evmos/evmos/v16/x/evm/types"
+	evmtypes "github.com/evmos/evmos/v18/x/evm/types"
 
 	"github.com/aura-nw/aura/x/evmutil/types"
 )
 
 const (
 	// EvmDenom is the gas denom used by the evm
-	EvmDenom = "aeaura"
+	EvmDenom = "aaura"
 
 	// CosmosDenom is the gas denom used by the kava app
-	CosmosDenom = "ueaura"
+	CosmosDenom = "uaura"
 )
 
 // ConversionMultiplier is the conversion multiplier between akava and ukava

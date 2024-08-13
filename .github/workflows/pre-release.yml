@@ -27,7 +27,7 @@ jobs:
           VER=$(cat .VERSION)-${{ github.head_ref || github.ref_name }}
           echo "VERSION=$VER" >> $GITHUB_ENV
       
-      - uses: mukunku/tag-exists-action@v1.4.0
+      - uses: mukunku/tag-exists-action@v1.6.0
         id: checkTag
         with: 
           tag: ${{ env.VERSION }}
@@ -39,7 +39,7 @@ jobs:
           exit 1
 
       - name: Delete the "latest" Pre-Release
-        uses: dev-drprasad/delete-older-releases@v0.3.2
+        uses: dev-drprasad/delete-older-releases@v0.3.4
         with:
           keep_latest: 0
           delete_tag_pattern: .*-${{ github.head_ref || github.ref_name }}

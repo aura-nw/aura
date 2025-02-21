@@ -46,7 +46,7 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 		// code_id whitelist indicates which contract can be initialized as smart account
 		// using gov proposal for updates
 		paramtypes.NewParamSetPair(WhitelistCodeID, &p.WhitelistCodeID, validateWhitelistCodeID),
-		// list of diable messages for smartaccount
+		// list of disable messages for smartaccount
 		paramtypes.NewParamSetPair(DisableMsgsList, &p.DisableMsgsList, validateDisableMsgsList),
 		// max_gas_query limits the amount of gas that the validation query can use
 		paramtypes.NewParamSetPair(MaxGasExecute, &p.MaxGasExecute, validateMaxGasExecute),

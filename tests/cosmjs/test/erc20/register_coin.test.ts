@@ -126,7 +126,7 @@ describe('Should register a new coin', () => {
     // assert passed
     assert.equal(proposal.status.toString(), 'PROPOSAL_STATUS_PASSED');
 
-    // get token_pairs infomation
+    // get token_pairs information
     const tokenPairsRes = await fetch('http://0.0.0.0:1317/evmos/erc20/v1/token_pairs').then(res => res.json());
 
     // token_pairs should have the new coin
